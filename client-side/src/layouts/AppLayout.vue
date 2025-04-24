@@ -1,19 +1,18 @@
 <template>
   <v-app>
-    <v-layout>
-      <!-- App bar -->
-      <!-- <Header
-        :drawer="drawer"
-        @toggle-drawer="drawer = !drawer"
-        :isMobile="isMobile"
-      /> -->
-
-      <!-- Sidebar drawer -->
+    <v-layout style="overflow: hidden">
       <v-navigation-drawer
         color="primary"
         v-model="drawer"
         :permanent="!isMobile"
         :temporary="isMobile"
+        style="
+          height: 100vh;
+          position: fixed;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        "
       >
         <div class="d-flex pa-2">
           <h2>DUKAN</h2>
@@ -28,6 +27,21 @@
             <v-list-item-title>{{ item.title }}</v-list-item-title>
           </v-list-item>
         </v-list>
+
+        <!-- Logout Button (fixed at bottom) -->
+        <div
+          style="
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+          "
+        >
+          <v-btn block color="error" prepend-icon="mdi-logout" @click="logout">
+            Logout
+          </v-btn>
+        </div>
       </v-navigation-drawer>
 
       <!-- Page content -->
@@ -45,26 +59,30 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from "vue";
-import { useDisplay } from "vuetify";
-import Header from "../components/Header.vue";
+  import { ref, computed, watchEffect } from 'vue'
+  import { useDisplay } from 'vuetify'
+  import Header from '../components/Header.vue'
 
-const display = useDisplay();
-const isMobile = computed(() => display.smAndDown.value);
-const drawer = ref(true);
+  const display = useDisplay()
+  const isMobile = computed(() => display.smAndDown.value)
+  const drawer = ref(true)
 
-const items = [
-  { title: "Dashboard", to: "/dashboard" },
-  { title: "Products", to: "/products" },
-  { title: "Orders", to: "/orders" },
-];
+  const items = [
+    { title: 'Dashboard', to: '/dashboard' },
+    { title: 'Products', to: '/products' },
+    { title: 'Orders', to: '/orders' },
+    { title: 'Requests', to: '/requests' },
+    { title: 'Store Settings', to: '/config' }
+  ]
 
-watchEffect(() => {
-  drawer.value = !isMobile.value;
-});
+  watchEffect(() => {
+    drawer.value = !isMobile.value
+  })
 </script>
 <style>
-.v-application {
-  transition: background-color 0.3s ease, color 0.1s ease;
-}
+  .v-application {
+    transition:
+      background-color 0.3s ease-in-out,
+      color 0.5s ease-in;
+  }
 </style>
