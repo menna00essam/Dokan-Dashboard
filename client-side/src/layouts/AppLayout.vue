@@ -46,6 +46,7 @@
 
       <!-- Page content -->
       <v-main>
+        <!-- header -->
         <Header
           :drawer="drawer"
           @toggle-drawer="drawer = !drawer"
@@ -74,6 +75,13 @@
     { title: 'Requests', to: '/requests' },
     { title: 'Store Settings', to: '/config' }
   ]
+  // Add this logout method
+  const logout = () => {
+    // Your logout logic here
+    console.log('Logging out...')
+    // router.push('/login') // Redirect to login page
+    // Add any other logout cleanup (clearing tokens, etc.)
+  }
 
   watchEffect(() => {
     drawer.value = !isMobile.value
