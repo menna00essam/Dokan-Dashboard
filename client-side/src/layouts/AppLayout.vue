@@ -57,6 +57,7 @@ const items = [
   { title: "Dashboard", to: "/dashboard" },
   { title: "Products", to: "/products" },
   { title: "Orders", to: "/orders" },
+  { title: "Customers", to: "/CustomerManagement" },
 ];
 
 watchEffect(() => {

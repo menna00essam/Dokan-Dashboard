@@ -8,9 +8,14 @@ import MainLayout from "../layouts/AppLayout.vue";
 import Dashboard from "../views/Dashboard.vue";
 import Products from "../views/Products.vue";
 import Login from "../views/Login.vue";
+import CustomerManagement from "../views/CustomerManagement.vue"
+
 // import Register from "../views/Register.vue"; // Add this
 import Orders from "../views/Orders.vue";
 import NotFound from "../views/NotFound.vue";
+
+//components
+import CustomerDetails from "../views/CustomerDetails.vue"
 
 const routes = [
   {
@@ -54,6 +59,16 @@ const routes = [
         name: "orders",
         component: Orders,
       },
+      {
+        path: 'CustomerManagement',
+        name: 'CustomerManagement',
+        component: CustomerManagement,
+      },
+      {
+        path: 'CustomerDetails/:id',
+        name: 'CustomerDetails',
+        component: CustomerDetails,
+      }
     ],
   },
 

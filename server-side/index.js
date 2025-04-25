@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
+const cloudinary = require('./src/config/cloudinary.config');
 
 // Scripts to run
 require('./src/middlewares/passport.middleware');
@@ -79,4 +80,5 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () =>
   console.log(`I am running on: http://localhost:${PORT}`)
 );
+app.use(express.urlencoded({ extended: true }));
 module.exports = app;
