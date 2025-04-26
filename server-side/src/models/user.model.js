@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema(
     favourites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     role: {
       type: String,
-      enum: ['USER', 'ADMIN'],
+      enum: ['USER', 'ADMIN','SUPERADMIN'],
       default: 'USER',
     },
     thumbnail: {
