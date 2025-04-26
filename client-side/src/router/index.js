@@ -9,7 +9,7 @@ import Dashboard from "../views/Dashboard.vue";
 import Products from "../views/Products.vue";
 import Login from "../views/Login.vue";
 import CustomerManagement from "../views/CustomerManagement.vue"
-
+import CustomerDetails from "../views/CustomerDetails.vue"
 // import Register from "../views/Register.vue"; // Add this
 import Orders from '../views/Orders.vue'
 import NotFound from '../views/NotFound.vue'
