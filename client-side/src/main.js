@@ -15,6 +15,24 @@ import { createPinia } from 'pinia'
 // Router
 import router from './router'
 
+//Toast
+import Toast from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
+const toastOptions = {
+  position: 'top-right',
+  timeout: 3000,
+  closeOnClick: false,
+  pauseOnHover: true,
+  draggable: true,
+  draggablePercent: 0.6,
+  showCloseButton: true,
+  hideProgressBar: false,
+  transition: 'Vue-Toastification__bounce',
+  toastClassName: 'custom-toast',
+  bodyClassName: 'toast-body',
+  icon: true
+}
+
 // Vuetify Theme Configuration
 const vuetify = createVuetify({
   components,
@@ -52,4 +70,9 @@ const vuetify = createVuetify({
 })
 
 // Create and mount the app
-createApp(App).use(router).use(createPinia()).use(vuetify).mount('#app')
+createApp(App)
+  .use(router)
+  .use(createPinia())
+  .use(vuetify)
+  .use(Toast, toastOptions)
+  .mount('#app')
