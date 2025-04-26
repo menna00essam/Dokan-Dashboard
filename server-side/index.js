@@ -8,7 +8,7 @@ const cloudinary = require('./src/config/cloudinary.config');
 require('./src/middlewares/passport.middleware');
 require('./src/services/orderStatus.service');
 
-require('./seed');
+// require('./seed');
 const passport = require('passport');
 
 / * * * * Utils * * * * /;
