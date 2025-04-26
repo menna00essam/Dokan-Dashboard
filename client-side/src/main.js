@@ -2,12 +2,18 @@ import { createApp } from "vue";
 import "./style.css";
 import App from "./App.vue";
 
+
+
+
+
+
 // Vuetify 3
 import "vuetify/styles";
 import "@mdi/font/css/materialdesignicons.css"; // Icons
 import { createVuetify } from "vuetify";
 import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
+
 
 // Pinia (state management)
 import { createPinia } from "pinia";
