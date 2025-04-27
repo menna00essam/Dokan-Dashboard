@@ -8,20 +8,21 @@ const cloudinary = require('./src/config/cloudinary.config');
 require('./src/middlewares/passport.middleware');
 require('./src/services/orderStatus.service');
 
-// require('./seed');
 const passport = require('passport');
 
-/ * * * * Utils * * * * /;
+/* * * * Utils * * * * */
 const httpStatusText = require('./src/utils/httpStatusText');
-/ * * * * End Utils * * * * /;
+/* * * * End Utils * * * * */
 
 const PORT = process.env.PORT || 5000;
 app.use(passport.initialize());
-/ * * * * DB * * * /;
+
+/* * * * DB * * * * */
 const connectDB = require('./src/config/db');
-/ * * * * End Db * * * * /;
+/* * * * End Db * * * * */
 // const seedData = require("./seed");
-/ * * * * Router imports * * * * /
+
+/* * * * Router imports * * * * */
 const registerationRouter = require('./src/routes/registration.routes');
 const userRouter = require('./src/routes/user.routes');
 const categoreRouter = require('./src/routes/category.routes');
@@ -33,8 +34,8 @@ const galleryRouter = require('./src/routes/gallery.routes');
 const contactRouter = require('./src/routes/contact.routes');
 const orderRouter = require('./src/routes/order.routes');
 const paymentRouter = require('./src/routes/payment.routes');
-const settingsRouter= require("./src/routes/settings.routes")
-// / * * * * End Router imports * * * * /;
+const settingsRouter = require("./src/routes/settings.routes");
+/* * * * End Router imports * * * * */
 
 // Connect to MongoDB
 connectDB();
@@ -48,8 +49,7 @@ app.get('/', (req, res) => {
   res.json('You need furniture? Here’s Furniro!');
 });
 
-/ * * * Routes * * * /;
-
+/* * * Routes * * * */
 app.use('/auth', registerationRouter);
 app.use('/users', userRouter);
 app.use('/categories', categoreRouter);
@@ -61,26 +61,28 @@ app.use('/api', galleryRouter);
 app.use('/contact', contactRouter);
 app.use('/orders', orderRouter);
 app.use('/payments', paymentRouter);
-app.use("/api/settings",settingsRouter );
+app.use("/api/settings", settingsRouter);
 
-/ * * * Global MiddleWare * * * /;
+/* * * Global MiddleWare * * * */
 app.all('*', (req, res, next) => {
   return res.status(404).json({
     status: httpStatusText.ERROR,
-    message: 'this resource is not avilable',
+    message: 'this resource is not available',
   });
 });
-// global error handlers
+
+// Global error handlers
 app.use((error, req, res, next) => {
   return res.status(error.statusCode || 500).json({
-    status: error.statueText || httpStatusText.ERROR,
+    status: error.statusText || httpStatusText.ERROR,
     error: error.message,
     code: error.statusCode || 500,
     data: null,
   });
 });
+
 app.listen(PORT, () =>
   console.log(`I am running on: http://localhost:${PORT}`)
 );
-app.use(express.urlencoded({ extended: true }));
+
 module.exports = app;
