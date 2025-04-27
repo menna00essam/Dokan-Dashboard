@@ -2,10 +2,7 @@ import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
 
-
-
-
-
+import i18n from './i18n'
 
 // Vuetify 3
 import 'vuetify/styles'
@@ -80,4 +77,5 @@ createApp(App)
   .use(createPinia())
   .use(vuetify)
   .use(Toast, toastOptions)
+  .use(i18n)
   .mount('#app')

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios' // Assuming you're using axios for HTTP requests
+import axios from 'axios'
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
@@ -10,48 +10,39 @@ export const useSettingsStore = defineStore('settings', {
     loading: false,
     error: null
   }),
+
   actions: {
-    // Fetch store settings from the backend
     async fetchStoreSettings() {
       this.loading = true
       this.error = null
       try {
         const response = await axios.get('/api/settings')
-        const { storeName, currency, defaultLanguage, shippingMethods } =
-          response.data.settings
-        this.storeName = storeName
-        this.currency = currency
-        this.defaultLanguage = defaultLanguage
-        this.shippingMethods = shippingMethods
+        this.updateFromResponse(response.data)
       } catch (error) {
-        this.error = 'Failed to fetch store settings'
-        console.error(error)
+        this.handleError(error, 'Failed to fetch store settings')
       } finally {
         this.loading = false
       }
     },
 
-    // Update store settings on the backend
     async updateStoreSettings(updatedSettings) {
       this.loading = true
       this.error = null
       try {
-        const response = await axios.put('/api/settings', updatedSettings)
-        const { storeName, currency, defaultLanguage, shippingMethods } =
-          response.data.settings
-        this.storeName = storeName
-        this.currency = currency
-        this.defaultLanguage = defaultLanguage
-        this.shippingMethods = shippingMethods
+        const response = await axios.put(
+          'http:localhost:5000/store/settings',
+          updatedSettings
+        )
+        this.updateFromResponse(response.data)
+        return true
       } catch (error) {
-        this.error = 'Failed to update store settings'
-        console.error(error)
+        this.handleError(error, 'Failed to update store settings')
+        return false
       } finally {
         this.loading = false
       }
     },
 
-    // Delete a shipping method from the settings
     async deleteShippingMethod(methodId) {
       this.loading = true
       this.error = null
@@ -60,12 +51,40 @@ export const useSettingsStore = defineStore('settings', {
         this.shippingMethods = this.shippingMethods.filter(
           (method) => method._id !== methodId
         )
+        return true
       } catch (error) {
-        this.error = 'Failed to delete shipping method'
-        console.error(error)
+        this.handleError(error, 'Failed to delete shipping method')
+        return false
       } finally {
         this.loading = false
       }
+    },
+
+    updateFromResponse(data) {
+      const { storeName, currency, defaultLanguage, shippingMethods } =
+        data.settings
+      this.storeName = storeName
+      this.currency = currency
+      this.defaultLanguage = defaultLanguage
+      this.shippingMethods = shippingMethods || []
+    },
+
+    handleError(error, defaultMessage) {
+      this.error = error.response?.data?.message || defaultMessage
+      console.error(error)
+    },
+
+    // Simple setters for reactive updates
+    setStoreName(name) {
+      this.storeName = name
+    },
+
+    setCurrency(currency) {
+      this.currency = currency
+    },
+
+    setLanguage(language) {
+      this.defaultLanguage = language
     }
   }
 })

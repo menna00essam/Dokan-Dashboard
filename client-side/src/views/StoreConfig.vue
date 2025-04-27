@@ -8,7 +8,7 @@
 </script>
 
 <template>
-  <v-container>
+  <v-container fluid>
     <!-- Store Settings Section -->
     <StoreSettings></StoreSettings>
     <!-- Shipping Methods Section -->
