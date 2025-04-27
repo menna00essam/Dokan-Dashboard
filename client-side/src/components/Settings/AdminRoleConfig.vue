@@ -1,19 +1,33 @@
 <template>
   <v-card>
-    <v-card-title class="primary">
-      <v-icon left>mdi-account-cog</v-icon>
-      User Permissions
+    <v-card-title
+      class="primary d-flex align-center"
+      :class="{ 'flex-row-reverse': $i18n.locale === 'ar' }"
+    >
+      <v-icon
+        class="mx-2"
+        :left="$i18n.locale !== 'ar'"
+        :right="$i18n.locale === 'ar'"
+      >
+        mdi-account-cog
+      </v-icon>
+      <span>{{ $t('userPermissions') }}</span>
     </v-card-title>
+
     <v-card-text>
-      <v-data-table :headers="userHeaders" :items="users" class="elevation-1">
-        <!-- Explicit header template -->
+      <v-data-table
+        :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+        :headers="userHeaders"
+        :items="users"
+        class="elevation-1"
+      >
         <template v-slot:header="{ headers }">
           <thead>
             <tr>
               <th
                 v-for="header in headers"
                 :key="header.value"
-                :class="['text-' + header.align || 'start']"
+                class="text-start"
               >
                 {{ header.title }}
               </th>
@@ -35,45 +49,50 @@
     </v-card-text>
   </v-card>
 </template>
+
 <script>
   export default {
     data() {
       return {
-        userHeaders: [
-          { title: 'Name', value: 'name', align: 'start' },
-          { title: 'Email', value: 'email', align: 'start' },
-          { title: 'Role', value: 'role', align: 'start' }
-        ],
+        // userHeaders: [
+        //   { title: 'userName', value: 'name' },
+        //   { title: 'userEmail', value: 'email' },
+        //   { title: 'userRole', value: 'role' }
+        // ],
         users: [
           {
-            id: 1,
             name: 'Admin User',
             email: 'admin@store.com',
             role: 'superadmin'
           },
-          { id: 2, name: 'Manager', email: 'manager@store.com', role: 'admin' },
+          { name: 'Manager', email: 'manager@store.com', role: 'admin' },
           {
-            id: 3,
-            name: 'Content admin',
-            email: 'admin@store.com',
+            name: 'Content Admin',
+            email: 'content@store.com',
             role: 'admin'
           }
         ],
         roles: ['superadmin', 'admin'],
-        currentUser: { id: 1, role: 'superadmin' } // Mock current user
+        currentUser: { id: 1, role: 'superadmin' }
       }
     },
     computed: {
+      userHeaders() {
+        return [
+          { title: this.$t('userName'), value: 'name' },
+          { title: this.$t('userEmail'), value: 'email' },
+          { title: this.$t('userRole'), value: 'role' }
+        ]
+      },
       isSuperAdmin() {
         return this.currentUser.role === 'superadmin'
       }
     },
-
     methods: {
-      // User Management
       updateUserRole(user) {
-        console.log(`Updated user ${user.name} to role ${user.role}`)
-        this.$toast.success(`Updated ${user.name}'s role to ${user.role}`)
+        this.$toast.success(
+          this.$t('roleUpdated', { name: user.name, role: user.role })
+        )
       }
     }
   }
