@@ -74,10 +74,15 @@ const routes = [
         component: CustomerManagement
       },
       {
-        path: 'CustomerDetails/:id',
+        path: 'CustomerDetails',
         name: 'CustomerDetails',
         component: CustomerDetails
-      }
+      },
+      // {
+      //   path: 'CustomerDetails/:id',
+      //   name: 'CustomerDetails',
+      //   component: CustomerDetails
+      // }
     ]
   },
 
