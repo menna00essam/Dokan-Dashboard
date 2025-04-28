@@ -41,7 +41,7 @@
             border-top: 1px solid rgba(255, 255, 255, 0.12);
           "
         >
-          <v-btn block color="error" prepend-icon="mdi-logout" @click="logout">
+          <v-btn block color="secondary" prepend-icon="mdi-logout" @click="logout">
             {{ t('logout') }}
           </v-btn>
         </div>

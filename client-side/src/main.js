@@ -47,8 +47,8 @@ const vuetify = createVuetify({
     themes: {
       light: {
         colors: {
-          primary: '#3A5BFF',
-          secondary: '#3A5BFF',
+          primary: '#F5F5F5',
+          secondary: '#2196F3', //all btns
           error: '#FF5252',
           background: '#FFFFFF', // Light background
           surface: '#FFFFFF' // Cards/forms background
@@ -59,7 +59,7 @@ const vuetify = createVuetify({
         colors: {
           primary: '#2E2E48',
           'dark-primary': '#475BE8',
-          secondary: '#2E2E48',
+          secondary: '#2196F3', //all btns
           background: '#383854',
           surface: '#2E2E48', // Cards/forms background
           'on-surface': '#FFFFFF', // Text on surfaces

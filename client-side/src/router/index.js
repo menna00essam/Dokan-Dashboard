@@ -15,7 +15,6 @@ import NotFound from "../views/NotFound.vue";
 import Pending from "../views/Pending.vue";
 import CustomerManagement from "../views/CustomerManagement.vue"
 import CustomerDetails from "../views/CustomerDetails.vue"
-import NotFound from '../views/NotFound.vue'
 import StoreConfig from '../views/StoreConfig.vue'
 import Requests from '../views/Requests.vue'
 
@@ -26,16 +25,31 @@ const routes = [
     meta: { public: true },
     children: [
       {
-        path: "/login",
-        redirect: "/auth/login",
+        path: 'login',
+        name: 'login',
+        component: Login
       },
       {
-        path: "/register",
-        redirect: "/auth/register",
+        path: '/login',
+        redirect: '/auth/login'
       },
       {
-        path:'/pending',
-        redirect:'/auth/pending',
+        path: 'register',
+        name: 'register',
+        component: Register
+      },
+      {
+        path: '/register',
+        redirect: '/auth/register'
+      },
+      {
+        path: 'pending',
+        name: 'pending',
+        component: Pending
+      },
+      {
+        path: '/pending',
+        redirect: '/auth/pending'
       }
     ]
   },
