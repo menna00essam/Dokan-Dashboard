@@ -8,11 +8,13 @@ import MainLayout from '../layouts/AppLayout.vue'
 import Dashboard from "../views/Dashboard.vue";
 import Products from "../views/Products.vue";
 import Login from "../views/Login.vue";
+
+import Register from "../views/Register.vue";
+import Orders from "../views/Orders.vue";
+import NotFound from "../views/NotFound.vue";
+import Pending from "../views/Pending.vue";
 import CustomerManagement from "../views/CustomerManagement.vue"
 import CustomerDetails from "../views/CustomerDetails.vue"
-// import Register from "../views/Register.vue"; // Add this
-import Orders from '../views/Orders.vue'
-import NotFound from '../views/NotFound.vue'
 import StoreConfig from '../views/StoreConfig.vue'
 import Requests from '../views/Requests.vue'
 
@@ -30,6 +32,24 @@ const routes = [
       {
         path: '/login',
         redirect: '/auth/login'
+      },
+      {
+        path: 'register',
+        name: 'register',
+        component: Register
+      },
+      {
+        path: '/register',
+        redirect: '/auth/register'
+      },
+      {
+        path: 'pending',
+        name: 'pending',
+        component: Pending
+      },
+      {
+        path: '/pending',
+        redirect: '/auth/pending'
       }
     ]
   },
@@ -73,11 +93,18 @@ const routes = [
         name: 'CustomerManagement',
         component: CustomerManagement
       },
-      {
-        path: 'CustomerDetails/:id',
+    
+      // {
+      //   path: '/CustomerDetails/:id',
+      //   name: 'CustomerDetails',
+      //   component: CustomerDetails
+      // }
+
+        {
+        path: 'CustomerDetails',
         name: 'CustomerDetails',
         component: CustomerDetails
-      }
+      },
     ]
   },
 

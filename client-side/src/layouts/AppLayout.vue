@@ -1,11 +1,12 @@
 <template>
-  <v-app>
+  <v-app :dir="isRTL ? 'rtl' : 'ltr'">
     <v-layout style="overflow: hidden">
       <v-navigation-drawer
         color="primary"
         v-model="drawer"
         :permanent="!isMobile"
         :temporary="isMobile"
+        :location="isRTL ? 'right' : 'left'"
         style="
           height: 100vh;
           position: fixed;
@@ -13,22 +14,24 @@
           flex-direction: column;
           justify-content: space-between;
         "
+        class="custom-drawer"
       >
-        <div class="d-flex pa-2">
-          <h2>DUKAN</h2>
+        <!-- Drawer content -->
+        <div class="pa-5">
+          <h2>{{ t('appName') }}</h2>
         </div>
         <v-list style="padding: 0">
           <v-list-item
             v-for="item in items"
-            :key="item.value"
+            :key="item.title"
             :to="item.to"
             link
           >
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
+            <v-list-item-title>{{ t(item.title) }}</v-list-item-title>
           </v-list-item>
         </v-list>
 
-        <!-- Logout Button (fixed at bottom) -->
+        <!-- Logout Button -->
         <div
           style="
             position: fixed;
@@ -38,21 +41,20 @@
             border-top: 1px solid rgba(255, 255, 255, 0.12);
           "
         >
-          <v-btn block color="error" prepend-icon="mdi-logout" @click="logout">
-            Logout
+          <v-btn block color="secondary" prepend-icon="mdi-logout" @click="logout">
+            {{ t('logout') }}
           </v-btn>
         </div>
       </v-navigation-drawer>
 
-      <!-- Page content -->
-      <v-main>
-        <!-- header -->
+      <!-- Main Content -->
+      <v-main :style="mainContentStyles">
         <Header
           :drawer="drawer"
-          @toggle-drawer="drawer = !drawer"
+          @toggle-drawer="toggleDrawer"
           :isMobile="isMobile"
+          :isRTL="isRTL"
         />
-
         <router-view />
       </v-main>
     </v-layout>
@@ -60,38 +62,94 @@
 </template>
 
 <script setup>
-  import { ref, computed, watchEffect } from 'vue'
+  import { ref, computed, watch, watchEffect } from 'vue'
   import { useDisplay } from 'vuetify'
+  import { useI18n } from 'vue-i18n'
   import Header from '../components/Header.vue'
 
+  const { t, locale } = useI18n()
   const display = useDisplay()
-  const isMobile = computed(() => display.smAndDown.value)
   const drawer = ref(true)
+  const isMobile = computed(() => display.smAndDown.value)
+  const isRTL = computed(() => locale.value === 'ar')
+
+  // Dynamic content margins
+  const mainContentStyles = computed(() => ({
+    transition: 'margin 0.3s ease'
+  }))
 
   const items = [
-    { title: 'Dashboard', to: '/dashboard' },
-    { title: 'Products', to: '/products' },
-    { title: 'Orders', to: '/orders' },
-  { title: "Customers", to: "/CustomerManagement" },
-    { title: 'Requests', to: '/requests' },
-    { title: 'Store Settings', to: '/config' }
+    { title: 'dashboard', to: '/dashboard' },
+    { title: 'products', to: '/products' },
+    { title: 'orders', to: '/orders' },
+    { title: 'customers', to: '/CustomerManagement' },
+    { title: 'requests', to: '/requests' },
+    { title: 'storeSettings', to: '/config' }
   ]
-  // Add this logout method
-  const logout = () => {
-    // Your logout logic here
-    console.log('Logging out...')
-    // router.push('/login') // Redirect to login page
-    // Add any other logout cleanup (clearing tokens, etc.)
+
+  const toggleDrawer = () => {
+    drawer.value = !drawer.value
   }
 
+  const logout = () => {
+    console.log('Logging out...')
+  }
+
+  // Handle drawer for mobile
   watchEffect(() => {
     drawer.value = !isMobile.value
   })
+
+  // Handle RTL/LTR changes
+  watch(
+    locale,
+    (newLang) => {
+      document.documentElement.lang = newLang
+      document.documentElement.dir = isRTL.value ? 'rtl' : 'ltr'
+    },
+    { immediate: true }
+  )
 </script>
-<style>
-  .v-application {
+
+<style scoped>
+  /* RTL specific styles */
+  .custom-drawer {
     transition:
-      background-color 0.3s ease-in-out,
-      color 0.5s ease-in;
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      right 0.3s ease,
+      left 0.3s ease !important;
+  }
+
+  .v-application[dir='rtl'] {
+    text-align: right !important;
+  }
+
+  /* Drawer positioning */
+  .v-navigation-drawer {
+    transition:
+      right 0.3s ease,
+      left 0.3s ease;
+  }
+
+  .v-navigation-drawer--right {
+    right: 0;
+    left: auto !important;
+  }
+
+  .v-navigation-drawer--left {
+    left: 0;
+    right: auto !important;
+  }
+  /* Mobile drawer animation */
+  .v-navigation-drawer--is-mobile {
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      right 0.3s ease,
+      left 0.3s ease !important;
+  }
+
+  /* Main content transition */
+  .v-main {
+    transition: margin 0.3s ease !important;
   }
 </style>
