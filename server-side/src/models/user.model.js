@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema(
   {
@@ -15,7 +17,6 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true,
       lowercase: true,
       validate: {
         validator: function (v) {
@@ -24,6 +25,15 @@ const userSchema = new mongoose.Schema(
         message: (props) => `${props.value} is not a valid email!`,
       },
     },
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+      minlength: [8, "Password must be at least 8 characters"],
+      select: false,
+    },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
     mobile: {
       type: String,
       validate: {
@@ -73,7 +83,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
       required: false
-    },    
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'denied'],
@@ -141,7 +151,10 @@ const userSchema = new mongoose.Schema(
     ],
     supportTickets: [
       {
-        ticketId: { type: String, unique: true },
+        ticketId: { 
+          type: String,         
+          default: () => crypto.randomBytes(16).toString('hex') 
+        },
         title: { type: String, required: true },
         issueType: {
           type: String,
@@ -197,7 +210,7 @@ const userSchema = new mongoose.Schema(
     ],
     reviews: [
       {
-        reviewId: { type: String, unique: true },
+        reviewId: { type: String, unique: true, default: () => crypto.randomBytes(16).toString('hex') },
         productId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
@@ -218,7 +231,7 @@ const userSchema = new mongoose.Schema(
     ],
     incentives: [
       {
-        incentiveId: { type: String, unique: true },
+        incentiveId: { type: String, unique: true, default: () => crypto.randomBytes(16).toString('hex') },
         incentiveType: {
           type: String,
           enum: ["discount", "coupon", "cashback", "gift", "points", "other"],
@@ -260,29 +273,42 @@ userSchema.virtual("age").get(function () {
   return age;
 });
 
-userSchema.pre('save', function(next) {
-  if (this.isModified('ordersCount') || this.isModified('totalSpent')) {
-    const newTags = [];
-    
-    // Logic for automatic tagging based on orders
-    if (this.ordersCount >= 20) newTags.push('premium', 'loyal');
-    else if (this.ordersCount >= 10) newTags.push('premium');
-    else if (this.ordersCount >= 5) newTags.push('frequent');
-    
-    if (this.totalSpent >= 1000) newTags.push('vip');
-    if (this.ordersCount === 0) newTags.push('new');
-    
-    // Remove duplicates and existing tags
-    this.tags = [...new Set([...this.tags.filter(t => !['premium','frequent','new','vip','loyal'].includes(t)), ...newTags])];
-    
-    // Update customer tier
-    if (this.totalSpent >= 5000) this.customerTier = 'platinum';
-    else if (this.totalSpent >= 2000) this.customerTier = 'gold';
-    else if (this.totalSpent >= 500) this.customerTier = 'silver';
-    else this.customerTier = 'basic';
-  }
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  this.password = await bcrypt.hash(this.password, 12);
+  this.passwordChangedAt = Date.now() - 1000;
   next();
 });
+
+// Method to compare passwords
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Method to check if password was changed after token was issued
+userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
+};
+
+// Method to create password reset token
+userSchema.methods.createPasswordResetToken = function() {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  
+  return resetToken;
+};
 
 // Indexes
 userSchema.index({ email: 1 }, { unique: true });
