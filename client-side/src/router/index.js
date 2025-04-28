@@ -93,11 +93,18 @@ const routes = [
         name: 'CustomerManagement',
         component: CustomerManagement
       },
-      {
-        path: 'CustomerDetails/:id',
+    
+      // {
+      //   path: '/CustomerDetails/:id',
+      //   name: 'CustomerDetails',
+      //   component: CustomerDetails
+      // }
+
+        {
+        path: 'CustomerDetails',
         name: 'CustomerDetails',
         component: CustomerDetails
-      }
+      },
     ]
   },
 

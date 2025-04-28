@@ -1,7 +1,13 @@
 const verifyToken = require("./auth.middleware");
 const allowedTo = require("./allowTo.middleware");
-const roleMiddleware = require("./role.middleware");
-const upload = require("./upload.middleware"); 
+const upload = require("./upload.middleware");
+const AppError = require("../utils/appError");
+const httpStatusText = require("../utils/httpStatusText");
+
+const adminRole = 'admin';
+const superAdminRole = 'super_admin';
+const supportRole = 'support';
+const accountantRole = 'accountant';
 
 // Middleware for avatar upload
 const avatarUpload = (req, res, next) => {
@@ -13,14 +19,26 @@ const avatarUpload = (req, res, next) => {
 const authenticateUser = verifyToken;
 
 // Middleware for role-based access control
-const adminAccess = allowedTo("admin", "super_admin");
-const superAdminAccess = allowedTo("super_admin");
-const supportAccess = allowedTo("admin", "super_admin", "support");
-const accountantAccess = allowedTo("super_admin", "accountant");
+const adminAccess = allowedTo(adminRole, superAdminRole);
+const superAdminAccess = allowedTo(superAdminRole);
+const supportAccess = allowedTo(adminRole, superAdminRole, supportRole);
+const accountantAccess = allowedTo(superAdminRole, accountantRole);
 
-// Middleware for specific role-only access
-const adminRole = roleMiddleware(["admin", "super_admin"]);
-const superAdminRole = roleMiddleware(["super_admin"]);
+// Middleware function for role checking
+const allowTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError(
+          "You are not allowed to access this route, unauthorized user",
+          403,
+          httpStatusText.ERROR
+        )
+      );
+    }
+    next();
+  };
+};
 
 module.exports = {
   avatarUpload,
@@ -31,4 +49,7 @@ module.exports = {
   accountantAccess,
   adminRole,
   superAdminRole,
+  supportRole,
+  accountantRole,
+  allowTo
 };

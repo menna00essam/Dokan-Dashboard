@@ -9,8 +9,6 @@ const {
   superAdminAccess,
   supportAccess,
   accountantAccess,
-  adminRole,
-  superAdminRole,
 } = require("../middlewares/user.middleware");
 
 // ===== Public Routes =====
@@ -58,29 +56,33 @@ router.post("/:id/incentives", adminAccess, userController.addIncentive);
 router.get("/:id/incentives", adminAccess, userController.getIncentives);
 
 // ===== Tags Management =====
-router.post("/:id/tags", adminRole, userController.assignUserTags);
-router.delete("/:id/tags", adminRole, userController.removeUserTags);
+router.post("/:id/tags", adminAccess, userController.assignUserTags);
+router.delete("/:id/tags", adminAccess, userController.removeUserTags);
 
 // ===== Segments Management =====
-router.post("/:id/segments", adminRole, userController.assignSegment);
-router.delete("/:id/segments/:segmentName", adminRole, userController.removeSegment);
+router.post("/:id/segments", adminAccess, userController.assignSegment);
+router.delete("/:id/segments/:segmentName", adminAccess, userController.removeSegment);
 
 // ===== User Queries (Filter) =====
-router.get("/by-tag/:tag", adminRole, userController.getUsersByTag);
-router.get("/by-segment/:segment", adminRole, userController.getUsersBySegment);
+router.get("/by-tag/:tag", adminAccess, userController.getUsersByTag);
+router.get("/by-segment/:segment", adminAccess, userController.getUsersBySegment);
 
 // ===== Tier Management =====
-router.patch("/:id/tier", adminRole, userController.updateCustomerTier);
+router.patch("/:id/tier", adminAccess, userController.updateCustomerTier);
 
 // ===== User Status Management =====
-router.get("/pending", adminRole, userController.getPendingUsers);
-router.get("/approved", adminRole, userController.getApprovedUsers);
-router.get("/denied", adminRole, userController.getDeniedUsers);
-router.patch("/:id/approve", adminRole, userController.approveUser);
-router.patch("/:id/deny", adminRole, userController.denyUser);
+router.get("/pending", adminAccess, userController.getPendingUsers);
+router.get("/approved", adminAccess, userController.getApprovedUsers);
+router.get("/denied", adminAccess, userController.getDeniedUsers);
+router.patch("/:id/approve", adminAccess, userController.approveUser);
+router.patch("/:id/deny", adminAccess, userController.denyUser);
 
 // ===== Admin Request Management =====
-router.patch("/:id/request-admin", adminRole, userController.handleAdminRequest);
-router.get("/admin-requests", adminRole, userController.getAdminRequests);
+router.patch("/:id/request-admin", adminAccess, userController.handleAdminRequest);
+router.get("/admin-requests", adminAccess, userController.getAdminRequests);
+
+// Password reset routes
+router.post('/forgot-password', userController.forgotPassword);
+router.patch('/reset-password/:token', userController.resetPassword);
 
 module.exports = router;
