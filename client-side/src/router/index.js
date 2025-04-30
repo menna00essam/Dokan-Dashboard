@@ -91,20 +91,22 @@ const routes = [
       {
         path: 'CustomerManagement',
         name: 'CustomerManagement',
-        component: CustomerManagement
+        component: CustomerManagement,
+        props: true
+
       },
     
-      // {
-      //   path: '/CustomerDetails/:id',
+      {
+        path: '/customers/:id',
+        name: 'customer-details',
+        component: CustomerDetails
+      }
+
+      //   {
+      //   path: 'CustomerDetails',
       //   name: 'CustomerDetails',
       //   component: CustomerDetails
-      // }
-
-        {
-        path: 'CustomerDetails',
-        name: 'CustomerDetails',
-        component: CustomerDetails
-      },
+      // },
     ]
   },
 
