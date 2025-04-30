@@ -5,7 +5,7 @@ import { useToast } from 'vue-toastification'
 export const useCustomerStore = defineStore('customer', () => {
   const toast = useToast()
 
-  // Sample provinces and cities data (unchanged)
+  // Base data
   const provinces = ref([
     { id: '1', name: 'Cairo' },
     { id: '2', name: 'Alexandria' },
@@ -24,7 +24,7 @@ export const useCustomerStore = defineStore('customer', () => {
     { id: '7', provinceId: '3', name: 'Haram' }
   ])
 
-  // Sample customer data
+  // Customers data
   const customers = ref([
     {
       id: '1',
@@ -75,48 +75,72 @@ export const useCustomerStore = defineStore('customer', () => {
   const sortOrder = ref('asc')
   const currentPage = ref(1)
   const itemsPerPage = ref(10)
-
-  // New state for selected customers (for bulk operations)
   const selectedCustomers = ref([])
+
+  // Customer segments
+  const segments = ref([
+    {
+      id: '1',
+      name: 'High Value',
+      criteria: { totalSpent: { $gt: 1000 }, status: 'active' },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: '2',
+      name: 'Frequent Buyers',
+      criteria: { ordersCount: { $gt: 5 }, status: 'active' },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: '3',
+      name: 'Inactive',
+      criteria: { lastOrderDate: { $lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: '4',
+      name: 'New Customers',
+      criteria: { joinDate: { $gt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ])
 
   // Computed properties
   const filteredCustomers = computed(() => {
     let result = [...customers.value]
 
-    // Apply search
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
-      result = result.filter((c) =>
+      result = result.filter(c => 
         `${c.firstName} ${c.lastName} ${c.email} ${c.mobile} ${c.tags?.join(' ')}`
           .toLowerCase()
           .includes(query)
       )
     }
 
-    // Apply filters
     if (statusFilter.value !== 'all') {
-      result = result.filter((c) => c.status === statusFilter.value)
+      result = result.filter(c => c.status === statusFilter.value)
     }
 
     if (tierFilter.value !== 'all') {
-      result = result.filter((c) => c.tier === tierFilter.value)
+      result = result.filter(c => c.tier === tierFilter.value)
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       let comparison = 0
       switch (sortBy.value) {
-        case 'name':
-          comparison = `${a.firstName} ${a.lastName}`.localeCompare(
-            `${b.firstName} ${b.lastName}`
-          )
+        case 'name': 
+          comparison = `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
           break
         case 'joinDate':
           comparison = new Date(a.joinDate) - new Date(b.joinDate)
           break
         case 'lastOrder':
-          comparison =
-            new Date(a.lastOrderDate || 0) - new Date(b.lastOrderDate || 0)
+          comparison = new Date(a.lastOrderDate || 0) - new Date(b.lastOrderDate || 0)
           break
         case 'totalSpent':
           comparison = a.totalSpent - b.totalSpent
@@ -128,23 +152,20 @@ export const useCustomerStore = defineStore('customer', () => {
     return result
   })
 
-  // Paginated customers
   const paginatedCustomers = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage.value
     const end = start + itemsPerPage.value
     return filteredCustomers.value.slice(start, end)
   })
 
-  // Total pages for pagination
-  const totalPages = computed(() =>
+  const totalPages = computed(() => 
     Math.ceil(filteredCustomers.value.length / itemsPerPage.value)
   )
 
-  // Enhanced customer stats
   const customerStats = computed(() => {
     const all = customers.value
-    const active = all.filter((c) => c.status === 'active')
-    const newCustomers = all.filter((c) => {
+    const active = all.filter(c => c.status === 'active')
+    const newCustomers = all.filter(c => {
       const joinDate = new Date(c.joinDate)
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -155,18 +176,36 @@ export const useCustomerStore = defineStore('customer', () => {
       total: all.length,
       active: active.length,
       new: newCustomers.length,
-      vip: all.filter((c) => c.tier === 'platinum').length,
-      blocked: all.filter((c) => c.isBlocked).length,
+      vip: all.filter(c => c.tier === 'platinum').length,
+      blocked: all.filter(c => c.isBlocked).length,
       totalSpent: all.reduce((sum, c) => sum + c.totalSpent, 0),
-      avgOrderValue:
-        all.length > 0
-          ? all.reduce((sum, c) => sum + c.totalSpent, 0) /
-            all.reduce((sum, c) => sum + c.ordersCount, 0)
-          : 0
+      avgOrderValue: all.length > 0 
+        ? all.reduce((sum, c) => sum + c.totalSpent, 0) / all.reduce((sum, c) => sum + c.ordersCount, 0)
+        : 0
     }
   })
 
-  // Methods for customer operations
+  const segmentStats = computed(() => {
+    return segments.value.map(segment => {
+      const customersInSegment = getCustomersInSegment(segment.id)
+      return {
+        id: segment.id,
+        name: segment.name,
+        customerCount: customersInSegment.length,
+        totalSpent: customersInSegment.reduce((sum, c) => sum + c.totalSpent, 0),
+        avgOrderValue: customersInSegment.length > 0
+          ? customersInSegment.reduce((sum, c) => sum + c.totalSpent, 0) /
+            customersInSegment.reduce((sum, c) => sum + c.ordersCount, 0)
+          : 0
+      }
+    })
+  })
+
+  // Basic CRUD operations
+  function getCustomerById(id) {
+    return customers.value.find(c => c.id === id)
+  }
+
   function addCustomer(newCustomer) {
     const customer = {
       id: Date.now().toString(),
@@ -179,11 +218,7 @@ export const useCustomerStore = defineStore('customer', () => {
       tier: 'basic',
       isBlocked: false,
       notes: '',
-      communicationPreferences: {
-        email: true,
-        sms: false,
-        whatsapp: false
-      },
+      communicationPreferences: { email: true, sms: false, whatsapp: false },
       ...newCustomer
     }
 
@@ -193,12 +228,9 @@ export const useCustomerStore = defineStore('customer', () => {
   }
 
   function updateCustomer(id, updatedData) {
-    const index = customers.value.findIndex((c) => c.id === id)
+    const index = customers.value.findIndex(c => c.id === id)
     if (index !== -1) {
-      customers.value[index] = {
-        ...customers.value[index],
-        ...updatedData
-      }
+      customers.value[index] = { ...customers.value[index], ...updatedData }
       toast.success('Customer updated successfully')
       return true
     }
@@ -208,9 +240,65 @@ export const useCustomerStore = defineStore('customer', () => {
 
   function removeCustomer(id) {
     const initialLength = customers.value.length
-    customers.value = customers.value.filter((c) => c.id !== id)
+    customers.value = customers.value.filter(c => c.id !== id)
     if (customers.value.length < initialLength) {
-      toast.success('Customer removed successfully')
+      toast.success('Customer deleted successfully')
+      return true
+    }
+    toast.error('Customer not found')
+    return false
+  }
+
+  // Address functions
+  function addAddress(customerId, newAddress) {
+    const customer = customers.value.find(c => c.id === customerId)
+    if (customer) {
+      if (customer.addresses.length === 0 || newAddress.isDefault) {
+        customer.addresses.forEach(addr => { addr.isDefault = false })
+        newAddress.isDefault = true
+      }
+
+      newAddress.id = Date.now().toString()
+      customer.addresses.push(newAddress)
+      toast.success('Address added successfully')
+      return newAddress
+    }
+    toast.error('Customer not found')
+    return null
+  }
+
+  function updateAddress(customerId, addressId, updatedData) {
+    const customer = customers.value.find(c => c.id === customerId)
+    if (customer) {
+      const address = customer.addresses.find(a => a.id === addressId)
+      if (address) {
+        if (updatedData.isDefault) {
+          customer.addresses.forEach(addr => {
+            addr.isDefault = addr.id === addressId
+          })
+        }
+        Object.assign(address, updatedData)
+        toast.success('Address updated successfully')
+        return true
+      }
+    }
+    toast.error('Address not found')
+    return false
+  }
+
+  function deleteAddress(customerId, addressId) {
+    const customer = customers.value.find(c => c.id === customerId)
+    if (customer) {
+      const initialLength = customer.addresses.length
+      customer.addresses = customer.addresses.filter(a => a.id !== addressId)
+
+      if (initialLength > customer.addresses.length && 
+          customer.addresses.length > 0 &&
+          !customer.addresses.some(a => a.isDefault)) {
+        customer.addresses[0].isDefault = true
+      }
+
+      toast.success('Address deleted successfully')
       return true
     }
     toast.error('Customer not found')
@@ -218,17 +306,13 @@ export const useCustomerStore = defineStore('customer', () => {
   }
 
   function setDefaultAddress(customerId, addressId) {
-    const customer = customers.value.find((c) => c.id === customerId)
+    const customer = customers.value.find(c => c.id === customerId)
     if (customer) {
-      const address = customer.addresses.find((a) => a.id === addressId)
+      const address = customer.addresses.find(a => a.id === addressId)
       if (address) {
-        // Set all addresses to non-default first
-        customer.addresses.forEach((addr) => {
-          addr.isDefault = false
-        })
-        // Then set the selected address as default
+        customer.addresses.forEach(addr => { addr.isDefault = false })
         address.isDefault = true
-        toast.success('Default address updated successfully')
+        toast.success('Default address set successfully')
         return true
       }
       toast.error('Address not found')
@@ -238,9 +322,181 @@ export const useCustomerStore = defineStore('customer', () => {
     return false
   }
 
+  // Tag functions
+  function addTag(customerId, tag) {
+    const customer = customers.value.find(c => c.id === customerId)
+    if (customer) {
+      if (!customer.tags.includes(tag)) {
+        customer.tags.push(tag)
+        toast.success('Tag added successfully')
+        return true
+      }
+      toast.warning('Customer already has this tag')
+      return false
+    }
+    toast.error('Customer not found')
+    return false
+  }
+
+  function removeTag(customerId, tag) {
+    const customer = customers.value.find(c => c.id === customerId)
+    if (customer) {
+      const initialLength = customer.tags.length
+      customer.tags = customer.tags.filter(t => t !== tag)
+      if (customer.tags.length < initialLength) {
+        toast.success('Tag removed successfully')
+        return true
+      }
+      toast.warning('Tag not found')
+      return false
+    }
+    toast.error('Customer not found')
+    return false
+  }
+
+  // Bulk operations
+  function removeCustomers(ids) {
+    const initialLength = customers.value.length
+    customers.value = customers.value.filter(c => !ids.includes(c.id))
+    const removedCount = initialLength - customers.value.length
+    if (removedCount > 0) {
+      toast.success(`${removedCount} customers deleted`)
+      selectedCustomers.value = []
+      return removedCount
+    }
+    toast.error('No customers deleted')
+    return 0
+  }
+
+  function toggleBlockStatus(id) {
+    const customer = customers.value.find(c => c.id === id)
+    if (customer) {
+      customer.isBlocked = !customer.isBlocked
+      toast.success(`Customer ${customer.isBlocked ? 'blocked' : 'unblocked'} successfully`)
+      return true
+    }
+    toast.error('Customer not found')
+    return false
+  }
+
+  function bulkUpdateStatus(ids, status) {
+    let updatedCount = 0
+    customers.value.forEach(customer => {
+      if (ids.includes(customer.id)) {
+        customer.status = status
+        updatedCount++
+      }
+    })
+
+    if (updatedCount > 0) {
+      toast.success(`${updatedCount} customers updated`)
+      selectedCustomers.value = []
+      return updatedCount
+    }
+    toast.error('No customers updated')
+    return 0
+  }
+
+  // Segment functions
+  function getCustomersInSegment(segmentId) {
+    const segment = segments.value.find(s => s.id === segmentId)
+    if (!segment) return []
+
+    return customers.value.filter(customer => {
+      return Object.entries(segment.criteria).every(([key, condition]) => {
+        if (typeof condition === 'object') {
+          if (condition.$gt !== undefined) return customer[key] > condition.$gt
+          if (condition.$lt !== undefined) return customer[key] < condition.$lt
+          if (condition.$gte !== undefined) return customer[key] >= condition.$gte
+          if (condition.$lte !== undefined) return customer[key] <= condition.$lte
+          if (condition.$ne !== undefined) return customer[key] !== condition.$ne
+          if (condition.$in) return condition.$in.includes(customer[key])
+          if (condition.$nin) return !condition.$nin.includes(customer[key])
+        }
+        return customer[key] === condition
+      })
+    })
+  }
+
+  function evaluateCustomerForSegments(customerId) {
+    const customer = getCustomerById(customerId)
+    if (!customer) return []
+  
+    return segments.value
+      .filter(segment => {
+        return Object.entries(segment.criteria).every(([key, condition]) => {
+          if (typeof condition === 'object') {
+            if (condition.$gt !== undefined) return customer[key] > condition.$gt
+            if (condition.$lt !== undefined) return customer[key] < condition.$lt
+            if (condition.$gte !== undefined) return customer[key] >= condition.$gte
+            if (condition.$lte !== undefined) return customer[key] <= condition.$lte
+            if (condition.$ne !== undefined) return customer[key] !== condition.$ne
+            if (condition.$in) return condition.$in.includes(customer[key])
+            if (condition.$nin) return !condition.$nin.includes(customer[key])
+          }
+          return customer[key] === condition
+        })
+      })
+      .map(segment => segment.id)
+  }
+
+  function createSegment(name, criteria) {
+    const newSegment = {
+      id: Date.now().toString(),
+      name,
+      criteria,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    segments.value.push(newSegment)
+    toast.success('Segment created successfully')
+    return newSegment
+  }
+
+  function updateSegment(segmentId, updates) {
+    const segment = segments.value.find(s => s.id === segmentId)
+    if (segment) {
+      Object.assign(segment, updates, { updatedAt: new Date() })
+      toast.success('Segment updated successfully')
+      return true
+    }
+    toast.error('Segment not found')
+    return false
+  }
+
+  function deleteSegment(segmentId) {
+    const initialLength = segments.value.length
+    segments.value = segments.value.filter(s => s.id !== segmentId)
+    if (segments.value.length < initialLength) {
+      toast.success('Segment deleted successfully')
+      return true
+    }
+    toast.error('Segment not found')
+    return false
+  }
+
+  // Other functions
+  function searchCustomers(query) {
+    searchQuery.value = query
+    currentPage.value = 1
+  }
+
+  function resetFilters() {
+    searchQuery.value = ''
+    statusFilter.value = 'all'
+    tierFilter.value = 'all'
+    sortBy.value = 'name'
+    sortOrder.value = 'asc'
+    currentPage.value = 1
+  }
+
+  function exportCustomers(format = 'csv') {
+    console.log(`Exporting customers as ${format}`)
+    toast.info(`Preparing ${format} file...`)
+    return filteredCustomers.value
+  }
+
   function getCustomerActivityLog(customerId) {
-    // In a real app, this would come from an API
-    // Here we're generating sample activity data
     const customer = getCustomerById(customerId)
     if (!customer) return []
 
@@ -248,29 +504,22 @@ export const useCustomerStore = defineStore('customer', () => {
       {
         type: 'login',
         date: new Date(),
-        description: 'Logged in to the website',
+        description: 'Logged in to website',
         ipAddress: '192.168.1.1'
       },
       {
         type: 'purchase',
-        date: new Date(Date.now() - 86400000), // 1 day ago
-        description: `Placed order #${Math.floor(1000 + Math.random() * 9000)}`,
+        date: new Date(Date.now() - 86400000),
+        description: `Created order #${Math.floor(1000 + Math.random() * 9000)}`,
         ipAddress: '192.168.1.1'
-      },
-      {
-        type: 'contact',
-        date: new Date(Date.now() - 172800000), // 2 days ago
-        description: 'Contacted customer support',
-        ipAddress: '192.168.1.2'
       }
     ]
 
-    // Add more activities based on customer data
     if (customer.lastOrderDate) {
       activities.push({
         type: 'purchase',
         date: new Date(customer.lastOrderDate),
-        description: `Placed order #${Math.floor(1000 + Math.random() * 9000)}`,
+        description: `Created order #${Math.floor(1000 + Math.random() * 9000)}`,
         ipAddress: '192.168.1.3'
       })
     }
@@ -279,18 +528,10 @@ export const useCustomerStore = defineStore('customer', () => {
   }
 
   function getCustomerOrders(customerId) {
-    // In a real app, this would come from an API
-    // Here we're generating sample order data
     const customer = getCustomerById(customerId)
     if (!customer) return []
 
-    const statuses = [
-      'pending',
-      'processing',
-      'shipped',
-      'delivered',
-      'cancelled'
-    ]
+    const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
     const orders = []
 
     for (let i = 0; i < customer.ordersCount; i++) {
@@ -311,329 +552,13 @@ export const useCustomerStore = defineStore('customer', () => {
     return orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
   }
 
-  // Enhanced bulk operations
-  function removeCustomers(ids) {
-    const initialLength = customers.value.length
-    customers.value = customers.value.filter((c) => !ids.includes(c.id))
-    const removedCount = initialLength - customers.value.length
-    if (removedCount > 0) {
-      toast.success(`Removed ${removedCount} customers`)
-      selectedCustomers.value = []
-      return removedCount
-    }
-    toast.error('No customers were removed')
-    return 0
-  }
-
-  function toggleBlockStatus(id) {
-    const customer = customers.value.find((c) => c.id === id)
-    if (customer) {
-      customer.isBlocked = !customer.isBlocked
-      const action = customer.isBlocked ? 'blocked' : 'unblocked'
-      toast.success(`Customer ${action} successfully`)
-      return true
-    }
-    toast.error('Customer not found')
-    return false
-  }
-
-  function bulkUpdateStatus(ids, status) {
-    let updatedCount = 0
-    customers.value.forEach((customer) => {
-      if (ids.includes(customer.id)) {
-        customer.status = status
-        updatedCount++
-      }
-    })
-
-    if (updatedCount > 0) {
-      toast.success(`Updated status for ${updatedCount} customers`)
-      selectedCustomers.value = []
-      return updatedCount
-    }
-    toast.error('No customers were updated')
-    return 0
-  }
-
-  // Address operations
-  function addAddress(customerId, newAddress) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      // Set as default if first address or explicitly set
-      if (customer.addresses.length === 0 || newAddress.isDefault) {
-        customer.addresses.forEach((addr) => {
-          addr.isDefault = false
-        })
-        newAddress.isDefault = true
-      }
-
-      newAddress.id = Date.now().toString()
-      customer.addresses.push(newAddress)
-      toast.success('Address added successfully')
-      return newAddress
-    }
-    toast.error('Customer not found')
-    return null
-  }
-
-  function updateAddress(customerId, addressId, updatedData) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      const address = customer.addresses.find((a) => a.id === addressId)
-      if (address) {
-        if (updatedData.isDefault) {
-          customer.addresses.forEach((addr) => {
-            addr.isDefault = addr.id === addressId
-          })
-        }
-        Object.assign(address, updatedData)
-        toast.success('Address updated successfully')
-        return true
-      }
-    }
-    toast.error('Address not found')
-    return false
-  }
-
-  function deleteAddress(customerId, addressId) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      const initialLength = customer.addresses.length
-      customer.addresses = customer.addresses.filter((a) => a.id !== addressId)
-
-      // If we deleted the default address and there are others left
-      if (
-        initialLength > customer.addresses.length &&
-        customer.addresses.length > 0 &&
-        !customer.addresses.some((a) => a.isDefault)
-      ) {
-        customer.addresses[0].isDefault = true
-      }
-
-      toast.success('Address deleted successfully')
-      return true
-    }
-    toast.error('Customer not found')
-    return false
-  }
-
-  // Tag operations
-  function addTag(customerId, tag) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      if (!customer.tags.includes(tag)) {
-        customer.tags.push(tag)
-        toast.success('Tag added successfully')
-        return true
-      }
-      toast.warning('Customer already has this tag')
-      return false
-    }
-    toast.error('Customer not found')
-    return false
-  }
-
-  function removeTag(customerId, tag) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      const initialLength = customer.tags.length
-      customer.tags = customer.tags.filter((t) => t !== tag)
-      if (customer.tags.length < initialLength) {
-        toast.success('Tag removed successfully')
-        return true
-      }
-      toast.warning('Tag not found')
-      return false
-    }
-    toast.error('Customer not found')
-    return false
-  }
-
-  // New methods for additional functionality
-  function getCustomerById(id) {
-    return customers.value.find((c) => c.id === id)
-  }
-
-  function searchCustomers(query) {
-    searchQuery.value = query
-    currentPage.value = 1 // Reset to first page when searching
-  }
-
-  function resetFilters() {
-    searchQuery.value = ''
-    statusFilter.value = 'all'
-    tierFilter.value = 'all'
-    sortBy.value = 'name'
-    sortOrder.value = 'asc'
-    currentPage.value = 1
-  }
-
-  // Export functionality
-  function exportCustomers(format = 'csv') {
-    // This would be implemented with actual export logic
-    console.log(`Exporting customers in ${format} format`)
-    toast.info(`Preparing ${format} export...`)
-    // In a real app, this would generate a file download
-    return filteredCustomers.value
-  }
-
-  // State for segments
-  const segments = ref([
-    {
-      id: '1',
-      name: 'High Value',
-      criteria: {
-        totalSpent: { $gt: 1000 },
-        status: 'active'
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '2',
-      name: 'Frequent Buyers',
-      criteria: {
-        ordersCount: { $gt: 5 },
-        status: 'active'
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '3',
-      name: 'Inactive',
-      criteria: {
-        lastOrderDate: { $lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '4',
-      name: 'New Customers',
-      criteria: {
-        joinDate: { $gt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ])
-
-  // Computed property for segment statistics
-  const segmentStats = computed(() => {
-    return segments.value.map((segment) => {
-      const customersInSegment = getCustomersInSegment(segment.id)
-      return {
-        id: segment.id,
-        name: segment.name,
-        customerCount: customersInSegment.length,
-        totalSpent: customersInSegment.reduce(
-          (sum, c) => sum + c.totalSpent,
-          0
-        ),
-        avgOrderValue:
-          customersInSegment.length > 0
-            ? customersInSegment.reduce((sum, c) => sum + c.totalSpent, 0) /
-              customersInSegment.reduce((sum, c) => sum + c.ordersCount, 0)
-            : 0
-      }
-    })
-  })
-
-  // Methods for segmentation
-  function createSegment(name, criteria) {
-    const newSegment = {
-      id: Date.now().toString(),
-      name,
-      criteria,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-    segments.value.push(newSegment)
-    toast.success('Segment created successfully')
-    return newSegment
-  }
-
-  function updateSegment(segmentId, updates) {
-    const segment = segments.value.find((s) => s.id === segmentId)
-    if (segment) {
-      Object.assign(segment, updates, { updatedAt: new Date() })
-      toast.success('Segment updated successfully')
-      return true
-    }
-    toast.error('Segment not found')
-    return false
-  }
-
-  function deleteSegment(segmentId) {
-    const initialLength = segments.value.length
-    segments.value = segments.value.filter((s) => s.id !== segmentId)
-    if (segments.value.length < initialLength) {
-      toast.success('Segment deleted successfully')
-      return true
-    }
-    toast.error('Segment not found')
-    return false
-  }
-
-  function getCustomersInSegment(segmentId) {
-    const segment = segments.value.find((s) => s.id === segmentId)
-    if (!segment) return []
-
-    return customers.value.filter((customer) => {
-      return Object.entries(segment.criteria).every(([key, condition]) => {
-        if (typeof condition === 'object') {
-          // Handle comparison operators
-          if (condition.$gt !== undefined) return customer[key] > condition.$gt
-          if (condition.$lt !== undefined) return customer[key] < condition.$lt
-          if (condition.$gte !== undefined)
-            return customer[key] >= condition.$gte
-          if (condition.$lte !== undefined)
-            return customer[key] <= condition.$lte
-          if (condition.$ne !== undefined)
-            return customer[key] !== condition.$ne
-          if (condition.$in) return condition.$in.includes(customer[key])
-          if (condition.$nin) return !condition.$nin.includes(customer[key])
-        }
-        // Simple equality check
-        return customer[key] === condition
-      })
-    })
-  }
-  evaluateCustomerForSegments,
-    getCustomersInSegment,
-    function evaluateCustomerForSegments(customerId) {
-      const customer = getCustomerById(customerId)
-      if (!customer) return []
-
-      return segments.value
-        .filter((segment) => {
-          return Object.entries(segment.criteria).every(([key, condition]) => {
-            if (typeof condition === 'object') {
-              if (condition.$gt !== undefined)
-                return customer[key] > condition.$gt
-              if (condition.$lt !== undefined)
-                return customer[key] < condition.$lt
-              if (condition.$gte !== undefined)
-                return customer[key] >= condition.$gte
-              if (condition.$lte !== undefined)
-                return customer[key] <= condition.$lte
-              if (condition.$ne !== undefined)
-                return customer[key] !== condition.$ne
-              if (condition.$in) return condition.$in.includes(customer[key])
-              if (condition.$nin) return !condition.$nin.includes(customer[key])
-            }
-            return customer[key] === condition
-          })
-        })
-        .map((segment) => segment.id)
-    }
-
+  // Final export
   return {
-    // State
+    // States
     provinces,
     cities,
     customers,
+    segments,
     searchQuery,
     statusFilter,
     tierFilter,
@@ -643,35 +568,36 @@ export const useCustomerStore = defineStore('customer', () => {
     itemsPerPage,
     selectedCustomers,
 
-    // Computed
+    // Computed properties
     filteredCustomers,
     paginatedCustomers,
     totalPages,
     customerStats,
+    segmentStats,
 
-    // Methods
+    // Functions
+    getCustomerById,
     addCustomer,
     updateCustomer,
     removeCustomer,
-    toggleBlockStatus,
     addAddress,
     updateAddress,
     deleteAddress,
+    setDefaultAddress,
     addTag,
     removeTag,
     removeCustomers,
+    toggleBlockStatus,
     bulkUpdateStatus,
-    getCustomerById,
+    getCustomersInSegment,
+    evaluateCustomerForSegments,
+    createSegment,
+    updateSegment,
+    deleteSegment,
     searchCustomers,
     resetFilters,
     exportCustomers,
-    setDefaultAddress,
     getCustomerActivityLog,
-    getCustomerOrders,
-    deleteSegment,
-    updateSegment,
-    createSegment,
-    evaluateCustomerForSegments,
-    getCustomersInSegment
+    getCustomerOrders
   }
 })
