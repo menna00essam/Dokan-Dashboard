@@ -87,7 +87,11 @@
         class="d-flex"
         :class="{ 'flex-row-reverse': $i18n.locale === 'ar' }"
       >
-        <v-icon class="mx-2" :left="$i18n.locale !== 'ar'" :right="$i18n.locale === 'ar'">
+        <v-icon
+          class="mx-2"
+          :left="$i18n.locale !== 'ar'"
+          :right="$i18n.locale === 'ar'"
+        >
           mdi-store
         </v-icon>
         {{ $t('storeSettings') }}
@@ -155,7 +159,8 @@
 
         <v-btn
           type="submit"
-          :color="$vuetify.theme.current.dark ? 'dark-primary' : 'primary'"
+          style="background-color: transparent;"
+          color="secondary"
           :disabled="
             settingsStore.loading ||
             !storeSettings.name ||

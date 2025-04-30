@@ -125,7 +125,7 @@
                 <tr>
                   <th class="text-left text-h6">{{ t('user') }}</th>
                   <th class="text-left text-h6">{{ t('email') }}</th>
-                  <th class="text-right text-h6">{{ t('actions') }}</th>
+                  <th class="text-left text-h6">{{ t('actions') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -139,7 +139,7 @@
                     </div>
                   </td>
                   <td class="text-h6">{{ user.email }}</td>
-                  <td class="text-right">
+                  <td class="text-left">
                     <v-btn
                       color="success"
                       variant="tonal"

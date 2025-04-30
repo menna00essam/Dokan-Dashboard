@@ -1,6 +1,19 @@
 <template>
   <v-app-bar color="background" style="box-shadow: none; position: fixed">
     <v-app-bar-nav-icon v-if="isMobile" @click="$emit('toggle-drawer')" />
+    <p class="flex flex-row items-center space-x-1 text-sm font-medium w-100">
+      <v-icon size="18" class="mr-1">mdi-home</v-icon>
+      <router-link
+        to="/"
+        class="text-gray-400 hover:underline no-visited"
+        exact-active-class="text-gray-400"
+      >
+        Home
+      </router-link>
+      <span class="text-gray-500">/</span>
+      <span class="text-gray-300 mx-2">{{ pageTitle }}</span>
+    </p>
+
     <v-spacer></v-spacer>
 
     <!-- Language Selector -->
@@ -20,7 +33,7 @@
             v-for="lang in availableLanguages"
             :key="lang.code"
             @click="changeLanguage(lang.code)"
-            style="padding: 20px;"
+            style="padding: 20px"
             :class="{ 'v-list-item--active': locale === lang.code }"
           >
             <v-list-item-title>{{ lang.name }}</v-list-item-title>
@@ -85,5 +98,13 @@
 <style scoped>
   .v-list-item--active {
     background-color: rgba(0, 0, 0, 0.1);
+  }
+  .no-visited {
+    text-decoration: none;
+    color: inherit;
+  }
+  .no-visited:visited {
+    color: inherit;
+    text-decoration: none;
   }
 </style>
