@@ -64,6 +64,84 @@ export const useCustomerStore = defineStore('customer', () => {
         whatsapp: true
       },
       activityLog: []
+    },
+    {
+      id: '2',
+      firstName: 'Menna',
+      lastName: 'Ahmed',
+      fullName: 'Mohamed Ahmed',
+      email: 'mohamed.ahmed@example.com',
+      mobile: '01012345678',
+      addresses: [
+        {
+          id: '1',
+          province: { id: '1', name: 'Cairo' },
+          city: { id: '1', name: 'Nasr City' },
+          street: '123 Main Street',
+          building: 'Building 5',
+          floor: '3',
+          apartment: '12',
+          postalCode: '11511',
+          isDefault: true
+        }
+      ],
+      joinDate: new Date('2022-05-15'),
+      birthDate: new Date('1990-08-20'),
+      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+      ordersCount: 5,
+      orders: [],
+      totalSpent: 12500,
+      lastOrderDate: new Date('2023-04-10'),
+      tags: ['VIP', 'Frequent Buyer'],
+      status: 'active',
+      tier: 'gold',
+      isBlocked: false,
+      notes: 'Prefers evening deliveries',
+      communicationPreferences: {
+        email: true,
+        sms: false,
+        whatsapp: true
+      },
+      activityLog: []
+    },
+    {
+      id: '3',
+      firstName: 'Mariem',
+      lastName: 'Ahmed',
+      fullName: 'Mohamed Ahmed',
+      email: 'mohamed.ahmed@example.com',
+      mobile: '01012345678',
+      addresses: [
+        {
+          id: '1',
+          province: { id: '1', name: 'Cairo' },
+          city: { id: '1', name: 'Nasr City' },
+          street: '123 Main Street',
+          building: 'Building 5',
+          floor: '3',
+          apartment: '12',
+          postalCode: '11511',
+          isDefault: true
+        }
+      ],
+      joinDate: new Date('2022-05-15'),
+      birthDate: new Date('1990-08-20'),
+      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+      ordersCount: 5,
+      orders: [],
+      totalSpent: 12500,
+      lastOrderDate: new Date('2023-04-10'),
+      tags: ['VIP', 'Frequent Buyer'],
+      status: 'active',
+      tier: 'gold',
+      isBlocked: false,
+      notes: 'Prefers evening deliveries',
+      communicationPreferences: {
+        email: true,
+        sms: false,
+        whatsapp: true
+      },
+      activityLog: []
     }
   ])
 
@@ -451,7 +529,7 @@ export const useCustomerStore = defineStore('customer', () => {
 
   // New methods for additional functionality
   function getCustomerById(id) {
-    return customers.value.find((c) => c.id === id)
+    return customers.value.find((c) => parseInt(c.id) === parseInt(id))
   }
 
   function searchCustomers(query) {
@@ -600,34 +678,32 @@ export const useCustomerStore = defineStore('customer', () => {
       })
     })
   }
-  evaluateCustomerForSegments,
-    getCustomersInSegment,
-    function evaluateCustomerForSegments(customerId) {
-      const customer = getCustomerById(customerId)
-      if (!customer) return []
+  function evaluateCustomerForSegments(customerId) {
+    const customer = getCustomerById(customerId)
+    if (!customer) return []
 
-      return segments.value
-        .filter((segment) => {
-          return Object.entries(segment.criteria).every(([key, condition]) => {
-            if (typeof condition === 'object') {
-              if (condition.$gt !== undefined)
-                return customer[key] > condition.$gt
-              if (condition.$lt !== undefined)
-                return customer[key] < condition.$lt
-              if (condition.$gte !== undefined)
-                return customer[key] >= condition.$gte
-              if (condition.$lte !== undefined)
-                return customer[key] <= condition.$lte
-              if (condition.$ne !== undefined)
-                return customer[key] !== condition.$ne
-              if (condition.$in) return condition.$in.includes(customer[key])
-              if (condition.$nin) return !condition.$nin.includes(customer[key])
-            }
-            return customer[key] === condition
-          })
+    return segments.value
+      .filter((segment) => {
+        return Object.entries(segment.criteria).every(([key, condition]) => {
+          if (typeof condition === 'object') {
+            if (condition.$gt !== undefined)
+              return customer[key] > condition.$gt
+            if (condition.$lt !== undefined)
+              return customer[key] < condition.$lt
+            if (condition.$gte !== undefined)
+              return customer[key] >= condition.$gte
+            if (condition.$lte !== undefined)
+              return customer[key] <= condition.$lte
+            if (condition.$ne !== undefined)
+              return customer[key] !== condition.$ne
+            if (condition.$in) return condition.$in.includes(customer[key])
+            if (condition.$nin) return !condition.$nin.includes(customer[key])
+          }
+          return customer[key] === condition
         })
-        .map((segment) => segment.id)
-    }
+      })
+      .map((segment) => segment.id)
+  }
 
   return {
     // State

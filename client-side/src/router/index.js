@@ -5,19 +5,19 @@ import AuthLayout from '../layouts/AuthLayout.vue'
 import MainLayout from '../layouts/AppLayout.vue'
 
 // Views
-import Dashboard from "../views/Dashboard.vue";
-import Products from "../views/Products.vue";
-import Login from "../views/Login.vue";
+import Dashboard from '../views/Dashboard.vue'
+import Products from '../views/Products.vue'
+import Login from '../views/Login.vue'
 
-import Register from "../views/Register.vue";
-import Orders from "../views/Orders.vue";
-import NotFound from "../views/NotFound.vue";
-import Pending from "../views/Pending.vue";
-import CustomerManagement from "../views/CustomerManagement.vue"
-import CustomerDetails from "../views/CustomerDetails.vue"
+import Register from '../views/Register.vue'
+import Orders from '../views/Orders.vue'
+import NotFound from '../views/NotFound.vue'
+import Pending from '../views/Pending.vue'
+import CustomerManagement from '../views/CustomerManagement.vue'
+import CustomerDetails from '../views/CustomerDetails.vue'
 import StoreConfig from '../views/StoreConfig.vue'
 import Requests from '../views/Requests.vue'
-
+import EditCustomer from '../views/EditCustomer.vue'
 const routes = [
   {
     path: '/auth',
@@ -89,13 +89,18 @@ const routes = [
         component: Requests
       },
       {
-        path: 'CustomerManagement',
-        name: 'CustomerManagement',
+        path: 'customers',
+        name: 'customers',
         component: CustomerManagement,
         props: true
-
       },
-    
+      {
+        path: '/customers/edit/:id',
+        name: 'edit-customer',
+        props: true,
+        component: EditCustomer
+      },
+
       {
         path: '/customers/:id',
         name: 'customer-details',

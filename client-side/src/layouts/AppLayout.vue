@@ -41,7 +41,12 @@
             border-top: 1px solid rgba(255, 255, 255, 0.12);
           "
         >
-          <v-btn block color="secondary" prepend-icon="mdi-logout" @click="logout">
+          <v-btn
+            block
+            color="secondary"
+            prepend-icon="mdi-logout"
+            @click="logout"
+          >
             {{ t('logout') }}
           </v-btn>
         </div>
@@ -82,7 +87,7 @@
     { title: 'dashboard', to: '/dashboard' },
     { title: 'products', to: '/products' },
     { title: 'orders', to: '/orders' },
-    { title: 'customers', to: '/CustomerManagement' },
+    { title: 'customers', to: '/customers' },
     { title: 'requests', to: '/requests' },
     { title: 'storeSettings', to: '/config' }
   ]
