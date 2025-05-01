@@ -1,64 +1,7 @@
 <template>
   <v-app :dir="isRTL ? 'rtl' : 'ltr'">
-    <v-navigation-drawer
-      v-model="settingsDrawer"
-      :location="isRTL ? 'left' : 'right'"
-      :temporary="true"
-      width="300"
-      class="settings-drawer"
-      style="height: 100vh"
-    >
-      <div class="pa-4">
-        <h3 class="mb-4">Customize</h3>
+    <CustomizeDrawer v-model="settingsDrawer" />
 
-        <!-- Theme -->
-        <div>
-          <h4 class="mb-4">Theme</h4>
-          <v-btn-toggle v-model="theme" mandatory>
-            <v-btn
-              @click="setTheme('light')"
-              :class="{ 'selected-theme': theme === 'light' }"
-              >☀</v-btn
-            >
-            <v-btn
-              @click="setTheme('dark')"
-              :class="{ 'selected-theme': theme === 'dark' }"
-              >🌙</v-btn
-            >
-          </v-btn-toggle>
-        </div>
-
-        <!-- Color -->
-        <div class="mt-4">
-          <div class="d-flex justify-space-between align-center mb-4">
-            <h4>Text Color</h4>
-            <v-btn
-              variant="text"
-              color="error"
-              size="small"
-              @click="resetColors"
-            >
-              Reset
-            </v-btn>
-          </div>
-          <v-row>
-            <v-col v-for="(color, index) in colors" :key="index">
-              <v-btn
-                :style="{
-                  backgroundColor: color,
-                  width: '50px !important',
-                  height: '50px !important'
-                }"
-                @click="setColor(color)"
-                icon
-                :variant="selectedColor === color ? 'flat' : 'text'"
-                :class="{ 'selected-color': selectedColor === color }"
-              ></v-btn>
-            </v-col>
-          </v-row>
-        </div>
-      </div>
-    </v-navigation-drawer>
     <v-layout style="overflow: hidden">
       <v-navigation-drawer
         v-model="drawer"
@@ -130,7 +73,7 @@
   import { useDisplay, useTheme } from 'vuetify'
   import { useI18n } from 'vue-i18n'
   import Header from '../components/Header.vue'
-
+  import CustomizeDrawer from '../components/CustomizeDrawer.vue'
   const { t, locale } = useI18n()
   const display = useDisplay()
   const themeManager = useTheme()
@@ -138,20 +81,7 @@
   const isMobile = computed(() => display.smAndDown.value)
   const isRTL = computed(() => locale.value === 'ar')
   const settingsDrawer = ref(false)
-
-  // Default colors for reset functionality
-  const defaultColors = {
-    light: {
-      text: '#000000', // Default dark text for light theme
-      secondary: '#424242' // Default secondary for light theme
-    },
-    dark: {
-      text: '#FFFFFF', // Default light text for dark theme
-      secondary: '#BDBDBD' // Default secondary for dark theme
-    }
-  }
-
-  // Dynamic content margins
+ // Dynamic content margins
   const mainContentStyles = computed(() => ({
     transition: 'margin 0.3s ease'
   }))
@@ -165,79 +95,8 @@
     { title: 'storeSettings', to: '/config' }
   ]
 
-  const theme = ref('light') // Default theme
-  const selectedColor = ref('#000000') // Default text color for light theme
 
-  const colors = [
-    '#000000', // Black
-    '#2196F3', // Blue
-    '#4CAF50', // Green
-    '#FF5722', // Orange
-    '#9C27B0', // Purple
-    '#E91E63', // Pink
-    '#607D8B' // Blue Grey
-  ]
-
-  const setTheme = (selectedTheme) => {
-    theme.value = selectedTheme
-    themeManager.global.name.value = selectedTheme
-  }
-
-  const setColor = (color) => {
-    selectedColor.value = color
-    // Update text and secondary colors for both themes
-    themeManager.themes.value.light.colors.text = color
-    themeManager.themes.value.light.colors.secondary = color
-    themeManager.themes.value.dark.colors.text = color
-    themeManager.themes.value.dark.colors.secondary = color
-
-    localStorage.setItem('textColor', color)
-  }
-
-  const resetColors = () => {
-    // Reset to default colors
-    themeManager.themes.value.light.colors.text = defaultColors.light.text
-    themeManager.themes.value.light.colors.secondary =
-      defaultColors.light.secondary
-    themeManager.themes.value.dark.colors.text = defaultColors.dark.text
-    themeManager.themes.value.dark.colors.secondary =
-      defaultColors.dark.secondary
-
-    selectedColor.value =
-      theme.value === 'light'
-        ? defaultColors.light.text
-        : defaultColors.dark.text
-
-    localStorage.removeItem('textColor')
-  }
-
-  // Initialize theme and color from localStorage
-  onMounted(() => {
-    const savedTheme = localStorage.getItem('theme')
-    const savedColor = localStorage.getItem('textColor')
-
-    if (savedTheme) {
-      theme.value = savedTheme
-      themeManager.global.name.value = savedTheme
-    }
-
-    if (savedColor) {
-      selectedColor.value = savedColor
-      setColor(savedColor)
-    } else {
-      // Set default colors if none saved
-      selectedColor.value =
-        theme.value === 'light'
-          ? defaultColors.light.text
-          : defaultColors.dark.text
-    }
-  })
-
-  // Save theme to localStorage
-  watch(theme, (newTheme) => {
-    localStorage.setItem('theme', newTheme)
-  })
-
+  
   const toggleDrawer = () => {
     drawer.value = !drawer.value
   }
