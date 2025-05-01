@@ -35,6 +35,9 @@
       class="w-100 d-flex"
       :class="$i18n.locale === 'ar' ? 'justify-start' : 'justify-end'"
     >
+      <v-btn icon @click="$emit('toggle-settings')">
+        <v-icon>mdi-cog</v-icon>
+      </v-btn>
       <v-menu offset-y>
         <template v-slot:activator="{ props }">
           <v-btn icon v-bind="props" class="mx-2">
