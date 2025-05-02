@@ -111,19 +111,19 @@ const routes = [
         name: "editproducts",
         component:EditProduct
       },
-    ],
       {
         path: '/customers/:id',
         name: 'customer-details',
         component: CustomerDetails
       }
 
+    ],
+      
       //   {
       //   path: 'CustomerDetails',
       //   name: 'CustomerDetails',
       //   component: CustomerDetails
       // },
-    ]
   },
 
   // 404 Catch-all
