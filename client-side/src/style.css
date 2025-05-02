@@ -9,8 +9,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-
-
 body {
   margin: 0;
   min-height: 100vh;
@@ -21,5 +19,39 @@ h1 {
   line-height: 1.1;
 }
 
+/* Global RTL table fixes */
+/* [dir='rtl'] .v-data-table-header__content {
+  justify-content: flex-end;
+} */
 
+[dir='rtl'] .v-data-table__td--start {
+  text-align: right;
+}
 
+[dir='rtl'] .v-data-table__td--end {
+  text-align: left;
+}
+
+[dir='rtl'] .v-data-table__td--center {
+  text-align: center;
+}
+[dir='rtl'] .v-data-table th,
+[dir='rtl'] .v-data-table td {
+  text-align: right !important;
+}
+
+[dir='rtl'] .v-text-field input,
+[dir='rtl'] .v-text-field .v-label,
+[dir='rtl'] .v-select .v-select__selection-text,
+[dir='rtl'] .v-select .v-label {
+  text-align: right !important;
+}
+
+[dir='rtl'] .v-text-field .v-field__input {
+  text-align: right;
+  direction: rtl;
+}
+
+[dir='rtl'] .v-select .v-field__input {
+  direction: rtl;
+}

@@ -140,6 +140,3 @@ const deleteItemHandler = (item) => {
   transition: background-color 0.3s;
 }
 </style>
-
-
-
