@@ -158,24 +158,28 @@
       </template>
 
       <template #item.actions="{ item }">
-        <v-btn
-          icon
-          size="small"
-          color="info"
-          class="mr-2"
-          @click.stop="editCustomer(item)"
-        >
-          <v-icon>mdi-pencil</v-icon> </v-btn
-        ><v-btn
-          icon
-          size="small"
-          color="error"
-          @click.stop="deleteSingleCustomer(item.id)"
-          :loading="isDeleting && customerToDelete === item.id"
-        >
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </template>
+  <div class="d-flex align-center">
+    <v-btn
+      icon
+      size="small"
+      color="info"
+      class="mr-2"
+      @click.stop="editCustomer(item)"
+    >
+      <v-icon>mdi-pencil</v-icon>
+    </v-btn>
+    <v-btn
+      icon
+      size="small"
+      color="error"
+      @click.stop="deleteSingleCustomer(item.id)"
+      :loading="isDeleting && customerToDelete === item.id"
+    >
+      <v-icon>mdi-delete</v-icon>
+    </v-btn>
+  </div>
+</template>
+
     </v-data-table>
 
     <!-- Delete Confirmation -->
@@ -225,7 +229,6 @@
   import { useCustomerStore } from '../store/customers'
   import { useRouter } from 'vue-router'
   import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
-  // import { exportToCSV } from '@/utils/export'
 
   const router = useRouter()
   const customerStore = useCustomerStore()
