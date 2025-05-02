@@ -19,6 +19,7 @@ import CustomerDetails from '../views/CustomerDetails.vue'
 import StoreConfig from '../views/StoreConfig.vue'
 import Requests from '../views/Requests.vue'
 import EditCustomer from '../views/EditCustomer.vue'
+import Currencies from '../views/Currencies.vue'
 const routes = [
   {
     path: '/auth',
@@ -115,7 +116,13 @@ const routes = [
         path: '/customers/:id',
         name: 'customer-details',
         component: CustomerDetails
+      },
+      {
+        path: '/currencies',
+        name: 'Currencies',
+        component: Currencies
       }
+      
 
     ],
       

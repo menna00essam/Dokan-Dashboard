@@ -71,30 +71,40 @@ const userSchema = new mongoose.Schema(
     adminRequest: {
       type: Boolean,
       default: false,
-      required: false
-    },    
+      required: false,
+    },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'denied'],
+      enum: ["pending", "approved", "denied"],
       default: function () {
-        return this.role === 'user' ? 'approved' : 'pending';
-      }
+        return this.role === "user" ? "approved" : "pending";
+      },
     },
     tags: {
       type: [String],
-      enum: ['premium', 'frequent', 'new', 'vip', 'loyal', 'wholesale', 'business'],
-      default: []
+      enum: [
+        "premium",
+        "frequent",
+        "new",
+        "vip",
+        "loyal",
+        "wholesale",
+        "business",
+      ],
+      default: [],
     },
-    segments: [{
-      name: String,
-      assignedAt: { type: Date, default: Date.now },
-      assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      expiresAt: Date
-    }],
+    segments: [
+      {
+        name: String,
+        assignedAt: { type: Date, default: Date.now },
+        assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        expiresAt: Date,
+      },
+    ],
     customerTier: {
       type: String,
-      enum: ['basic', 'silver', 'gold', 'platinum'],
-      default: 'basic'
+      enum: ["basic", "silver", "gold", "platinum"],
+      default: "basic",
     },
     ordersCount: { type: Number, default: 0 },
     totalSpent: { type: Number, default: 0 },
@@ -259,34 +269,35 @@ userSchema.virtual("age").get(function () {
   return age;
 });
 
-userSchema.pre('save', function(next) {
-  if (this.isModified('ordersCount') || this.isModified('totalSpent')) {
+userSchema.pre("save", function (next) {
+  if (this.isModified("ordersCount") || this.isModified("totalSpent")) {
     const newTags = [];
-    
-    // Logic for automatic tagging based on orders
-    if (this.ordersCount >= 20) newTags.push('premium', 'loyal');
-    else if (this.ordersCount >= 10) newTags.push('premium');
-    else if (this.ordersCount >= 5) newTags.push('frequent');
-    
-    if (this.totalSpent >= 1000) newTags.push('vip');
-    if (this.ordersCount === 0) newTags.push('new');
-    
-    // Remove duplicates and existing tags
-    this.tags = [...new Set([...this.tags.filter(t => !['premium','frequent','new','vip','loyal'].includes(t)), ...newTags])];
-    
-    // Update customer tier
-    if (this.totalSpent >= 5000) this.customerTier = 'platinum';
-    else if (this.totalSpent >= 2000) this.customerTier = 'gold';
-    else if (this.totalSpent >= 500) this.customerTier = 'silver';
-    else this.customerTier = 'basic';
+
+    if (this.ordersCount >= 20) newTags.push("premium", "loyal");
+    else if (this.ordersCount >= 10) newTags.push("premium");
+    else if (this.ordersCount >= 5) newTags.push("frequent");
+
+    if (this.totalSpent >= 1000) newTags.push("vip");
+    if (this.ordersCount === 0) newTags.push("new");
+
+    this.tags = [
+      ...new Set(
+        [
+          ...this.tags.filter(
+            (t) =>
+              !["premium", "frequent", "new", "vip", "loyal"].includes(t)
+          ),
+          ...newTags,
+        ]
+      ),
+    ];
+
+    if (this.totalSpent >= 5000) this.customerTier = "platinum";
+    else if (this.totalSpent >= 2000) this.customerTier = "gold";
+    else if (this.totalSpent >= 500) this.customerTier = "silver";
+    else this.customerTier = "basic";
   }
   next();
 });
 
-// Indexes
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ mobile: 1 }, { sparse: true });
-userSchema.index({ firstName: "text", lastName: "text", email: "text" });
-userSchema.index({ "addresses.location": "2dsphere" });
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

@@ -35,13 +35,14 @@ const contactRouter = require('./src/routes/contact.routes');
 const orderRouter = require('./src/routes/order.routes');
 const paymentRouter = require('./src/routes/payment.routes');
 const settingsRouter = require("./src/routes/settings.routes");
+
 /* * * * End Router imports * * * * */
 
 // Connect to MongoDB
 connectDB();
 
 // Middlewares
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -62,6 +63,8 @@ app.use('/contact', contactRouter);
 app.use('/orders', orderRouter);
 app.use('/payments', paymentRouter);
 app.use("/api/settings", settingsRouter);
+app.use('/api/currencies', require('./src/routes/currencies'));
+
 
 /* * * Global MiddleWare * * * */
 app.all('*', (req, res, next) => {
