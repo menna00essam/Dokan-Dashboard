@@ -11,6 +11,8 @@ import Login from "../views/Login.vue";
 // import Register from "../views/Register.vue"; // Add this
 import Orders from "../views/Orders.vue";
 import NotFound from "../views/NotFound.vue";
+import AddProduct from "../views/AddProduct.vue";
+import EditProduct from "../views/EditProduct.vue";
 
 const routes = [
   {
@@ -53,6 +55,16 @@ const routes = [
         path: "orders",
         name: "orders",
         component: Orders,
+      },
+      {
+        path: "addproducts",
+        name: "Addproducts",
+        component:AddProduct
+      },
+      {
+        path: "editproducts/:sku/",
+        name: "editproducts",
+        component:EditProduct
       },
     ],
   },
