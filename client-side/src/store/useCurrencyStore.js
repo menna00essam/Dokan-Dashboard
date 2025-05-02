@@ -1,5 +1,6 @@
-
 import { defineStore } from 'pinia'
+import axios from 'axios'
+
 export const useCurrencyStore = defineStore('currency', {
   state: () => ({
     currencies: [],
@@ -16,7 +17,7 @@ export const useCurrencyStore = defineStore('currency', {
     async fetchCurrencies() {
       this.loading = true
       try {
-        const res = await axios.get('http://localhost:5000/api/currencies');
+        const res = await axios.get('http://localhost:5000/api/currencies')
         this.currencies = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data.data)
@@ -32,7 +33,7 @@ export const useCurrencyStore = defineStore('currency', {
 
     async addCurrency(data) {
       try {
-        await axios.post('http://localhost:5000/api/currencies', data);
+        await axios.post('http://localhost:5000/api/currencies', data)
         await this.fetchCurrencies()
       } catch (err) {
         this.error = err.response?.data?.message || 'Failed to add currency'
@@ -41,7 +42,7 @@ export const useCurrencyStore = defineStore('currency', {
 
     async updateCurrency(id, data) {
       try {
-        const res = await axios.put(`http://localhost:5000/api/currencies/${id}`, data);
+        const res = await axios.put(`http://localhost:5000/api/currencies/${id}`, data)
         const index = this.currencies.findIndex(c => c._id === id)
         if (index !== -1) {
           this.currencies[index] = res.data
@@ -53,7 +54,7 @@ export const useCurrencyStore = defineStore('currency', {
 
     async deleteCurrency(id) {
       try {
-        await axios.delete(`http://localhost:5000/api/currencies/${id}`);
+        await axios.delete(`http://localhost:5000/api/currencies/${id}`)
         this.currencies = this.currencies.filter(currency => currency._id !== id)
       } catch (err) {
         this.error = err.response?.data?.message || 'Failed to delete currency'
@@ -68,7 +69,14 @@ export const useCurrencyStore = defineStore('currency', {
     persistCurrencyFromStorage() {
       const savedCurrency = localStorage.getItem('selectedCurrency')
       if (savedCurrency) {
-        this.selectedCurrency = JSON.parse(savedCurrency)
+        try {
+          const currency = JSON.parse(savedCurrency)
+          if (currency && currency.code && currency.exchange_rate && currency.symbol) {
+            this.selectedCurrency = currency
+          }
+        } catch (err) {
+          console.error('Error parsing saved currency:', err)
+        }
       }
     }
   },

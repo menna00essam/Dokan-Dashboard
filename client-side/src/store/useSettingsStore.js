@@ -31,11 +31,13 @@ export const useSettingsStore = defineStore('settings', {
     async fetchCurrencies() {
       try {
         const response = await axios.get('http://localhost:5000/api/currencies')
+        console.log(response.data)  
         this.currencies = response.data
       } catch (error) {
         this.handleError(error, 'Failed to load currencies')
       }
     },
+    
 
     async updateStoreSettings(updatedSettings) {
       this.loading = true

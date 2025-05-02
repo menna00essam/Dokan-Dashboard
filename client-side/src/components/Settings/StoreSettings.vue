@@ -23,6 +23,7 @@
       value: c.code
     }))
   )
+
   const languages = computed(() => [
     { text: t('english'), value: 'en' },
     { text: t('arabic'), value: 'ar' },
@@ -35,9 +36,15 @@
       await settingsStore.fetchStoreSettings()
       await settingsStore.fetchCurrencies()
 
+      // Check if currencies are loaded successfully
+      if (settingsStore.currencies.length > 0) {
+        console.log("Currencies loaded:", settingsStore.currencies)
+      } else {
+        console.warn("No currencies found")
+      }
+
       // Check localStorage first, then fall back to store default
-      const savedLang =
-        localStorage.getItem('userLanguage') || settingsStore.defaultLanguage
+      const savedLang = localStorage.getItem('userLanguage') || settingsStore.defaultLanguage
 
       // Update all references
       storeSettings.value = {
@@ -51,6 +58,9 @@
 
       // Persist currency from localStorage
       currencyStore.persistCurrencyFromStorage()
+
+      // Debug log for checking currency
+      console.log("Selected Currency on mount:", currencyStore.selectedCurrency)
     } catch (error) {
       toast.error(t('failedToLoadSettings'))
     }
@@ -62,6 +72,18 @@
     (newLang) => {
       if (newLang !== locale.value) {
         applyLanguageSettings(newLang)
+      }
+    }
+  )
+
+  watch(
+    () => storeSettings.value.currency,
+    (newCurrency) => {
+      const selectedCurrency = settingsStore.currencies.find(
+        (c) => c.code === newCurrency
+      )
+      if (selectedCurrency) {
+        currencyStore.setCurrency(selectedCurrency)
       }
     }
   )
@@ -99,3 +121,101 @@
     }
   }
 </script>
+
+<template>
+  <v-card class="mb-6">
+    <v-card-title class="primary">
+      <div
+        class="d-flex"
+        :class="{ 'flex-row-reverse': $i18n.locale === 'ar' }"
+      >
+        <v-icon
+          class="mx-2"
+          :left="$i18n.locale !== 'ar'"
+          :right="$i18n.locale === 'ar'"
+        >
+          mdi-store
+        </v-icon>
+        {{ $t('storeSettings') }}
+      </div>
+    </v-card-title>
+
+    <v-card-text>
+      <!-- <v-alert
+        v-if="settingsStore.error"
+        type="error"
+        class="mb-4"
+      >
+        {{ settingsStore.error }}
+      </v-alert> -->
+
+      <v-progress-linear
+        v-if="settingsStore.loading"
+        indeterminate
+        color="primary"
+        class="mb-4"
+      ></v-progress-linear>
+
+      <v-form
+        :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+        @submit.prevent="saveSettings"
+      >
+        <v-row>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="storeSettings.name"
+              :label="$t('storeName')"
+              :rules="[(v) => !!v || $t('fieldRequired')]"
+              outlined
+              required
+              :disabled="settingsStore.loading"
+            ></v-text-field>
+          </v-col>
+
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="storeSettings.currency"
+              :items="currencies"
+              :label="$t('currency')"
+              :rules="[(v) => !!v || $t('fieldRequired')]"
+              outlined
+              required
+              :disabled="settingsStore.loading || !currencies.length"
+            ></v-select>
+          </v-col>
+
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="storeSettings.language"
+              :items="languages"
+              item-title="text"
+              item-value="value"
+              :label="$t('language')"
+              :rules="[(v) => !!v || $t('fieldRequired')]"
+              outlined
+              required
+              :disabled="settingsStore.loading"
+            ></v-select>
+          </v-col>
+        </v-row>
+
+        <v-btn
+          type="submit"
+          :color="$vuetify.theme.current.dark ? 'dark-primary' : 'primary'"
+          :disabled="
+            settingsStore.loading ||
+            !storeSettings.name ||
+            !storeSettings.currency ||
+            !storeSettings.language
+          "
+          :loading="settingsStore.loading"
+          class="mt-2"
+        >
+          {{ $t('saveSettings') }}
+        </v-btn>
+      </v-form>
+    </v-card-text>
+  </v-card>
+</template>
+
+<style scoped></style>

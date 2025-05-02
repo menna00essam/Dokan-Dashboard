@@ -118,12 +118,14 @@
 <script>
   import { useToast } from 'vue-toastification'
   import { useSettingsStore } from '../../store/useSettingsStore'
+  import { useCurrencyStore } from '../../store/useCurrencyStore'
 
   export default {
     setup() {
       const settingsStore = useSettingsStore()
+      const currencyStore = useCurrencyStore()
       const toast = useToast()
-      return { settingsStore, toast }
+      return { settingsStore, toast, currencyStore }
     },
     data() {
       return {
@@ -260,11 +262,9 @@
         })
       },
 
+      // Update formatCurrency method to use selected currency
       formatCurrency(value) {
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: this.settingsStore.currency
-        }).format(value)
+        return `${this.currencyStore.symbol}${(value * this.currencyStore.rate).toFixed(2)}`
       }
     }
   }
@@ -288,6 +288,7 @@
   tr td {
     padding: 20px !important;
   }
+
   /* Apply only when dir="rtl" */
   [dir='rtl'] tr th {
     text-align: right !important;
@@ -297,8 +298,4 @@
   [dir='rtl'] .v-table td {
     text-align: right !important;
   }
-  /* 
-  [dir='rtl'] .v-data-table-header__content {
-    justify-content: flex-end !important;
-  } */
 </style>
