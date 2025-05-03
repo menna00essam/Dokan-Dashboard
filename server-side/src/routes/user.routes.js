@@ -5,14 +5,15 @@ const userController = require("../controllers/user.controller");
 const {
   avatarUpload,
   authenticateUser,
-  adminAccess,
   superAdminAccess,
+  adminAccess,
   supportAccess,
   accountantAccess,
   adminRole,
   superAdminRole,
 } = require("../middlewares/user.middleware");
 
+// const authenticateUser = verifyToken;
 // ===== Public Routes =====
 router.post("/", userController.createUser);
 router.get("/", userController.getAllUsers);
@@ -39,7 +40,11 @@ router.get("/:id/activities", adminAccess, userController.getActivities);
 // ===== Support Tickets =====
 router.post("/:id/tickets", supportAccess, userController.createTicket);
 router.get("/:id/tickets", supportAccess, userController.getTickets);
-router.patch("/:id/tickets/:ticketId", supportAccess, userController.updateTicket);
+router.patch(
+  "/:id/tickets/:ticketId",
+  supportAccess,
+  userController.updateTicket
+);
 
 // ===== Credit Management =====
 router.post("/:id/credit", accountantAccess, userController.addCredit);
@@ -63,7 +68,11 @@ router.delete("/:id/tags", adminRole, userController.removeUserTags);
 
 // ===== Segments Management =====
 router.post("/:id/segments", adminRole, userController.assignSegment);
-router.delete("/:id/segments/:segmentName", adminRole, userController.removeSegment);
+router.delete(
+  "/:id/segments/:segmentName",
+  adminRole,
+  userController.removeSegment
+);
 
 // ===== User Queries (Filter) =====
 router.get("/by-tag/:tag", adminRole, userController.getUsersByTag);
@@ -73,14 +82,43 @@ router.get("/by-segment/:segment", adminRole, userController.getUsersBySegment);
 router.patch("/:id/tier", adminRole, userController.updateCustomerTier);
 
 // ===== User Status Management =====
-router.get("/pending", adminRole, userController.getPendingUsers);
-router.get("/approved", adminRole, userController.getApprovedUsers);
-router.get("/denied", adminRole, userController.getDeniedUsers);
-router.patch("/:id/approve", adminRole, userController.approveUser);
-router.patch("/:id/deny", adminRole, userController.denyUser);
+router.get(
+  "/pending",
+  authenticateUser,
+  superAdminAccess,
+  userController.getPendingUsers
+);
+router.get(
+  "/approved",
+  authenticateUser,
+  superAdminAccess,
+  userController.getApprovedUsers
+);
+router.get(
+  "/denied",
+  authenticateUser,
+  superAdminAccess,
+  userController.getDeniedUsers
+);
+router.patch(
+  "/:id/approve",
+  authenticateUser,
+  superAdminAccess,
+  userController.approveUser
+);
+router.patch(
+  "/:id/deny",
+  authenticateUser,
+  superAdminAccess,
+  userController.denyUser
+);
 
 // ===== Admin Request Management =====
-router.patch("/:id/request-admin", adminRole, userController.handleAdminRequest);
+router.patch(
+  "/:id/request-admin",
+  adminRole,
+  userController.handleAdminRequest
+);
 router.get("/admin-requests", adminRole, userController.getAdminRequests);
 
 module.exports = router;
