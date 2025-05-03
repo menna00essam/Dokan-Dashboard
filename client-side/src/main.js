@@ -134,17 +134,19 @@ const vuetify = createVuetify({
           secondary: '#2196F3', //all btns
           error: '#FF5252',
           background: '#FFFFFF', // Light background
+          text:'#000000',
           surface: '#FFFFFF' // Cards/forms background
           // ... (other colors)
         }
       },
       dark: {
         colors: {
-          primary: '#2E2E48',
-          'dark-primary': '#475BE8',
+          primary: '#0f172a',
+          'dark-primary': '#283045',
           secondary: '#2196F3', //all btns
-          background: '#383854',
-          surface: '#2E2E48', // Cards/forms background
+          text:'#F5F5F5',
+          background: '#1e2936',
+          surface: '#0f172a', // Cards/forms background
           'on-surface': '#FFFFFF', // Text on surfaces
           error: '#FF5252'
           // ... (other colors)

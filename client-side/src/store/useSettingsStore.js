@@ -7,6 +7,7 @@ export const useSettingsStore = defineStore('settings', {
     currency: 'USD',
     defaultLanguage: 'en',
     shippingMethods: [],
+    currencies: [],
     loading: false,
     error: null
   }),
@@ -25,6 +26,19 @@ export const useSettingsStore = defineStore('settings', {
       }
     },
 
+
+
+    async fetchCurrencies() {
+      try {
+        const response = await axios.get('http://localhost:5000/api/currencies')
+        console.log(response.data)  
+        this.currencies = response.data
+      } catch (error) {
+        this.handleError(error, 'Failed to load currencies')
+      }
+    },
+    
+
     async updateStoreSettings(updatedSettings) {
       this.loading = true
       this.error = null
@@ -42,6 +56,16 @@ export const useSettingsStore = defineStore('settings', {
         this.loading = false
       }
     },
+
+
+    // async setCurrency(currency) {
+    //   this.currency = currency
+    //   try {
+    //     await axios.put('/api/settings', { currency })
+    //   } catch (error) {
+    //     this.handleError(error, 'Failed to update currency')
+    //   }
+    // },
 
     async deleteShippingMethod(methodId) {
       this.loading = true

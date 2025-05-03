@@ -3,10 +3,12 @@
   import { useToast } from 'vue-toastification'
   import { useI18n } from 'vue-i18n'
   import { useSettingsStore } from '../../store/useSettingsStore'
+  import { useCurrencyStore } from '../../store/useCurrencyStore'
 
   const toast = useToast()
   const { locale, t } = useI18n()
   const settingsStore = useSettingsStore()
+  const currencyStore = useCurrencyStore()
 
   // Initialize with store values
   const storeSettings = ref({
@@ -15,20 +17,34 @@
     language: 'en'
   })
 
-  const currencies = ['USD', 'EUR', 'GBP', 'AED']
+  const currencies = computed(() =>
+    settingsStore.currencies.map((c) => ({
+      title: `${c.symbol} - ${c.name}`,
+      value: c.code
+    }))
+  )
+
   const languages = computed(() => [
     { text: t('english'), value: 'en' },
     { text: t('arabic'), value: 'ar' },
     { text: t('french'), value: 'fr' }
   ])
+
   // Load settings when component mounts
   onMounted(async () => {
     try {
       await settingsStore.fetchStoreSettings()
+      await settingsStore.fetchCurrencies()
+
+      // Check if currencies are loaded successfully
+      if (settingsStore.currencies.length > 0) {
+        console.log("Currencies loaded:", settingsStore.currencies)
+      } else {
+        console.warn("No currencies found")
+      }
 
       // Check localStorage first, then fall back to store default
-      const savedLang =
-        localStorage.getItem('userLanguage') || settingsStore.defaultLanguage
+      const savedLang = localStorage.getItem('userLanguage') || settingsStore.defaultLanguage
 
       // Update all references
       storeSettings.value = {
@@ -39,6 +55,12 @@
 
       // Apply the language settings
       applyLanguageSettings(savedLang)
+
+      // Persist currency from localStorage
+      currencyStore.persistCurrencyFromStorage()
+
+      // Debug log for checking currency
+      console.log("Selected Currency on mount:", currencyStore.selectedCurrency)
     } catch (error) {
       toast.error(t('failedToLoadSettings'))
     }
@@ -50,6 +72,18 @@
     (newLang) => {
       if (newLang !== locale.value) {
         applyLanguageSettings(newLang)
+      }
+    }
+  )
+
+  watch(
+    () => storeSettings.value.currency,
+    (newCurrency) => {
+      const selectedCurrency = settingsStore.currencies.find(
+        (c) => c.code === newCurrency
+      )
+      if (selectedCurrency) {
+        currencyStore.setCurrency(selectedCurrency)
       }
     }
   )
@@ -69,6 +103,14 @@
       }
 
       await settingsStore.updateStoreSettings(settingsToSave)
+      // Get full currency object (code, symbol, exchange_rate)
+      const selectedCurrency = settingsStore.currencies.find(
+        (c) => c.code === storeSettings.value.currency
+      )
+
+      if (selectedCurrency) {
+        currencyStore.setCurrency(selectedCurrency)
+      }
 
       // Persist language preference locally
       localStorage.setItem('userLanguage', storeSettings.value.language)
@@ -87,7 +129,11 @@
         class="d-flex"
         :class="{ 'flex-row-reverse': $i18n.locale === 'ar' }"
       >
-        <v-icon class="mx-2" :left="$i18n.locale !== 'ar'" :right="$i18n.locale === 'ar'">
+        <v-icon
+          class="mx-2"
+          :left="$i18n.locale !== 'ar'"
+          :right="$i18n.locale === 'ar'"
+        >
           mdi-store
         </v-icon>
         {{ $t('storeSettings') }}
@@ -134,7 +180,7 @@
               :rules="[(v) => !!v || $t('fieldRequired')]"
               outlined
               required
-              :disabled="settingsStore.loading"
+              :disabled="settingsStore.loading || !currencies.length"
             ></v-select>
           </v-col>
 

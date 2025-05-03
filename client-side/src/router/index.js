@@ -5,19 +5,21 @@ import AuthLayout from '../layouts/AuthLayout.vue'
 import MainLayout from '../layouts/AppLayout.vue'
 
 // Views
-import Dashboard from "../views/Dashboard.vue";
-import Products from "../views/Products.vue";
-import Login from "../views/Login.vue";
-
-import Register from "../views/Register.vue";
-import Orders from "../views/Orders.vue";
 import NotFound from "../views/NotFound.vue";
-import Pending from "../views/Pending.vue";
-import CustomerManagement from "../views/CustomerManagement.vue"
-import CustomerDetails from "../views/CustomerDetails.vue"
+import AddProduct from "../views/AddProduct.vue";
+import EditProduct from "../views/EditProduct.vue";
+import Dashboard from '../views/Dashboard.vue'
+import Products from '../views/Products.vue'
+import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
+import Orders from '../views/Orders.vue'
+import Pending from '../views/Pending.vue'
+import CustomerManagement from '../views/CustomerManagement.vue'
+import CustomerDetails from '../views/CustomerDetails.vue'
 import StoreConfig from '../views/StoreConfig.vue'
 import Requests from '../views/Requests.vue'
-
+import EditCustomer from '../views/EditCustomer.vue'
+import Currencies from '../views/Currencies.vue'
 const routes = [
   {
     path: '/auth',
@@ -89,16 +91,46 @@ const routes = [
         component: Requests
       },
       {
-        path: 'CustomerManagement',
-        name: 'CustomerManagement',
-        component: CustomerManagement
+        path: 'customers',
+        name: 'customers',
+        component: CustomerManagement,
+        props: true
       },
       {
-        path: 'CustomerDetails/:id',
-        name: 'CustomerDetails',
+        path: '/customers/edit/:id',
+        name: 'edit-customer',
+        props: true,
+        component: EditCustomer
+      },
+      {
+        path: "addproducts",
+        name: "Addproducts",
+        component:AddProduct
+      },
+      {
+        path: "editproducts/:sku/",
+        name: "editproducts",
+        component:EditProduct
+      },
+      {
+        path: '/customers/:id',
+        name: 'customer-details',
         component: CustomerDetails
+      },
+      {
+        path: '/currencies',
+        name: 'Currencies',
+        component: Currencies
       }
-    ]
+      
+
+    ],
+      
+      //   {
+      //   path: 'CustomerDetails',
+      //   name: 'CustomerDetails',
+      //   component: CustomerDetails
+      // },
   },
 
   // 404 Catch-all
