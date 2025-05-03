@@ -287,14 +287,6 @@ userSchema.pre("save", function (next) {
     if (this.ordersCount === 0) newTags.push("new");
 
     this.tags = [
-<<<<<<< HEAD
-      ...new Set([
-        ...this.tags.filter(
-          (t) => !["premium", "frequent", "new", "vip", "loyal"].includes(t)
-        ),
-        ...newTags,
-      ]),
-=======
       ...new Set(
         [
           ...this.tags.filter(
@@ -304,7 +296,6 @@ userSchema.pre("save", function (next) {
           ...newTags,
         ]
       ),
->>>>>>> 27a269b79c66eb1b220ba0f217ff2366ad4dc0e4
     ];
 
     if (this.totalSpent >= 5000) this.customerTier = "platinum";
