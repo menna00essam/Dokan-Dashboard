@@ -65,8 +65,7 @@
     "Shipped": "Shipped",
     "Delivered": "Delivered",
     "Cancelled": "Cancelled"
-  }
-}
+  },
   "TotalRevenue": "Total Revenue",
   "NumberofOrders": "Number of Orders",
   "AverageOrderValue": "Average Order Value",
@@ -103,12 +102,11 @@
   "Orders": "Orders",
   "AvgOrderValue": "Average Order Value",
   "switchToDark": "Switch to Dark Mode",
-  "Home":"Home",
-    "welcomeBack": "Welcome back!",
-    "loginTitle": "Login",
-    "password": "Password",
-    "noAccount": "Don't have an account?",
-    "signUp": "Sign Up",
-    "login": "Login"
-  
+  "Home": "Home",
+  "welcomeBack": "Welcome back!",
+  "loginTitle": "Login",
+  "password": "Password",
+  "noAccount": "Don't have an account?",
+  "signUp": "Sign Up",
+  "login": "Login"
 }

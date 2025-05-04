@@ -109,9 +109,9 @@ const routes = [
       //   component: CustomerDetails
       // }
 
-      {
-        path: 'CustomerDetails',
-        name: 'CustomerDetails',
+      // {
+      //   path: 'CustomerDetails',
+      //   name: 'CustomerDetails',
       {
         path: '/customers/edit/:id',
         name: 'edit-customer',
@@ -121,12 +121,12 @@ const routes = [
       {
         path: "addproducts",
         name: "Addproducts",
-        component:AddProduct
+        component: AddProduct
       },
       {
         path: "editproducts/:sku/",
         name: "editproducts",
-        component:EditProduct
+        component: EditProduct
       },
       {
         path: '/customers/:id',
@@ -138,15 +138,15 @@ const routes = [
         name: 'Currencies',
         component: Currencies
       }
-      
+
 
     ],
-      
-      //   {
-      //   path: 'CustomerDetails',
-      //   name: 'CustomerDetails',
-      //   component: CustomerDetails
-      // },
+
+    //   {
+    //   path: 'CustomerDetails',
+    //   name: 'CustomerDetails',
+    //   component: CustomerDetails
+    // },
   },
 
   // 404 Catch-all
