@@ -2,42 +2,62 @@
   <v-dialog v-model="internalDialog" max-width="800">
     <v-card>
       <v-card-title class="text-h5 font-weight-bold">
-        Add a New Customer
+        {{ mode === 'add' ? 'Add a New Customer' : 'Edit Customer' }}
       </v-card-title>
       <v-card-subtitle class="mb-4">Customer Information</v-card-subtitle>
 
       <v-card-text>
-        <v-text-field
-          v-model="form.name"
-          label="Customer Name"
-          :rules="[nameRequired]"
-        />
+        <v-row>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="form.firstName"
+              label="First Name"
+              :rules="[required]"
+            />
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="form.lastName"
+              label="Last Name"
+              :rules="[required]"
+            />
+          </v-col>
+        </v-row>
+
         <v-text-field
           v-model="form.email"
-          label="Customer Email"
-          :rules="[emailRequired]"
+          label="Email"
+          type="email"
+          :rules="[required, emailRule]"
         />
 
         <div class="d-flex align-center">
           <v-select
-            v-model="form.country"
+            v-model="form.countryCode"
             :items="countries"
             item-title="label"
             item-value="code"
             label="Country"
-            return-object
             dense
             style="max-width: 150px"
-            :rules="[countryRequired]"
+            :rules="[required]"
           />
           <v-text-field
             v-model="form.mobile"
             label="Mobile Number"
             class="ml-3"
             style="flex: 1"
-            :prefix="form.country?.code || ''"
+            :prefix="form.countryCode || ''"
+            :rules="[required]"
           />
         </div>
+
+        <v-switch
+          v-model="form.isBlocked"
+          label="Block this customer"
+          color="error"
+          class="mt-4"
+        />
 
         <v-switch
           v-model="showAddress"
@@ -82,7 +102,7 @@
           :disabled="!isFormValid"
           style="height: 50px; border-radius: 12px;"
         >
-          Add
+          {{ mode === 'add' ? 'Add' : 'Save' }}
         </v-btn>
         <v-btn
           variant="outlined"
@@ -100,27 +120,22 @@
 
 <script setup>
 import { ref, computed, watch, defineProps, defineEmits } from 'vue'
-import { useCustomerStore } from '../../store/customers'
 
-const props = defineProps({ modelValue: Boolean })
-const emit = defineEmits(['update:modelValue'])
+const props = defineProps({ 
+  modelValue: Boolean,
+  mode: {
+    type: String,
+    default: 'add',
+    validator: value => ['add', 'edit'].includes(value)
+  },
+  customer: Object
+})
+
+const emit = defineEmits(['update:modelValue', 'save'])
 
 const internalDialog = ref(props.modelValue)
 watch(internalDialog, val => emit('update:modelValue', val))
 watch(() => props.modelValue, val => (internalDialog.value = val))
-
-const customerStore = useCustomerStore()
-
-const form = ref({
-  name: '',
-  email: '',
-  country: { label: 'Egypt +20', code: '+20' },
-  mobile: '',
-  address: { street: '', city: '', state: '', zipCode: '' },
-  billingAddress: { street: '', city: '', state: '', zipCode: '' }
-})
-const showAddress = ref(false)
-const sameAsCustomer = ref(true)
 
 const countries = [
   { label: 'Egypt +20', code: '+20' },
@@ -130,20 +145,70 @@ const countries = [
   { label: 'UK +44', code: '+44' }
 ]
 
-const nameRequired = v => !!v || 'Name is required'
-const emailRequired = v => !!v || 'Email is required'
-const countryRequired = v => !!v || 'Country is required'
+const showAddress = ref(false)
+const sameAsCustomer = ref(true)
 
-const isFormValid = computed(
-  () => form.value.name && form.value.email && form.value.country
-)
+const form = ref({
+  id: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  countryCode: '+20',
+  mobile: '',
+  isBlocked: false,
+  address: { street: '', city: '', state: '', zipCode: '' },
+  billingAddress: { street: '', city: '', state: '', zipCode: '' }
+})
+
+// Watch for customer prop changes (for edit mode)
+watch(() => props.customer, (customer) => {
+  if (customer) {
+    form.value = {
+      id: customer.id,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      email: customer.email,
+      countryCode: customer.mobile?.startsWith('+') 
+        ? customer.mobile.substring(0, 3) 
+        : '+20',
+      mobile: customer.mobile?.startsWith('+') 
+        ? customer.mobile.substring(3) 
+        : customer.mobile,
+      isBlocked: customer.isBlocked || false,
+      address: customer.address?.[0]?.text 
+        ? { 
+            street: customer.address[0].text,
+            city: customer.address[0].city?.name || '',
+            state: customer.address[0].province?.name || '',
+            zipCode: ''
+          }
+        : { street: '', city: '', state: '', zipCode: '' },
+      billingAddress: { street: '', city: '', state: '', zipCode: '' }
+    }
+    showAddress.value = !!customer.address?.[0]?.text
+  }
+}, { immediate: true })
+
+const required = v => !!v || 'This field is required'
+const emailRule = v => /.+@.+\..+/.test(v) || 'E-mail must be valid'
+
+const isFormValid = computed(() => {
+  return form.value.firstName && 
+         form.value.lastName && 
+         form.value.email && 
+         form.value.countryCode &&
+         form.value.mobile
+})
 
 function reset() {
   form.value = {
-    name: '',
+    id: '',
+    firstName: '',
+    lastName: '',
     email: '',
-    country: countries[0],
+    countryCode: '+20',
     mobile: '',
+    isBlocked: false,
     address: { street: '', city: '', state: '', zipCode: '' },
     billingAddress: { street: '', city: '', state: '', zipCode: '' }
   }
@@ -157,14 +222,19 @@ function handleCancel() {
 }
 
 function handleSubmit() {
-  const customer = { ...form.value }
-  if (!showAddress.value) {
-    delete customer.address
-    delete customer.billingAddress
-  } else if (sameAsCustomer.value) {
-    customer.billingAddress = { ...customer.address }
+  const customerData = { 
+    ...form.value,
+    mobile: form.value.countryCode + form.value.mobile
   }
-  customerStore.addCustomer(customer)
+  
+  if (!showAddress.value) {
+    delete customerData.address
+    delete customerData.billingAddress
+  } else if (sameAsCustomer.value) {
+    customerData.billingAddress = { ...customerData.address }
+  }
+  
+  emit('save', customerData)
   handleCancel()
 }
 </script>

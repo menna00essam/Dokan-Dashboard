@@ -26,13 +26,13 @@ async function login() {
 
     if(isValid){
         try {
-            const response = await axios.post("http://localhost:3000/api/login",{
+            const response = await axios.post("http://localhost:5000/auth/login",{
                 email: form.value.email,
                 password:form.value.password,
             });
             console.log("Login successful:",response.data);
 
-            authStore.setToken(response.data.token);
+            authStore.setToken(response.data.data.token);
 
             localStorage.setItem('token',response.data.token);
 
