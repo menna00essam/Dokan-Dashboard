@@ -140,15 +140,15 @@ const routes = [
         name: 'Currencies',
         component: Currencies
       }
-      
+
 
     ],
-      
-      //   {
-      //   path: 'CustomerDetails',
-      //   name: 'CustomerDetails',
-      //   component: CustomerDetails
-      // },
+
+    //   {
+    //   path: 'CustomerDetails',
+    //   name: 'CustomerDetails',
+    //   component: CustomerDetails
+    // },
   },
 
   // 404 Catch-all
