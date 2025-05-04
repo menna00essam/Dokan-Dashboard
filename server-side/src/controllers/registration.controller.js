@@ -42,7 +42,7 @@ const signup = asyncWrapper(async (req, res, next) => {
       );
     }
   }
-  
+
   const existingUser = await userModel.findOne({ email: userData.email });
   if (existingUser) {
     console.warn("[SIGNUP] Email already exists:", userData.email);
@@ -131,9 +131,6 @@ const login = asyncWrapper(async (req, res, next) => {
   const { email, password } = req.body;
 
   console.log('[LOGIN] Attempted login with email:', email);
-
-  const user = await userModel.findOne({ email }).select('+password');
-  console.log("[LOGIN] Attempted login with email:", email);
   console.log("[LOGIN] Password from request:", password);
 
   const user = await userModel.findOne({ email }).select("+password");
@@ -147,12 +144,12 @@ const login = asyncWrapper(async (req, res, next) => {
   console.log(
     "[LOGIN] User password from DB (Hashed) - Before Full Object:",
     user.password
-  ); 
+  );
   console.log("[LOGIN] Full user object from DB:", user);
   console.log(
     "[LOGIN] User password from DB (Hashed) - After Full Object:",
     user.password
-  ); 
+  );
   if (user.status === "pending") {
     return next(
       new AppError(
@@ -164,8 +161,7 @@ const login = asyncWrapper(async (req, res, next) => {
   } else if (user.status === "denied") {
     return next(
       new AppError(
-        `Your account has been denied. Reason: ${
-          user.denialReason || "No reason provided."
+        `Your account has been denied. Reason: ${user.denialReason || "No reason provided."
         }`,
         403,
         httpStatusText.FAIL
@@ -325,7 +321,6 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
 
 // POST /logout
 const logout = asyncWrapper(async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
