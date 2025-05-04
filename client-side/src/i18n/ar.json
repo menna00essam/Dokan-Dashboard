@@ -61,8 +61,7 @@
     "Shipped": "تم الشحن",
     "Delivered": "تم التوصيل",
     "Cancelled": "أُلغي"
-  }
-}
+  },
   "TotalRevenue": "إجمالي الإيرادات",
   "NumberofOrders": "عدد الطلبات",
   "AverageOrderValue": "متوسط ​​قيمة الطلب",
