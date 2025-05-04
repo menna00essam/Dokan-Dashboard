@@ -129,6 +129,10 @@ const signup = asyncWrapper(async (req, res, next) => {
 // });
 const login = asyncWrapper(async (req, res, next) => {
   const { email, password } = req.body;
+
+  console.log('[LOGIN] Attempted login with email:', email);
+
+  const user = await userModel.findOne({ email }).select('+password');
   console.log("[LOGIN] Attempted login with email:", email);
   console.log("[LOGIN] Password from request:", password);
 
@@ -321,6 +325,7 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
 
 // POST /logout
 const logout = asyncWrapper(async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {

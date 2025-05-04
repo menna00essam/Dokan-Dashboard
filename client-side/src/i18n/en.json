@@ -43,6 +43,30 @@
   "customers": "Customers",
   "requests": "Requests",
   "logout": "Logout",
+  "orderHeaders": {
+    "orderNumber": "Order Number",
+    "product": "Product",
+    "date": "Date",
+    "user": "User",
+    "total": "Total",
+    "payment": "Payment",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "orderDialog": {
+    "title": "Update Order Status",
+    "selectStatus": "Select New Status",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "orderStatus": {
+    "Pending": "Pending",
+    "Processing": "Processing",
+    "Shipped": "Shipped",
+    "Delivered": "Delivered",
+    "Cancelled": "Cancelled"
+  }
+}
   "TotalRevenue": "Total Revenue",
   "NumberofOrders": "Number of Orders",
   "AverageOrderValue": "Average Order Value",

@@ -18,6 +18,7 @@ import CustomerManagement from '../views/CustomerManagement.vue'
 import CustomerDetails from '../views/CustomerDetails.vue'
 import StoreConfig from '../views/StoreConfig.vue'
 import Requests from '../views/Requests.vue'
+import OrderDetails from '../views/OrderDetails.vue';
 import EditCustomer from '../views/EditCustomer.vue'
 import Currencies from '../views/Currencies.vue'
 const routes = [
@@ -78,7 +79,12 @@ const routes = [
       {
         path: 'orders',
         name: 'orders',
-        component: Orders
+        component: Orders,
+      },
+      {
+        path: 'order-details/:id',
+        name: 'order-details',
+        component: OrderDetails
       },
       {
         path: 'config',
@@ -96,6 +102,16 @@ const routes = [
         component: CustomerManagement,
         props: true
       },
+
+      // {
+      //   path: '/CustomerDetails/:id',
+      //   name: 'CustomerDetails',
+      //   component: CustomerDetails
+      // }
+
+      {
+        path: 'CustomerDetails',
+        name: 'CustomerDetails',
       {
         path: '/customers/edit/:id',
         name: 'edit-customer',

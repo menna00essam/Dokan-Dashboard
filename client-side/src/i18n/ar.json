@@ -39,6 +39,30 @@
   "customers": "العملاء",
   "requests": "الطلبات",
   "logout": "تسجيل الخروج",
+  "orderHeaders": {
+    "orderNumber": "رقم الطلب",
+    "product": "المنتج",
+    "date": "التاريخ",
+    "user": "المستخدم",
+    "total": "الإجمالي",
+    "payment": "طريقة الدفع",
+    "status": "الحالة",
+    "actions": "الإجراءات"
+  },
+  "orderDialog": {
+    "title": "تحديث حالة الطلب",
+    "selectStatus": "اختر الحالة الجديدة",
+    "cancel": "إلغاء",
+    "save": "حفظ"
+  },
+  "orderStatus": {
+    "Pending": "قيد الانتظار",
+    "Processing": "قيد المعالجة",
+    "Shipped": "تم الشحن",
+    "Delivered": "تم التوصيل",
+    "Cancelled": "أُلغي"
+  }
+}
   "TotalRevenue": "إجمالي الإيرادات",
   "NumberofOrders": "عدد الطلبات",
   "AverageOrderValue": "متوسط ​​قيمة الطلب",
