@@ -1,5 +1,7 @@
 const express = require('express');
 const app = express();
+const path = require('path');
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
 const cors = require('cors');
 require('dotenv').config();
 const cloudinary = require('./src/config/cloudinary.config');

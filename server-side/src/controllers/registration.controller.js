@@ -52,9 +52,10 @@ const signup = asyncWrapper(async (req, res, next) => {
 // POST /login
 const login = asyncWrapper(async (req, res, next) => {
   const { email, password } = req.body;
+
   console.log('[LOGIN] Attempted login with email:', email);
 
-  const user = await userModel.findOne({ email });
+  const user = await userModel.findOne({ email }).select('+password');
   if (!user) {
     console.warn('[LOGIN] Email not found:', email);
     return next(
@@ -182,7 +183,7 @@ const resetPassword = asyncWrapper(async (req, res, next) => {
 // POST /logout
 const logout = asyncWrapper(async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  
+
   if (!token) {
     console.warn('[LOGOUT] No token provided');
     return next(new AppError('Token is required', 400, httpStatusText.FAIL));

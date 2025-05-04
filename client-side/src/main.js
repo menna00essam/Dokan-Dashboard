@@ -68,7 +68,8 @@ const vuetify = createVuetify({
         }
       }
     }
-  }
+  },
+  rtl: true
 })
 
 // Create and mount the app
