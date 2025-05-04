@@ -1,60 +1,4 @@
 
-// import { defineStore } from 'pinia'
-// import { jwtDecode } from 'jwt-decode'
-
-// export const useAuthStore = defineStore('auth', {
-//   state: () => ({
-//     token: localStorage.getItem('token') || null,
-//     pendingEmail: null,
-//     user: null
-//   }),
-//   getters: {
-//     isLoggedIn: (state) => !!state.token,
-//     userRole: (state) => state.user?.role
-//   },
-//   actions: {
-//     setToken(token) {
-//       this.token = token
-//       localStorage.setItem('token', token)
-//       this.setUserFromToken(token)
-//     },
-//     setPendingEmail(email) {
-//       this.pendingEmail = email
-//     },
-//     clearPendingEmail() {
-//       this.pendingEmail = null
-//     },
-//     logout() {
-//       this.token = null
-//       this.user = null
-//       localStorage.removeItem('token')
-//     },
-//     setUserFromToken(token) {
-//       if (token) {
-//         try {
-//           const decodedToken = jwtDecode(token)
-//           this.user = {
-//             id: decodedToken.userId,
-//             email: decodedToken.email,
-//             role: decodedToken.role
-//           }
-//         } catch (error) {
-//           console.error('Error decoding token:', error)
-//           this.logout()
-//         }
-//       } else {
-//         this.user = null
-//       }
-//     },
-//     loadUserFromStorage() {
-//       const token = localStorage.getItem('token')
-//       if (token) {
-//         this.setUserFromToken(token)
-//       }
-//     }
-//   }
-// })
-
 // useAuthStore.js
 import { defineStore } from 'pinia';
 import { jwtDecode } from 'jwt-decode';
@@ -63,18 +7,18 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('token') || null,
     pendingEmail: null,
-    user: null // هنخزن معلومات المستخدم هنا
+    user: null 
   }),
   getters: {
     isLoggedIn: (state) => !!state.token,
     userRole: (state) => state.user?.role
   },
   actions: {
-    setToken(token) { // الأكشن دلوقتي بيستقبل التوكن بس
+    setToken(token) { 
       console.log('setToken called with token:', token)
       this.token = token;
       localStorage.setItem('token', token);
-      this.setUserFromToken(token); // هنفك التوكن عشان نجيب معلومات المستخدم
+      this.setUserFromToken(token); 
     },
     setPendingEmail(email) {
       this.pendingEmail = email;
@@ -92,7 +36,7 @@ export const useAuthStore = defineStore('auth', {
         try {
           const decodedToken = jwtDecode(token);
           this.user = {
-            id: decodedToken._id, // استخدم _id زي ما هو في التوكن
+            id: decodedToken._id, 
             email: decodedToken.email,
             role: decodedToken.role
           };

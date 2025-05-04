@@ -61,6 +61,11 @@ onUnmounted(() => {
             <p>Please wait while the super admin approves your account.</p>
             <!-- <v-progress-circular v-if="checking" indeterminate color="primary" class="mt-4" /> -->
             <p v-if="error" class="text-red mt-4">{{ error }}</p>
+            <div style="width: 100%; height: 200px;" class="d-flex align-center justify-center pa-4">
+                <v-img src="/pending.png" height="100%" width="100%" contain></v-img>
+            </div>
+
+
         </v-card>
     </v-container>
 </template>
