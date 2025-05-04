@@ -50,7 +50,6 @@
             :key="lang.code"
             @click="changeLanguage(lang.code)"
             style="padding: 20px"
-            style="padding: 20px"
             :class="{ 'v-list-item--active': locale === lang.code }"
           >
             <v-list-item-title>{{ lang.name }}</v-list-item-title>

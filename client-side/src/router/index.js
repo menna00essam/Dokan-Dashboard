@@ -5,9 +5,9 @@ import AuthLayout from '../layouts/AuthLayout.vue'
 import MainLayout from '../layouts/AppLayout.vue'
 
 // Views
-import NotFound from "../views/NotFound.vue";
-import AddProduct from "../views/AddProduct.vue";
-import EditProduct from "../views/EditProduct.vue";
+import NotFound from '../views/NotFound.vue'
+import AddProduct from '../views/AddProduct.vue'
+import EditProduct from '../views/EditProduct.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Products from '../views/Products.vue'
 import Login from '../views/Login.vue'
@@ -103,14 +103,14 @@ const routes = [
         component: EditCustomer
       },
       {
-        path: "addproducts",
-        name: "Addproducts",
-        component:AddProduct
+        path: 'addproducts',
+        name: 'Addproducts',
+        component: AddProduct
       },
       {
-        path: "editproducts/:sku/",
-        name: "editproducts",
-        component:EditProduct
+        path: 'editproducts/:sku/',
+        name: 'editproducts',
+        component: EditProduct
       },
       {
         path: '/customers/:id',
@@ -122,15 +122,13 @@ const routes = [
         name: 'Currencies',
         component: Currencies
       }
-      
+    ]
 
-    ],
-      
-      //   {
-      //   path: 'CustomerDetails',
-      //   name: 'CustomerDetails',
-      //   component: CustomerDetails
-      // },
+    //   {
+    //   path: 'CustomerDetails',
+    //   name: 'CustomerDetails',
+    //   component: CustomerDetails
+    // },
   },
 
   // 404 Catch-all
@@ -147,20 +145,20 @@ const router = createRouter({
 })
 
 // Improved Auth Guard
-// router.beforeEach((to, from, next) => {
-//   const isAuthenticated = localStorage.getItem("token");
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('token')
 
-//   // Redirect logged-in users away from auth pages
-//   if (to.meta.public && isAuthenticated) {
-//     return next({ name: "dashboard" });
-//   }
+  // Redirect logged-in users away from auth pages
+  if (to.meta.public && isAuthenticated) {
+    return next({ name: 'dashboard' })
+  }
 
-//   // Protect non-public routes
-//   if (!to.meta.public && !isAuthenticated) {
-//     return next({ name: "login" });
-//   }
+  // Protect non-public routes
+  if (!to.meta.public && !isAuthenticated) {
+    return next({ name: 'login' })
+  }
 
-//   next();
-// });
+  next()
+})
 
 export default router

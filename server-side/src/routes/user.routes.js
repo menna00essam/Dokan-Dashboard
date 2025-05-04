@@ -82,36 +82,11 @@ router.get("/by-segment/:segment", adminRole, userController.getUsersBySegment);
 router.patch("/:id/tier", adminRole, userController.updateCustomerTier);
 
 // ===== User Status Management =====
-router.get(
-  "/pending",
-  authenticateUser,
-  superAdminAccess,
-  userController.getPendingUsers
-);
-router.get(
-  "/approved",
-  authenticateUser,
-  superAdminAccess,
-  userController.getApprovedUsers
-);
-router.get(
-  "/denied",
-  authenticateUser,
-  superAdminAccess,
-  userController.getDeniedUsers
-);
-router.patch(
-  "/:id/approve",
-  authenticateUser,
-  superAdminAccess,
-  userController.approveUser
-);
-router.patch(
-  "/:id/deny",
-  authenticateUser,
-  superAdminAccess,
-  userController.denyUser
-);
+router.get("/pending", superAdminAccess, userController.getPendingUsers);
+router.get("/approved", superAdminAccess, userController.getApprovedUsers);
+router.get("/denied", superAdminAccess, userController.getDeniedUsers);
+router.patch("/:id/approve", superAdminAccess, userController.approveUser);
+router.patch("/:id/deny", superAdminAccess, userController.denyUser);
 
 // ===== Admin Request Management =====
 router.patch(
