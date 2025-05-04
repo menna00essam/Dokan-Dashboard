@@ -51,8 +51,20 @@ export const useRequestsStore = defineStore('requests', {
 
     async approveRequest(userId) {
       this.loading = true
+      console.log(userId)
+
       try {
-        await axios.patch(`/users/${userId}/approve`)
+        await axios.patch(
+          `http://localhost:5000/users/${userId}/approve`,
+          {}, // empty body
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Cache-Control': 'no-cache',
+              Pragma: 'no-cache'
+            }
+          }
+        )
         this.removeUser(userId)
         this.updateTotalCount(-1)
       } catch (error) {
@@ -66,7 +78,17 @@ export const useRequestsStore = defineStore('requests', {
     async denyRequest(userId) {
       this.loading = true
       try {
-        await axios.patch(`/users/${userId}/deny`)
+        await axios.patch(
+          `http://localhost:5000/users/${userId}/deny`,
+          { reason: 'you are not legal to enter dashboard' },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Cache-Control': 'no-cache',
+              Pragma: 'no-cache'
+            }
+          }
+        )
         this.removeUser(userId)
         this.updateTotalCount(-1)
       } catch (error) {

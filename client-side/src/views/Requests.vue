@@ -10,12 +10,14 @@
   const { t } = useI18n()
   const authStore = useAuthStore()
   const requestsStore = useRequestsStore()
+  const initialLoading = ref(true)
 
   // Reactive data
   const page = ref(1)
   const itemsPerPage = ref(10)
   const columns = ref([])
   const error = ref(null)
+  const loadingUsers = ref({})
 
   // Computed properties
   const isSuperAdmin = computed(() => authStore.userRole === 'super_admin')
@@ -30,6 +32,8 @@
   // Methods
   const fetchRequests = async () => {
     try {
+      initialLoading.value = true
+
       await requestsStore.fetchRequests({
         page: page.value,
         limit: itemsPerPage.value
@@ -37,28 +41,36 @@
     } catch (err) {
       error.value = err.message || t('error.fetchingRequests')
       toast.error(error.value)
+    } finally {
+      initialLoading.value = false
     }
   }
 
   const approve = async (user) => {
+    loadingUsers.value[user._id] = true
     try {
       await requestsStore.approveRequest(user._id)
-      toast.success(t('userApproved', { name: user.fullName }))
-      fetchRequests() // Refresh the list after approval
+      toast.success(t('userApproved', { name: user.username }))
+      fetchRequests()
     } catch (err) {
       error.value = err.message || t('error.approvingUser')
       toast.error(error.value)
+    } finally {
+      loadingUsers.value[user._id] = false
     }
   }
 
   const deny = async (user) => {
+    loadingUsers.value[user._id] = true
     try {
       await requestsStore.denyRequest(user._id)
-      toast.error(t('userDenied', { name: user.fullName }))
-      fetchRequests() // Refresh the list after denial
+      toast.success(t('userDenied', { name: user.username }))
+      fetchRequests()
     } catch (err) {
       error.value = err.message || t('error.denyingUser')
       toast.error(error.value)
+    } finally {
+      loadingUsers.value[user._id] = false
     }
   }
 
@@ -102,7 +114,7 @@
 
           <v-divider></v-divider>
 
-          <v-card-text class="pa-6">
+          <v-card-text style="padding: 0">
             <!-- Error state -->
             <v-alert v-if="error" type="error" variant="tonal" class="mb-6">
               {{ error }}
@@ -127,7 +139,8 @@
             <!-- Skeleton Loading -->
             <skeleton-loader
               v-if="
-                requestsStore.loading && requestsStore.requests.length === 0
+                initialLoading ||
+                (requestsStore.loading && requestsStore.requests.length === 0)
               "
               :columns="columns"
               :rows="3"
@@ -138,6 +151,7 @@
               <v-table
                 :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
                 class="elevation-1 mb-4"
+                style="width: 100%"
               >
                 <thead>
                   <tr>
@@ -155,9 +169,9 @@
                     <td>
                       <div class="d-flex align-center">
                         <v-avatar color="primary" size="48" class="mx-4">
-                          <v-img :src="user.avatar" :alt="user.fullName" />
+                          <v-img :src="user.avatar" :alt="user.username" />
                         </v-avatar>
-                        <span class="text-h6">{{ user.fullName }}</span>
+                        <span class="text-h6">{{ user.username }}</span>
                       </div>
                     </td>
                     <td class="text-h6">{{ user.email }}</td>
@@ -174,7 +188,7 @@
                         :append-icon="
                           $i18n.locale === 'ar' ? 'mdi-check' : undefined
                         "
-                        :loading="requestsStore.loading"
+                        :loading="loadingUsers[user._id]"
                       >
                         {{ t('approve') }}
                       </v-btn>
@@ -190,7 +204,7 @@
                         :append-icon="
                           $i18n.locale === 'ar' ? 'mdi-close' : undefined
                         "
-                        :loading="requestsStore.loading"
+                        :loading="loadingUsers[user._id]"
                       >
                         {{ t('deny') }}
                       </v-btn>
@@ -200,7 +214,7 @@
               </v-table>
 
               <!-- Pagination Controls -->
-              <div class="d-flex align-center justify-space-between mt-4">
+              <div class="d-flex align-center justify-space-between mt-4 pa-3">
                 <div class="d-flex align-center">
                   <span class="text-caption mr-2"
                     >{{ t('itemsPerPage') }}:</span

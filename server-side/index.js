@@ -62,7 +62,7 @@ app.use("/api", galleryRouter);
 app.use("/contact", contactRouter);
 app.use("/orders", orderRouter);
 app.use("/payments", paymentRouter);
-app.use("/api/settings", settingsRouter);
+app.use("/settings", settingsRouter);
 app.use("/api/currencies", require("./src/routes/currencies"));
 app.use("/dashboard", statsRouter);
 

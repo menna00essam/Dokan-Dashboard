@@ -83,5 +83,32 @@
   "password": "Mot de passe",
   "noAccount": "Vous n'avez pas de compte ?",
   "signUp": "S'inscrire",
-  "login": "Connexion"
+  "login": "Connexion",
+  "itemsPerPage": "Éléments par page",
+  "showingItems": "Affichage de {from} à {to} sur {total} éléments",
+  "userApproved": "{name} a été approuvé",
+  "currencies": "Devises",
+  "addCurrency": "Ajouter une devise",
+  "editCurrency": "Modifier la devise",
+  "newCurrency": "Nouvelle devise",
+  "code": "Code",
+  "name": "Nom",
+  "symbol": "Symbole",
+  "exchangeRate": "Taux de change",
+  "currencyUpdated": "Devise mise à jour avec succès",
+  "currencyAdded": "Devise ajoutée avec succès",
+  "currencyDeleted": "Devise supprimée avec succès",
+  "noCurrencies": "Aucune devise disponible",
+  "fieldRequired": "Ce champ est obligatoire",
+  "mustBeNumber": "Doit être un nombre valide",
+  "mustBePositive": "Doit être un nombre positif",
+  "update": "Mettre à jour",
+  "confirmDeleteTitle": "Confirmer la suppression",
+  "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer cette devise ? Cette action est irréversible.",
+  "error": {
+    "saveCurrency": "Échec de l'enregistrement de la devise",
+    "deleteCurrency": "Échec de la suppression de la devise",
+    "fetchCurrencies": "Échec du chargement des devises"
+  },
+  "noShippingMethods": "Aucune méthode de livraison disponible"
 }
