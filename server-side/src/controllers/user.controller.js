@@ -3,9 +3,7 @@ const asyncWrapper = require("../middlewares/asyncWrapper.middleware");
 const AppError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 const cloudinary = require("cloudinary").v2;
-const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
-const { sendEmail } = require("../utils/emailTransporter");
+const { body } = require("express-validator");
 
 // Helper function for pagination
 const paginate = async (model, query, options) => {
@@ -33,12 +31,12 @@ const paginate = async (model, query, options) => {
 // @route   POST /api/users
 // @access  Public
 const createUser = asyncWrapper(async (req, res, next) => {
-  const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, mobile } = req.body;
 
-  if (!firstName || !lastName || !email || !password) {
+  if (!firstName || !lastName || !email) {
     return next(
       new AppError(
-        "First name, last name, email and password are required",
+        "First name, last name and email are required",
         400,
         httpStatusText.FAIL
       )
@@ -54,12 +52,9 @@ const createUser = asyncWrapper(async (req, res, next) => {
     firstName,
     lastName,
     email,
-    password,
+    mobile,
     ...req.body,
   });
-
-  // Remove sensitive data from output
-  newUser.password = undefined;
 
   res.status(201).json({
     status: httpStatusText.SUCCESS,
@@ -210,104 +205,9 @@ const changePassword = asyncWrapper(async (req, res, next) => {
   user.password = newPassword;
   await user.save();
 
-  // Remove password from output
-  user.password = undefined;
-
   res.status(200).json({
     status: httpStatusText.SUCCESS,
     message: "Password changed successfully",
-  });
-});
-
-// @desc    Forgot password
-// @route   POST /api/users/forgot-password
-// @access  Public
-const forgotPassword = asyncWrapper(async (req, res, next) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return next(new AppError("Please provide email", 400, httpStatusText.FAIL));
-  }
-
-  const user = await User.findOne({ email });
-  if (!user) {
-    return next(
-      new AppError("No user with that email", 404, httpStatusText.NOT_FOUND)
-    );
-  }
-
-  const resetToken = user.createPasswordResetToken();
-  await user.save({ validateBeforeSave: false });
-
-  try {
-    const resetURL = `${req.protocol}://${req.get(
-      "host"
-    )}/api/v1/users/reset-password/${resetToken}`;
-
-    await sendEmail({
-      email: user.email,
-      subject: "Your password reset token (valid for 10 min)",
-      template: "password-reset",
-      context: {
-        name: user.firstName,
-        resetURL,
-      },
-    });
-
-    res.status(200).json({
-      status: httpStatusText.SUCCESS,
-      message: "Token sent to email!",
-    });
-  } catch (err) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    return next(
-      new AppError(
-        "There was an error sending the email. Try again later!",
-        500,
-        httpStatusText.ERROR
-      )
-    );
-  }
-});
-
-// @desc    Reset password
-// @route   PATCH /api/users/reset-password/:token
-// @access  Public
-const resetPassword = asyncWrapper(async (req, res, next) => {
-  const { token } = req.params;
-  const { password } = req.body;
-
-  if (!password) {
-    return next(new AppError("Password is required", 400, httpStatusText.FAIL));
-  }
-
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
-  const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: Date.now() },
-  });
-
-  if (!user) {
-    return next(
-      new AppError("Token is invalid or has expired", 400, httpStatusText.FAIL)
-    );
-  }
-
-  user.password = password;
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
-  await user.save();
-
-  // Remove password from output
-  user.password = undefined;
-
-  res.status(200).json({
-    status: httpStatusText.SUCCESS,
-    message: "Password updated successfully",
   });
 });
 
@@ -491,7 +391,6 @@ const getActivities = asyncWrapper(async (req, res, next) => {
     data: { activities: paginatedActivities },
   });
 });
-
 // @desc    Create support ticket
 // @route   POST /api/users/:id/tickets
 // @access  Private (Admin/SuperAdmin/Support)
@@ -902,9 +801,7 @@ const assignUserTags = asyncWrapper(async (req, res, next) => {
   const { tags } = req.body;
 
   if (!tags || !Array.isArray(tags)) {
-    return next(
-      new AppError("Please provide an array of tags", 400, httpStatusText.FAIL)
-    );
+    return next(new AppError('Please provide an array of tags', 400, httpStatusText.FAIL));
   }
 
   const user = await User.findByIdAndUpdate(
@@ -914,12 +811,12 @@ const assignUserTags = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { tags: user.tags },
+    data: { tags: user.tags }
   });
 });
 
@@ -930,13 +827,7 @@ const removeUserTags = asyncWrapper(async (req, res, next) => {
   const { tags } = req.body;
 
   if (!tags || !Array.isArray(tags)) {
-    return next(
-      new AppError(
-        "Please provide an array of tags to remove",
-        400,
-        httpStatusText.FAIL
-      )
-    );
+    return next(new AppError('Please provide an array of tags to remove', 400, httpStatusText.FAIL));
   }
 
   const user = await User.findByIdAndUpdate(
@@ -946,12 +837,12 @@ const removeUserTags = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { tags: user.tags },
+    data: { tags: user.tags }
   });
 });
 
@@ -962,14 +853,12 @@ const assignSegment = asyncWrapper(async (req, res, next) => {
   const { segmentName, expiresAt } = req.body;
 
   if (!segmentName) {
-    return next(
-      new AppError("Segment name is required", 400, httpStatusText.FAIL)
-    );
+    return next(new AppError('Segment name is required', 400, httpStatusText.FAIL));
   }
 
   const segmentData = {
     name: segmentName,
-    assignedBy: req.user.id,
+    assignedBy: req.user.id
   };
 
   if (expiresAt) {
@@ -983,12 +872,12 @@ const assignSegment = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { segments: user.segments },
+    data: { segments: user.segments }
   });
 });
 
@@ -1003,12 +892,12 @@ const removeSegment = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { segments: user.segments },
+    data: { segments: user.segments }
   });
 });
 
@@ -1031,7 +920,7 @@ const getUsersByTag = asyncWrapper(async (req, res, next) => {
     total,
     currentPage,
     totalPages,
-    data: { users },
+    data: { users }
   });
 });
 
@@ -1046,11 +935,7 @@ const getUsersBySegment = asyncWrapper(async (req, res, next) => {
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(
-    User,
-    { "segments.name": req.params.segment },
-    { page, limit }
-  );
+  } = await paginate(User, { 'segments.name': req.params.segment }, { page, limit });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1058,7 +943,7 @@ const getUsersBySegment = asyncWrapper(async (req, res, next) => {
     total,
     currentPage,
     totalPages,
-    data: { users },
+    data: { users }
   });
 });
 
@@ -1068,8 +953,8 @@ const getUsersBySegment = asyncWrapper(async (req, res, next) => {
 const updateCustomerTier = asyncWrapper(async (req, res, next) => {
   const { tier } = req.body;
 
-  if (!["basic", "silver", "gold", "platinum"].includes(tier)) {
-    return next(new AppError("Invalid tier value", 400, httpStatusText.FAIL));
+  if (!['basic', 'silver', 'gold', 'platinum'].includes(tier)) {
+    return next(new AppError('Invalid tier value', 400, httpStatusText.FAIL));
   }
 
   const user = await User.findByIdAndUpdate(
@@ -1079,14 +964,17 @@ const updateCustomerTier = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { customerTier: user.customerTier },
+    data: { customerTier: user.customerTier }
   });
 });
+
+
+// Add these methods to your user.controller.js
 
 // @desc    Get pending users
 // @route   GET /api/users/pending
@@ -1099,7 +987,7 @@ const getPendingUsers = asyncWrapper(async (req, res, next) => {
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { status: "pending" }, { page, limit });
+  } = await paginate(User, { status: 'pending' }, { page, limit });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1122,7 +1010,7 @@ const getApprovedUsers = asyncWrapper(async (req, res, next) => {
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { status: "approved" }, { page, limit });
+  } = await paginate(User, { status: 'approved' }, { page, limit });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1145,7 +1033,7 @@ const getDeniedUsers = asyncWrapper(async (req, res, next) => {
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { status: "denied" }, { page, limit });
+  } = await paginate(User, { status: 'denied' }, { page, limit });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1163,23 +1051,23 @@ const getDeniedUsers = asyncWrapper(async (req, res, next) => {
 const approveUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    {
-      status: "approved",
-      adminRequest: false,
+    { 
+      status: 'approved',
+      adminRequest: false 
     },
     { new: true, runValidators: true }
-  ).select("-password -__v");
+  ).select('-password -__v');
 
   if (!user) {
-    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
   }
 
   // Send approval email
   await sendEmail({
     email: user.email,
-    subject: "Your Account Has Been Approved",
-    template: "account-approved",
-    context: { name: user.firstName },
+    subject: 'Your Account Has Been Approved',
+    template: 'account-approved',
+    context: { name: user.firstName }
   });
 
   res.status(200).json({
@@ -1193,36 +1081,34 @@ const approveUser = asyncWrapper(async (req, res, next) => {
 // @access  Private (Admin/SuperAdmin)
 const denyUser = asyncWrapper(async (req, res, next) => {
   const { reason } = req.body;
-
+  
   if (!reason) {
-    return next(
-      new AppError("Denial reason is required", 400, httpStatusText.FAIL)
-    );
+    return next(new AppError('Denial reason is required', 400, httpStatusText.FAIL));
   }
 
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    {
-      status: "denied",
+    { 
+      status: 'denied',
       adminRequest: false,
-      denialReason: reason,
+      denialReason: reason 
     },
     { new: true }
-  ).select("-password -__v");
+  ).select('-password -__v');
 
   if (!user) {
-    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
   }
 
   // Send denial email
   await sendEmail({
     email: user.email,
-    subject: "Your Account Request Has Been Denied",
-    template: "account-denied",
-    context: {
+    subject: 'Your Account Request Has Been Denied',
+    template: 'account-denied',
+    context: { 
       name: user.firstName,
-      reason,
-    },
+      reason 
+    }
   });
 
   res.status(200).json({
@@ -1239,33 +1125,27 @@ const handleAdminRequest = asyncWrapper(async (req, res, next) => {
   const user = await User.findById(req.params.id);
 
   if (!user || !user.adminRequest) {
-    return next(
-      new AppError(
-        "No admin request found for this user",
-        404,
-        httpStatusText.NOT_FOUND
-      )
-    );
+    return next(new AppError('No admin request found for this user', 404, httpStatusText.NOT_FOUND));
   }
 
-  if (action === "approve") {
-    user.role = "admin";
+  if (action === 'approve') {
+    user.role = 'admin';
     user.adminRequest = false;
     await user.save();
-
+    
     await sendEmail({
       email: user.email,
-      subject: "Your Admin Request Has Been Approved",
-      template: "admin-approved",
+      subject: 'Your Admin Request Has Been Approved',
+      template: 'admin-approved'
     });
   } else {
     user.adminRequest = false;
     await user.save();
-
+    
     await sendEmail({
       email: user.email,
-      subject: "Your Admin Request Has Been Denied",
-      template: "admin-denied",
+      subject: 'Your Admin Request Has Been Denied',
+      template: 'admin-denied'
     });
   }
 
@@ -1297,6 +1177,8 @@ const getAdminRequests = asyncWrapper(async (req, res, next) => {
     data: { users },
   });
 });
+
+
 
 module.exports = {
   getIncentives,
@@ -1336,7 +1218,4 @@ module.exports = {
   denyUser,
   handleAdminRequest,
   getAdminRequests,
-  changePassword,
-  forgotPassword,
-  resetPassword,
 };

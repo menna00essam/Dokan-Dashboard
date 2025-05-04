@@ -1,8 +1,9 @@
 <template>
   <v-app :dir="isRTL ? 'rtl' : 'ltr'">
+    <CustomizeDrawer v-model="settingsDrawer" />
+
     <v-layout style="overflow: hidden">
       <v-navigation-drawer
-        color="primary"
         v-model="drawer"
         :permanent="!isMobile"
         :temporary="isMobile"
@@ -41,7 +42,12 @@
             border-top: 1px solid rgba(255, 255, 255, 0.12);
           "
         >
-          <v-btn block color="secondary" prepend-icon="mdi-logout" @click="logout">
+          <v-btn
+            block
+            color="secondary"
+            prepend-icon="mdi-logout"
+            @click="logout"
+          >
             {{ t('logout') }}
           </v-btn>
         </div>
@@ -54,6 +60,7 @@
           @toggle-drawer="toggleDrawer"
           :isMobile="isMobile"
           :isRTL="isRTL"
+          @toggle-settings="settingsDrawer = !settingsDrawer"
         />
         <router-view />
       </v-main>
@@ -62,18 +69,19 @@
 </template>
 
 <script setup>
-  import { ref, computed, watch, watchEffect } from 'vue'
-  import { useDisplay } from 'vuetify'
+  import { ref, computed, watch, watchEffect, onMounted } from 'vue'
+  import { useDisplay, useTheme } from 'vuetify'
   import { useI18n } from 'vue-i18n'
   import Header from '../components/Header.vue'
-
+  import CustomizeDrawer from '../components/CustomizeDrawer.vue'
   const { t, locale } = useI18n()
   const display = useDisplay()
+  const themeManager = useTheme()
   const drawer = ref(true)
   const isMobile = computed(() => display.smAndDown.value)
   const isRTL = computed(() => locale.value === 'ar')
-
-  // Dynamic content margins
+  const settingsDrawer = ref(false)
+ // Dynamic content margins
   const mainContentStyles = computed(() => ({
     transition: 'margin 0.3s ease'
   }))
@@ -82,11 +90,13 @@
     { title: 'dashboard', to: '/dashboard' },
     { title: 'products', to: '/products' },
     { title: 'orders', to: '/orders' },
-    { title: 'customers', to: '/CustomerManagement' },
+    { title: 'customers', to: '/customers' },
     { title: 'requests', to: '/requests' },
     { title: 'storeSettings', to: '/config' }
   ]
 
+
+  
   const toggleDrawer = () => {
     drawer.value = !drawer.value
   }
@@ -140,6 +150,7 @@
     left: 0;
     right: auto !important;
   }
+
   /* Mobile drawer animation */
   .v-navigation-drawer--is-mobile {
     transition:
@@ -151,5 +162,33 @@
   /* Main content transition */
   .v-main {
     transition: margin 0.3s ease !important;
+  }
+
+  .settings-drawer {
+    transition:
+      transform 0.3s ease,
+      opacity 0.3s ease,
+      right 0.3s ease,
+      left 0.3s ease;
+    will-change: transform, opacity;
+  }
+
+  .settings-drawer.v-navigation-drawer--active {
+    opacity: 1;
+  }
+
+  .settings-drawer:not(.v-navigation-drawer--active) {
+    opacity: 0;
+  }
+  .selected-theme {
+    border: 2px solid #2196f3 !important;
+    box-shadow: 0 0 0 1px white inset !important; /* Creates a white inner border */
+  }
+
+  .selected-color {
+    border: 3px solid #2196f3 !important;
+    box-shadow: 0 0 0 2px white inset !important; /* Creates a white inner border */
+    transform: scale(1.05);
+    transition: all 0.2s ease;
   }
 </style>

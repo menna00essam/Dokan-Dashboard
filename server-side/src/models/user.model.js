@@ -1,17 +1,16 @@
+
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: [true, "First name is required"],
+      // required: [true, "First name is required"],
       trim: true,
     },
     lastName: {
       type: String,
-      required: [true, "Last name is required"],
+      // required: [true, "Last name is required"],
       trim: true,
     },
     email: {
@@ -22,25 +21,21 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
         },
-        message: (props) => `${props.value} is not a valid email!`,
+        message: (props) => `${props.value} is not a valid email!`, 
       },
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
-      minlength: [8, "Password must be at least 8 characters"],
-      select: false,
+      required: [true, "Please add a password"],
+      minLength: 8,
     },
-    passwordChangedAt: Date,
-    passwordResetToken: String,
-    passwordResetExpires: Date,
     mobile: {
       type: String,
       validate: {
         validator: function (v) {
           return /^[0-9]{10,15}$/.test(v);
         },
-        message: (props) => `${props.value} is not a valid phone number!`,
+        message: (props) => `${props.value} is not a valid phone number!`, 
       },
     },
     addresses: [
@@ -71,7 +66,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^(https?:\/\/).+\.(jpg|jpeg|png|gif)$/i.test(v);
         },
-        message: (props) => `${props.value} is not a valid image URL!`,
+        message: (props) => `${props.value} is not a valid image URL!`, 
       },
     },
     role: {
@@ -82,30 +77,40 @@ const userSchema = new mongoose.Schema(
     adminRequest: {
       type: Boolean,
       default: false,
-      required: false
+      required: false,
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'denied'],
+      enum: ["pending", "approved", "denied"],
       default: function () {
-        return this.role === 'user' ? 'approved' : 'pending';
-      }
+        return this.role === "user" ? "approved" : "pending";
+      },
     },
     tags: {
       type: [String],
-      enum: ['premium', 'frequent', 'new', 'vip', 'loyal', 'wholesale', 'business'],
-      default: []
+      enum: [
+        "premium",
+        "frequent",
+        "new",
+        "vip",
+        "loyal",
+        "wholesale",
+        "business",
+      ],
+      default: [],
     },
-    segments: [{
-      name: String,
-      assignedAt: { type: Date, default: Date.now },
-      assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      expiresAt: Date
-    }],
+    segments: [
+      {
+        name: String,
+        assignedAt: { type: Date, default: Date.now },
+        assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        expiresAt: Date,
+      },
+    ],
     customerTier: {
       type: String,
-      enum: ['basic', 'silver', 'gold', 'platinum'],
-      default: 'basic'
+      enum: ["basic", "silver", "gold", "platinum"],
+      default: "basic",
     },
     ordersCount: { type: Number, default: 0 },
     totalSpent: { type: Number, default: 0 },
@@ -151,10 +156,7 @@ const userSchema = new mongoose.Schema(
     ],
     supportTickets: [
       {
-        ticketId: { 
-          type: String,         
-          default: () => crypto.randomBytes(16).toString('hex') 
-        },
+        ticketId: { type: String, unique: true },
         title: { type: String, required: true },
         issueType: {
           type: String,
@@ -210,7 +212,7 @@ const userSchema = new mongoose.Schema(
     ],
     reviews: [
       {
-        reviewId: { type: String, unique: true, default: () => crypto.randomBytes(16).toString('hex') },
+        reviewId: { type: String, unique: true },
         productId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
@@ -231,7 +233,7 @@ const userSchema = new mongoose.Schema(
     ],
     incentives: [
       {
-        incentiveId: { type: String, unique: true, default: () => crypto.randomBytes(16).toString('hex') },
+        incentiveId: { type: String, unique: true },
         incentiveType: {
           type: String,
           enum: ["discount", "coupon", "cashback", "gift", "points", "other"],
@@ -258,7 +260,7 @@ const userSchema = new mongoose.Schema(
 
 // Virtuals
 userSchema.virtual("fullName").get(function () {
-  return `${this.firstName} ${this.lastName}`;
+  return `${this.firstName} ${this.lastName}`; 
 });
 
 userSchema.virtual("age").get(function () {
@@ -273,47 +275,35 @@ userSchema.virtual("age").get(function () {
   return age;
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  this.password = await bcrypt.hash(this.password, 12);
-  this.passwordChangedAt = Date.now() - 1000;
+userSchema.pre("save", function (next) {
+  if (this.isModified("ordersCount") || this.isModified("totalSpent")) {
+    const newTags = [];
+
+    if (this.ordersCount >= 20) newTags.push("premium", "loyal");
+    else if (this.ordersCount >= 10) newTags.push("premium");
+    else if (this.ordersCount >= 5) newTags.push("frequent");
+
+    if (this.totalSpent >= 1000) newTags.push("vip");
+    if (this.ordersCount === 0) newTags.push("new");
+
+    this.tags = [
+      ...new Set(
+        [
+          ...this.tags.filter(
+            (t) =>
+              !["premium", "frequent", "new", "vip", "loyal"].includes(t)
+          ),
+          ...newTags,
+        ]
+      ),
+    ];
+
+    if (this.totalSpent >= 5000) this.customerTier = "platinum";
+    else if (this.totalSpent >= 2000) this.customerTier = "gold";
+    else if (this.totalSpent >= 500) this.customerTier = "silver";
+    else this.customerTier = "basic";
+  }
   next();
 });
 
-// Method to compare passwords
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
-// Method to check if password was changed after token was issued
-userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
-  if (this.passwordChangedAt) {
-    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
-    return JWTTimestamp < changedTimestamp;
-  }
-  return false;
-};
-
-// Method to create password reset token
-userSchema.methods.createPasswordResetToken = function() {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-  
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-  
-  return resetToken;
-};
-
-// Indexes
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ mobile: 1 }, { sparse: true });
-userSchema.index({ firstName: "text", lastName: "text", email: "text" });
-userSchema.index({ "addresses.location": "2dsphere" });
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

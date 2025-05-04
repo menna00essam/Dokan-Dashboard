@@ -5,12 +5,15 @@ const userController = require("../controllers/user.controller");
 const {
   avatarUpload,
   authenticateUser,
-  adminAccess,
   superAdminAccess,
+  adminAccess,
   supportAccess,
   accountantAccess,
+  adminRole,
+  superAdminRole,
 } = require("../middlewares/user.middleware");
 
+// const authenticateUser = verifyToken;
 // ===== Public Routes =====
 router.post("/", userController.createUser);
 router.get("/", userController.getAllUsers);
@@ -37,7 +40,11 @@ router.get("/:id/activities", adminAccess, userController.getActivities);
 // ===== Support Tickets =====
 router.post("/:id/tickets", supportAccess, userController.createTicket);
 router.get("/:id/tickets", supportAccess, userController.getTickets);
-router.patch("/:id/tickets/:ticketId", supportAccess, userController.updateTicket);
+router.patch(
+  "/:id/tickets/:ticketId",
+  supportAccess,
+  userController.updateTicket
+);
 
 // ===== Credit Management =====
 router.post("/:id/credit", accountantAccess, userController.addCredit);
@@ -56,33 +63,62 @@ router.post("/:id/incentives", adminAccess, userController.addIncentive);
 router.get("/:id/incentives", adminAccess, userController.getIncentives);
 
 // ===== Tags Management =====
-router.post("/:id/tags", adminAccess, userController.assignUserTags);
-router.delete("/:id/tags", adminAccess, userController.removeUserTags);
+router.post("/:id/tags", adminRole, userController.assignUserTags);
+router.delete("/:id/tags", adminRole, userController.removeUserTags);
 
 // ===== Segments Management =====
-router.post("/:id/segments", adminAccess, userController.assignSegment);
-router.delete("/:id/segments/:segmentName", adminAccess, userController.removeSegment);
+router.post("/:id/segments", adminRole, userController.assignSegment);
+router.delete(
+  "/:id/segments/:segmentName",
+  adminRole,
+  userController.removeSegment
+);
 
 // ===== User Queries (Filter) =====
-router.get("/by-tag/:tag", adminAccess, userController.getUsersByTag);
-router.get("/by-segment/:segment", adminAccess, userController.getUsersBySegment);
+router.get("/by-tag/:tag", adminRole, userController.getUsersByTag);
+router.get("/by-segment/:segment", adminRole, userController.getUsersBySegment);
 
 // ===== Tier Management =====
-router.patch("/:id/tier", adminAccess, userController.updateCustomerTier);
+router.patch("/:id/tier", adminRole, userController.updateCustomerTier);
 
 // ===== User Status Management =====
-router.get("/pending", adminAccess, userController.getPendingUsers);
-router.get("/approved", adminAccess, userController.getApprovedUsers);
-router.get("/denied", adminAccess, userController.getDeniedUsers);
-router.patch("/:id/approve", adminAccess, userController.approveUser);
-router.patch("/:id/deny", adminAccess, userController.denyUser);
+router.get(
+  "/pending",
+  authenticateUser,
+  superAdminAccess,
+  userController.getPendingUsers
+);
+router.get(
+  "/approved",
+  authenticateUser,
+  superAdminAccess,
+  userController.getApprovedUsers
+);
+router.get(
+  "/denied",
+  authenticateUser,
+  superAdminAccess,
+  userController.getDeniedUsers
+);
+router.patch(
+  "/:id/approve",
+  authenticateUser,
+  superAdminAccess,
+  userController.approveUser
+);
+router.patch(
+  "/:id/deny",
+  authenticateUser,
+  superAdminAccess,
+  userController.denyUser
+);
 
 // ===== Admin Request Management =====
-router.patch("/:id/request-admin", adminAccess, userController.handleAdminRequest);
-router.get("/admin-requests", adminAccess, userController.getAdminRequests);
-
-// Password reset routes
-router.post('/forgot-password', userController.forgotPassword);
-router.patch('/reset-password/:token', userController.resetPassword);
+router.patch(
+  "/:id/request-admin",
+  adminRole,
+  userController.handleAdminRequest
+);
+router.get("/admin-requests", adminRole, userController.getAdminRequests);
 
 module.exports = router;
