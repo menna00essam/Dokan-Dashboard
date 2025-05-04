@@ -131,7 +131,7 @@
     "saveCurrency": "Failed to save currency",
     "deleteCurrency": "Failed to delete currency",
     "fetchCurrencies": "Failed to load currencies"
-  }
+  },
   "noShippingMethods": "No shipping methods available",
   "Config":"Configration",
   "addCustomer": "Add New Customer",
