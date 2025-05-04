@@ -4,9 +4,7 @@ const path = require('path');
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 const cors = require('cors');
 require('dotenv').config();
-const cloudinary = require('./src/config/cloudinary.config');
 const passport = require('passport');
-const cors = require("cors");
 require("dotenv").config();
 const cloudinary = require("./src/config/cloudinary.config");
 
@@ -14,7 +12,6 @@ const cloudinary = require("./src/config/cloudinary.config");
 require("./src/middlewares/passport.middleware");
 require("./src/services/orderStatus.service");
 
-const passport = require("passport");
 
 /* * * * Utils * * * * */
 const httpStatusText = require("./src/utils/httpStatusText");

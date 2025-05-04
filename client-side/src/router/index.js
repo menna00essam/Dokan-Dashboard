@@ -110,8 +110,10 @@ const routes = [
       // }
 
       {
-        path: 'CustomerDetails',
-        name: 'CustomerDetails',
+        path: '/customers/:id',
+        name: 'customer-details',
+        component: CustomerDetails
+      },
       {
         path: '/customers/edit/:id',
         name: 'edit-customer',
