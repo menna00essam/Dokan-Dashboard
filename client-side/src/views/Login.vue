@@ -33,9 +33,12 @@ async function login() {
             });
             console.log("Login successful:",response.data);
 
-            authStore.setToken(response.data.data.token);
+            const token = response.data.data.token;  // Correct token path
+            authStore.setToken(token);  // Store token in Pinia
 
-            localStorage.setItem('token',response.data.token);
+            // Token is automatically stored in Pinia, no need to store manually in localStorage
+            localStorage.setItem('token', token);  // Optionally keep token in localStorage
+
 
             router.push('/dashboard')
             

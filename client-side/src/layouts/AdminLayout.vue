@@ -93,9 +93,7 @@
     { title: 'dashboard', to: '/dashboard' },
     { title: 'products', to: '/products' },
     { title: 'orders', to: '/orders' },
-    { title: 'customers', to: '/customers' },
-    { title: 'requests', to: '/requests' },
-    { title: 'storeSettings', to: '/config' }
+    { title: 'customers', to: '/customers' }
   ]
 
   const toggleDrawer = () => {

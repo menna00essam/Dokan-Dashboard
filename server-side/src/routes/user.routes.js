@@ -20,18 +20,18 @@ router.get("/", userController.getAllUsers);
 
 // ===== Protected Routes (Require Authentication) =====
 router.use(authenticateUser);
+// ===== User Status Management =====
+router.get("/pending", superAdminAccess, userController.getPendingUsers);
+router.get("/approved", superAdminAccess, userController.getApprovedUsers);
+router.get("/denied", superAdminAccess, userController.getDeniedUsers);
+router.patch("/:id/approve", superAdminAccess, userController.approveUser);
+router.patch("/:id/deny", superAdminAccess, userController.denyUser);
 
 // ===== User Profile =====
 router.get("/profile", userController.getUserProfile);
 router.patch("/profile", userController.updateUserProfile);
 router.patch("/profile/avatar", avatarUpload, userController.updateAvatar);
 router.patch("/profile/password", userController.changePassword);
-
-// ===== User Management (Admin Access) =====
-router.get("/:id", adminAccess, userController.getUserById);
-router.patch("/:id", adminAccess, userController.updateUser);
-router.delete("/:id", superAdminAccess, userController.deleteUser);
-router.post("/:id/restore", superAdminAccess, userController.restoreUser);
 
 // ===== Activities =====
 router.post("/:id/activities", adminAccess, userController.addActivity);
@@ -81,38 +81,6 @@ router.get("/by-segment/:segment", adminRole, userController.getUsersBySegment);
 // ===== Tier Management =====
 router.patch("/:id/tier", adminRole, userController.updateCustomerTier);
 
-// ===== User Status Management =====
-router.get(
-  "/pending",
-  authenticateUser,
-  superAdminAccess,
-  userController.getPendingUsers
-);
-router.get(
-  "/approved",
-  authenticateUser,
-  superAdminAccess,
-  userController.getApprovedUsers
-);
-router.get(
-  "/denied",
-  authenticateUser,
-  superAdminAccess,
-  userController.getDeniedUsers
-);
-router.patch(
-  "/:id/approve",
-  authenticateUser,
-  superAdminAccess,
-  userController.approveUser
-);
-router.patch(
-  "/:id/deny",
-  authenticateUser,
-  superAdminAccess,
-  userController.denyUser
-);
-
 // ===== Admin Request Management =====
 router.patch(
   "/:id/request-admin",
@@ -120,5 +88,9 @@ router.patch(
   userController.handleAdminRequest
 );
 router.get("/admin-requests", adminRole, userController.getAdminRequests);
-
+// ===== User Management (Admin Access) =====
+router.get("/:id", adminAccess, userController.getUserById);
+router.patch("/:id", adminAccess, userController.updateUser);
+router.delete("/:id", superAdminAccess, userController.deleteUser);
+router.post("/:id/restore", superAdminAccess, userController.restoreUser);
 module.exports = router;
