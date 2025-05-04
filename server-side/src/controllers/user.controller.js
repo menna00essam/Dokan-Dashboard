@@ -1090,6 +1090,7 @@ const approveUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     id,
     {
+      role: "admin",
       status: "approved",
       adminRequest: false,
     },
@@ -1115,6 +1116,7 @@ const approveUser = asyncWrapper(async (req, res, next) => {
     console.error("Email send error:", e.message);
     // Optional: log or report the failure, don't block the response
   }
+  console.log(user);
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
