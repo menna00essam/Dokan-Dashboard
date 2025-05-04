@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 // Layouts
 import AuthLayout from '../layouts/AuthLayout.vue'
 const AppLayout = () => import('../layouts/AppLayout.vue')
-import AdminLayout from '../layouts/AdminLayout.vue' // Add this
+import AdminLayout from '../layouts/AdminLayout.vue'
 
 // Views
 import NotFound from '../views/NotFound.vue'
@@ -19,6 +19,7 @@ import CustomerManagement from '../views/CustomerManagement.vue'
 import CustomerDetails from '../views/CustomerDetails.vue'
 import StoreConfig from '../views/StoreConfig.vue'
 import Requests from '../views/Requests.vue'
+import OrderDetails from '../views/OrderDetails.vue'
 import EditCustomer from '../views/EditCustomer.vue'
 import Currencies from '../components/Settings/Currencies.vue'
 
@@ -33,7 +34,8 @@ const routes = [
       {
         path: 'login',
         name: 'login',
-        component: Login
+        component: Login,
+        meta: { breadcrumb: 'Login' }
       },
       {
         path: '/login',
@@ -42,7 +44,8 @@ const routes = [
       {
         path: 'register',
         name: 'register',
-        component: Register
+        component: Register,
+        meta: { breadcrumb: 'Register' }
       },
       {
         path: '/register',
@@ -51,7 +54,8 @@ const routes = [
       {
         path: 'pending',
         name: 'pending',
-        component: Pending
+        component: Pending,
+        meta: { breadcrumb: 'Pending' }
       },
       {
         path: '/pending',
@@ -64,17 +68,17 @@ const routes = [
   {
     path: '/',
     component: AppLayout,
-    meta: {
-      requiresAuth: true,
+    meta: { 
+      requiresAuth: true, 
       allowedRoles: ['super_admin'],
       breadcrumb: 'Dashboard'
     },
     children: [
       {
         path: '',
-        name: 'super-admin-dashboard', // Dedicated name
+        name: 'super-admin-dashboard',
         component: Dashboard,
-        breadcrumb: 'Dashboard'
+        meta: { breadcrumb: 'Dashboard' }
       },
       {
         path: 'dashboard',
@@ -84,79 +88,86 @@ const routes = [
         path: 'products',
         name: 'super-admin-products',
         component: Products,
-        breadcrumb: 'Products'
+        meta: { breadcrumb: 'Products' }
       },
       {
         path: 'orders',
         name: 'super-admin-orders',
         component: Orders,
-        breadcrumb: 'Orders'
+        meta: { breadcrumb: 'Orders' }
+      },
+      {
+        path: 'order-details/:id',
+        name: 'order-details',
+        component: OrderDetails,
+        meta: { breadcrumb: 'Order Details' }
       },
       {
         path: 'config',
         name: 'super-admin-config',
         component: StoreConfig,
-        breadcrumb: 'Store Configration'
+        meta: { breadcrumb: 'Store Configuration' }
       },
       {
         path: 'requests',
         name: 'super-admin-requests',
         component: Requests,
-        breadcrumb: 'Requests'
+        meta: { breadcrumb: 'Requests' }
       },
       {
         path: 'customers',
         name: 'super-admin-customers',
         component: CustomerManagement,
         props: true,
-        breadcrumb: 'Customers'
+        meta: { breadcrumb: 'Customers' }
       },
       {
         path: 'customers/edit/:id',
         name: 'super-admin-edit-customer',
         props: true,
         component: EditCustomer,
-        breadcrumb: 'Edit Customers'
+        meta: { breadcrumb: 'Edit Customer' }
       },
       {
         path: 'addproducts',
         name: 'super-admin-add-products',
         component: AddProduct,
-        breadcrumb: 'Add Customers'
+        meta: { breadcrumb: 'Add Product' }
       },
       {
-        path: 'editproducts/:sku/',
+        path: 'editproducts/:sku',
         name: 'super-admin-edit-products',
         component: EditProduct,
-        breadcrumb: 'Edit Product'
+        meta: { breadcrumb: 'Edit Product' }
       },
       {
         path: 'customers/:id',
         name: 'super-admin-customer-details',
         component: CustomerDetails,
-        breadcrumb: 'Customers Details'
+        meta: { breadcrumb: 'Customer Details' }
       },
       {
         path: 'currencies',
         name: 'super-admin-currencies',
-        component: Currencies
+        component: Currencies,
+        meta: { breadcrumb: 'Currencies' }
       }
     ]
   },
   {
     path: '/admin',
     component: AdminLayout,
-    meta: {
-      requiresAuth: true,
+    meta: { 
+      requiresAuth: true, 
       allowedRoles: ['admin'],
       breadcrumb: 'Dashboard'
     },
     children: [
       {
         path: '',
-        name: 'admin-dashboard', // Dedicated name
+        name: 'admin-dashboard',
         component: Dashboard,
-        breadcrumb: 'Dashboard'
+        meta: { breadcrumb: 'Dashboard' }
       },
       {
         path: 'dashboard',
@@ -166,50 +177,51 @@ const routes = [
         path: 'products',
         name: 'admin-products',
         component: Products,
-        breadcrumb: 'Products'
+        meta: { breadcrumb: 'Products' }
       },
       {
         path: 'orders',
         name: 'admin-orders',
         component: Orders,
-        breadcrumb: 'Orders'
+        meta: { breadcrumb: 'Orders' }
       },
       {
         path: 'customers',
         name: 'admin-customers',
         component: CustomerManagement,
         props: true,
-        breadcrumb: 'Customers'
+        meta: { breadcrumb: 'Customers' }
       },
       {
         path: 'customers/edit/:id',
         name: 'admin-edit-customer',
         props: true,
         component: EditCustomer,
-        breadcrumb: 'Edit Customer'
+        meta: { breadcrumb: 'Edit Customer' }
       },
       {
         path: 'addproducts',
         name: 'admin-add-products',
         component: AddProduct,
-        breadcrumb: 'Add Product'
+        meta: { breadcrumb: 'Add Product' }
       },
       {
         path: 'editproducts/:sku',
         name: 'admin-edit-products',
         component: EditProduct,
-        breadcrumb: 'Edit Product'
+        meta: { breadcrumb: 'Edit Product' }
       },
       {
         path: 'customers/:id',
         name: 'admin-customer-details',
         component: CustomerDetails,
-        breadcrumb: 'Customer Details'
+        meta: { breadcrumb: 'Customer Details' }
       },
       {
         path: 'currencies',
         name: 'admin-currencies',
-        component: Currencies
+        component: Currencies,
+        meta: { breadcrumb: 'Currencies' }
       }
     ]
   },
@@ -229,8 +241,6 @@ const router = createRouter({
 // Improved Auth Guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  console.log('User:', authStore.user)
-  console.log('Role:', authStore.userRole)
   if (!authStore.user && authStore.token) {
     await authStore.loadUserFromStorage()
   }
@@ -243,10 +253,7 @@ router.beforeEach(async (to, from, next) => {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
 
-  if (
-    to.meta.allowedRoles &&
-    !to.meta.allowedRoles.includes(authStore.userRole)
-  ) {
+  if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(authStore.userRole)) {
     return next(redirectBasedOnRole(authStore.userRole))
   }
 
