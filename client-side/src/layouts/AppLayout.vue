@@ -28,7 +28,9 @@
             :to="item.to"
             link
           >
-            <v-list-item-title>{{ t(item.title) }}</v-list-item-title>
+            <v-list-item-title>{{
+              t('pages.' + item.title)
+            }}</v-list-item-title>
           </v-list-item>
         </v-list>
 
@@ -62,7 +64,7 @@
           :isRTL="isRTL"
           @toggle-settings="settingsDrawer = !settingsDrawer"
         />
-        <router-view />
+        <router-view :key="$route.fullPath" />
       </v-main>
     </v-layout>
   </v-app>
@@ -84,6 +86,8 @@
   const isMobile = computed(() => display.smAndDown.value)
   const isRTL = computed(() => locale.value === 'ar')
   const settingsDrawer = ref(false)
+  const loading = ref(false)
+
   // Dynamic content margins
   const mainContentStyles = computed(() => ({
     transition: 'margin 0.3s ease'
@@ -95,7 +99,7 @@
     { title: 'orders', to: '/orders' },
     { title: 'customers', to: '/customers' },
     { title: 'requests', to: '/requests' },
-    { title: 'storeSettings', to: '/config' }
+    { title: 'settings', to: '/config' }
   ]
 
   const toggleDrawer = () => {
@@ -119,6 +123,16 @@
       document.documentElement.dir = isRTL.value ? 'rtl' : 'ltr'
     },
     { immediate: true }
+  )
+  import { useRoute } from 'vue-router'
+  const route = useRoute()
+
+  watch(
+    () => route.path,
+    () => {
+      loading.value = true
+      setTimeout(() => (loading.value = false), 300)
+    }
   )
 </script>
 

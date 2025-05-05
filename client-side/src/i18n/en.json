@@ -2,6 +2,14 @@
   "title": "Dashboard",
   "welcome": "Welcome to the Dashboard",
   "users": "Users",
+  "pages": {
+    "orders": "Orders",
+    "customers": "Customers",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "requests": "Requests",
+    "settings": "Settings"
+  },
   "settings": "Settings",
   "storeSettings": "Store Settings",
   "saveSettings": "Save Settings",
@@ -133,7 +141,7 @@
     "fetchCurrencies": "Failed to load currencies"
   },
   "noShippingMethods": "No shipping methods available",
-  "Config":"Configration",
+  "Config": "Configration",
   "addCustomer": "Add New Customer",
   "country": "Country",
   "mobile": "Mobile Number",

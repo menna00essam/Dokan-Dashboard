@@ -6,6 +6,14 @@
   export default {
     components: { StoreSettings, ShippingConfig, AdminRoleConfig, Currencies }
   }
+  import { onBeforeUnmount } from 'vue'
+
+  onBeforeUnmount(() => {
+    // Cancel any pending requests
+    // Clear intervals/timeouts
+    // Remove event listeners
+    console.log('Settings component unmounted') // Verify cleanup
+  })
 </script>
 
 <template>
@@ -15,7 +23,7 @@
     <!-- Shipping Methods Section -->
     <ShippingConfig />
     <!-- User Roles Section -->
-    <AdminRoleConfig />
+    <AdminRoleConfig></AdminRoleConfig>
     <Currencies />
   </v-container>
 </template>
