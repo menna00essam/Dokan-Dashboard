@@ -31,7 +31,7 @@
   <RouterView />
 </template>
 
-<style scoped>
+<style >
   /* Toast Styles */
   .custom-toast {
     border-radius: 12px !important;

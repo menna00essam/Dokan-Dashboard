@@ -62,7 +62,7 @@
           :isRTL="isRTL"
           @toggle-settings="settingsDrawer = !settingsDrawer"
         />
-        <router-view />
+        <router-view :key="$route.name + JSON.stringify($route.params)" />
       </v-main>
     </v-layout>
   </v-app>

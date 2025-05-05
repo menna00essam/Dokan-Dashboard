@@ -10,7 +10,7 @@
         :location="isRTL ? 'right' : 'left'"
         style="
           height: 100vh;
-          position: fixed;
+          /* position: fixed; */
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -64,7 +64,7 @@
           :isRTL="isRTL"
           @toggle-settings="settingsDrawer = !settingsDrawer"
         />
-        <router-view :key="$route.fullPath" />
+        <router-view :key="$route.name + JSON.stringify($route.params)" />
       </v-main>
     </v-layout>
   </v-app>
@@ -116,14 +116,7 @@
   })
 
   // Handle RTL/LTR changes
-  watch(
-    locale,
-    (newLang) => {
-      document.documentElement.lang = newLang
-      document.documentElement.dir = isRTL.value ? 'rtl' : 'ltr'
-    },
-    { immediate: true }
-  )
+
   import { useRoute } from 'vue-router'
   const route = useRoute()
 

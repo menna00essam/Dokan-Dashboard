@@ -1,11 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Layouts
-const AppLayout = () => import('../layouts/AppLayout.vue')
-const AuthLayout = () => import('../layouts/AuthLayout.vue')
-const AdminLayout = () => import('../layouts/AdminLayout.vue')
-
-// Views
+// Views (keep these as direct imports)
 import NotFound from '../views/NotFound.vue'
 import AddProduct from '../views/AddProduct.vue'
 import EditProduct from '../views/EditProduct.vue'
@@ -29,7 +24,7 @@ const routes = [
   // Super Admin Routes
   {
     path: '/',
-    component: AppLayout,
+    component: () => import('../layouts/AppLayout.vue'), // Dynamic import here
     meta: {
       requiresAuth: true,
       allowedRoles: ['super_admin'],
@@ -118,7 +113,7 @@ const routes = [
   },
   {
     path: '/admin',
-    component: AdminLayout,
+    component: () => import('../layouts/AdminLayout.vue'), // Dynamic import here
     meta: {
       requiresAuth: true,
       allowedRoles: ['admin'],
@@ -189,7 +184,7 @@ const routes = [
   },
   {
     path: '/auth',
-    component: AuthLayout,
+    component: () => import('../layouts/AuthLayout.vue'), // Dynamic import here
     meta: { public: true },
     children: [
       {
