@@ -7,7 +7,7 @@
 
 <template>
   <v-container fluid>
-    <StoreSettings></StoreSettings>
+    <!-- <StoreSettings></StoreSettings> -->
     <ShippingConfig />
     <AdminRoleConfig></AdminRoleConfig>
     <Currencies />

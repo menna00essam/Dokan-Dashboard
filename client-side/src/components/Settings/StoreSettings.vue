@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, onMounted, watch, computed } from 'vue'
+  import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
   import { useToast } from 'vue-toastification'
   import { useI18n } from 'vue-i18n'
   import { useSettingsStore } from '../../store/useSettingsStore'
@@ -10,19 +10,23 @@
   const settingsStore = useSettingsStore()
   const currencyStore = useCurrencyStore()
 
-  // Initialize with store values
-  const storeSettings = ref({
+  // Reactive form model
+  const form = ref({
     name: '',
     currency: 'USD',
     language: 'en'
   })
 
-  const currencies = computed(() =>
-    settingsStore.currencies.map((c) => ({
+  // Safe reference to mounted state
+  let isMounted = false
+
+  // Computed properties
+  const currencies = computed(() => {
+    return settingsStore.currencies.map((c) => ({
       title: `${c.symbol} - ${c.name}`,
       value: c.code
     }))
-  )
+  })
 
   const languages = computed(() => [
     { text: t('english'), value: 'en' },
@@ -30,45 +34,49 @@
     { text: t('french'), value: 'fr' }
   ])
 
-  // Load settings when component mounts
-  onMounted(async () => {
+  // Language handling
+  const applyLanguageSettings = (lang) => {
+    if (!isMounted) return
+    locale.value = lang
+    document.documentElement.lang = lang
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+    localStorage.setItem('userLanguage', lang)
+  }
+
+  // Load initial settings
+  const loadSettings = async () => {
     try {
-      await settingsStore.fetchStoreSettings()
-      await settingsStore.fetchCurrencies()
+      await Promise.all([
+        settingsStore.fetchStoreSettings(),
+        settingsStore.fetchCurrencies()
+      ])
 
-      // Check if currencies are loaded successfully
-      if (settingsStore.currencies.length > 0) {
-        console.log("Currencies loaded:", settingsStore.currencies)
-      } else {
-        console.warn("No currencies found")
-      }
-
-      // Check localStorage first, then fall back to store default
-      const savedLang = localStorage.getItem('userLanguage') || settingsStore.defaultLanguage
-
-      // Update all references
-      storeSettings.value = {
+      // Initialize form values
+      form.value = {
         name: settingsStore.storeName,
         currency: settingsStore.currency,
-        language: savedLang
+        language:
+          localStorage.getItem('userLanguage') || settingsStore.defaultLanguage
       }
 
-      // Apply the language settings
-      applyLanguageSettings(savedLang)
+      // Apply initial language
+      applyLanguageSettings(form.value.language)
 
-      // Persist currency from localStorage
-      currencyStore.persistCurrencyFromStorage()
-
-      // Debug log for checking currency
-      console.log("Selected Currency on mount:", currencyStore.selectedCurrency)
+      // Initialize currency
+      const selectedCurrency = settingsStore.currencies.find(
+        (c) => c.code === form.value.currency
+      )
+      if (selectedCurrency) {
+        currencyStore.setCurrency(selectedCurrency)
+      }
     } catch (error) {
       toast.error(t('failedToLoadSettings'))
     }
-  })
+  }
 
-  // Watch for language changes
+  // Watch for changes
   watch(
-    () => storeSettings.value.language,
+    () => form.value.language,
     (newLang) => {
       if (newLang !== locale.value) {
         applyLanguageSettings(newLang)
@@ -77,7 +85,7 @@
   )
 
   watch(
-    () => storeSettings.value.currency,
+    () => form.value.currency,
     (newCurrency) => {
       const selectedCurrency = settingsStore.currencies.find(
         (c) => c.code === newCurrency
@@ -88,38 +96,32 @@
     }
   )
 
-  const applyLanguageSettings = (lang) => {
-    locale.value = lang
-    document.documentElement.lang = lang
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
-  }
-
+  // Save settings
   const saveSettings = async () => {
     try {
       const settingsToSave = {
-        storeName: storeSettings.value.name,
-        currency: storeSettings.value.currency,
-        defaultLanguage: storeSettings.value.language
+        storeName: form.value.name,
+        currency: form.value.currency,
+        defaultLanguage: form.value.language
       }
 
       await settingsStore.updateStoreSettings(settingsToSave)
-      // Get full currency object (code, symbol, exchange_rate)
-      const selectedCurrency = settingsStore.currencies.find(
-        (c) => c.code === storeSettings.value.currency
-      )
-
-      if (selectedCurrency) {
-        currencyStore.setCurrency(selectedCurrency)
-      }
-
-      // Persist language preference locally
-      localStorage.setItem('userLanguage', storeSettings.value.language)
-
       toast.success(t('settingsSaved'))
     } catch (error) {
       toast.error(t('failedToSaveSettings'))
     }
   }
+
+  // Component lifecycle
+  onMounted(() => {
+    isMounted = true
+    loadSettings()
+  })
+
+  onBeforeUnmount(() => {
+    isMounted = false
+    // Cleanup any pending operations
+  })
 </script>
 
 <template>
@@ -141,14 +143,6 @@
     </v-card-title>
 
     <v-card-text>
-      <!-- <v-alert
-        v-if="settingsStore.error"
-        type="error"
-        class="mb-4"
-      >
-        {{ settingsStore.error }}
-      </v-alert> -->
-
       <v-progress-linear
         v-if="settingsStore.loading"
         indeterminate
@@ -163,7 +157,7 @@
         <v-row>
           <v-col cols="12" md="6">
             <v-text-field
-              v-model="storeSettings.name"
+              v-model="form.name"
               :label="$t('storeName')"
               :rules="[(v) => !!v || $t('fieldRequired')]"
               outlined
@@ -174,7 +168,7 @@
 
           <v-col cols="12" md="3">
             <v-select
-              v-model="storeSettings.currency"
+              v-model="form.currency"
               :items="currencies"
               :label="$t('currency')"
               :rules="[(v) => !!v || $t('fieldRequired')]"
@@ -186,7 +180,7 @@
 
           <v-col cols="12" md="3">
             <v-select
-              v-model="storeSettings.language"
+              v-model="form.language"
               :items="languages"
               item-title="text"
               item-value="value"
@@ -201,13 +195,12 @@
 
         <v-btn
           type="submit"
-          style="background-color: transparent;"
           color="secondary"
           :disabled="
             settingsStore.loading ||
-            !storeSettings.name ||
-            !storeSettings.currency ||
-            !storeSettings.language
+            !form.name ||
+            !form.currency ||
+            !form.language
           "
           :loading="settingsStore.loading"
           class="mt-2"
@@ -218,5 +211,3 @@
     </v-card-text>
   </v-card>
 </template>
-
-<style scoped></style>

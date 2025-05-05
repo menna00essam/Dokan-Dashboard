@@ -60,10 +60,10 @@ const routes = [
         meta: { breadcrumb: 'Order Details' }
       },
       {
-        path: 'config',
+        path: 'settings',
         name: 'super-admin-config',
         component: StoreConfig,
-        meta: { breadcrumb: 'Store Configuration' }
+        meta: { breadcrumb: 'Settings' }
       },
       {
         path: 'requests',

@@ -1234,8 +1234,110 @@ const getAdminRequests = asyncWrapper(async (req, res, next) => {
     data: { users },
   });
 });
+// @desc    Get users with roles admin or user only
+// @route   GET /api/users/standard-roles
+// @access  Private (Admin/SuperAdmin)
+const getStandardRoleUsers = asyncWrapper(async (req, res, next) => {
+  const { page = 1, limit = 10, search, isActive } = req.query;
+
+  // Base query to only include admin or user roles
+  const query = { 
+    role: { $in: ['admin', 'user'] } 
+  };
+
+  // Optional filters
+  if (search) {
+    query.$or = [
+      { firstName: { $regex: search, $options: "i" } },
+      { lastName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  if (isActive === "true") query.isActive = true;
+  if (isActive === "false") query.isActive = false;
+
+  const {
+    data: users,
+    total,
+    page: currentPage,
+    totalPages,
+  } = await paginate(User, query, { page, limit, sort: { createdAt: -1 } });
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    results: users.length,
+    total,
+    currentPage,
+    totalPages,
+    data: { users },
+  });
+});
+
+// @desc    Toggle user role between admin and user
+// @route   PATCH /api/users/:id/toggle-role
+// @access  Private (SuperAdmin)
+const toggleUserRole = asyncWrapper(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError("Invalid user ID", 400, httpStatusText.FAIL));
+  }
+
+  // Find the user first to check current role
+  const user = await User.findById(id);
+  if (!user) {
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+  }
+
+  // Check if user has a role that can be toggled
+  if (!['admin', 'user'].includes(user.role)) {
+    return next(
+      new AppError(
+        "Can only toggle roles between admin and user", 
+        400, 
+        httpStatusText.FAIL
+      )
+    );
+  }
+
+  // Toggle the role
+  const newRole = user.role === 'admin' ? 'user' : 'admin';
+  
+  const updatedUser = await User.findByIdAndUpdate(
+    id,
+    { role: newRole },
+    { new: true, runValidators: true }
+  ).select('-password -__v');
+
+  // Send notification email if needed
+  try {
+    await sendEmail({
+      email: updatedUser.email,
+      subject: `Your account role has been updated to ${newRole}`,
+      template: "role-updated",
+      context: { 
+        name: updatedUser.firstName || "User", 
+        newRole,
+        oldRole: user.role 
+      },
+    });
+  } catch (e) {
+    console.error("Email send error:", e.message);
+    // Continue even if email fails
+  }
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: { user: updatedUser },
+    message: `User role changed from ${user.role} to ${newRole}`
+  });
+});
 
 module.exports = {
+  getStandardRoleUsers,
+  toggleUserRole,
   getIncentives,
   addIncentive,
   getReviews,

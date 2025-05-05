@@ -99,7 +99,7 @@
     { title: 'orders', to: '/orders' },
     { title: 'customers', to: '/customers' },
     { title: 'requests', to: '/requests' },
-    { title: 'settings', to: '/config' }
+    { title: 'settings', to: '/settings' }
   ]
 
   const toggleDrawer = () => {
