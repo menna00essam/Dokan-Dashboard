@@ -1,96 +1,102 @@
-// routes/user.routes.js
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user.controller");
-const {
-  avatarUpload,
-  authenticateUser,
-  superAdminAccess,
-  adminAccess,
-  supportAccess,
-  accountantAccess,
-  adminRole,
-  superAdminRole,
-} = require("../middlewares/user.middleware");
+const verifyToken = require("../middlewares/auth.middleware");
+const allowedTo = require("../middlewares/allowTo.middleware");
+const { avatarUpload } = require("../middlewares/user.middleware");
 
-// const authenticateUser = verifyToken;
 // ===== Public Routes =====
+// Accessible by: anyone (no authentication)
 router.post("/", userController.createUser);
-router.get("/", userController.getAllUsers);
 
-// ===== Protected Routes (Require Authentication) =====
-router.use(authenticateUser);
-// ===== User Status Management =====
-router.get("/pending", superAdminAccess, userController.getPendingUsers);
-router.get("/approved", superAdminAccess, userController.getApprovedUsers);
-router.get("/denied", superAdminAccess, userController.getDeniedUsers);
-router.patch("/:id/approve", superAdminAccess, userController.approveUser);
-router.patch("/:id/deny", superAdminAccess, userController.denyUser);
+// ===== Protected Routes =====
+router.use(verifyToken);
 
-// ===== User Profile =====
+// ===== General User Profile =====
+// Accessible by: logged-in user
 router.get("/profile", userController.getUserProfile);
 router.patch("/profile", userController.updateUserProfile);
-router.patch("/profile/avatar", avatarUpload, userController.updateAvatar);
 router.patch("/profile/password", userController.changePassword);
+router.patch("/profile/avatar", avatarUpload, userController.updateAvatar);
+
+// ===== User Management =====
+// Accessible by: super_admin
+router.get("/", allowedTo("super_admin","admin"), userController.getAllUsers);
+router.get("/pending", allowedTo("super_admin"), userController.getPendingUsers);
+router.get("/approved", allowedTo("super_admin"), userController.getApprovedUsers);
+router.get("/denied", allowedTo("super_admin"), userController.getDeniedUsers);
+router.patch("/:id/approve", allowedTo("super_admin"), userController.approveUser);
+router.patch("/:id/deny", allowedTo("super_admin"), userController.denyUser);
+
+// Accessible by: admin, super_admin
+router.get("/:id", allowedTo("admin", "super_admin"), userController.getUserById);
+router.patch("/:id", allowedTo("admin", "super_admin"), userController.updateUser);
+
+// Accessible by: super_admin only
+router.delete("/:id", allowedTo("admin","super_admin"), userController.deleteUser);
+router.post("/:id/restore", allowedTo("super_admin"), userController.restoreUser);
+
+// ===== Bulk Actions =====
+// Accessible by: admin, super_admin
+router.post("/bulk-delete", allowedTo("admin", "super_admin"), userController.bulkDeleteUsers);
+router.patch("/bulk-update-status", allowedTo("admin", "super_admin"), userController.bulkUpdateUserStatus);
+router.post("/bulk-assign-tags", allowedTo("admin","super_admin"), userController.bulkAssignTags);
+
 
 // ===== Activities =====
-router.post("/:id/activities", adminAccess, userController.addActivity);
-router.get("/:id/activities", adminAccess, userController.getActivities);
+// Accessible by: admin, super_admin
+router.post("/:id/activities", allowedTo("admin", "super_admin"), userController.addActivity);
+router.get("/:id/activities", allowedTo("admin", "super_admin"), userController.getActivities);
 
 // ===== Support Tickets =====
-router.post("/:id/tickets", supportAccess, userController.createTicket);
-router.get("/:id/tickets", supportAccess, userController.getTickets);
-router.patch(
-  "/:id/tickets/:ticketId",
-  supportAccess,
-  userController.updateTicket
-);
+// Accessible by: support
+router.post("/:id/tickets", allowedTo("support"), userController.createTicket);
+router.get("/:id/tickets", allowedTo("support"), userController.getTickets);
+router.patch("/:id/tickets/:ticketId", allowedTo("support"), userController.updateTicket);
 
 // ===== Credit Management =====
-router.post("/:id/credit", accountantAccess, userController.addCredit);
-router.get("/:id/credit", adminAccess, userController.getCreditHistory);
+// Add: accountant only
+router.post("/:id/credit", allowedTo("accountant"), userController.addCredit);
+// View: admin, super_admin
+router.get("/:id/credit", allowedTo("admin", "super_admin"), userController.getCreditHistory);
 
 // ===== Special Cases =====
-router.post("/:id/special-cases", adminAccess, userController.addSpecialCase);
-router.get("/:id/special-cases", adminAccess, userController.getSpecialCases);
+// Accessible by: admin, super_admin
+router.post("/:id/special-cases", allowedTo("admin", "super_admin"), userController.addSpecialCase);
+router.get("/:id/special-cases", allowedTo("admin", "super_admin"), userController.getSpecialCases);
 
 // ===== Reviews =====
+// Accessible by: any authenticated user
 router.post("/:id/reviews", userController.addReview);
 router.get("/:id/reviews", userController.getReviews);
 
 // ===== Incentives =====
-router.post("/:id/incentives", adminAccess, userController.addIncentive);
-router.get("/:id/incentives", adminAccess, userController.getIncentives);
+// Accessible by: admin, super_admin
+router.post("/:id/incentives", allowedTo("admin", "super_admin"), userController.addIncentive);
+router.get("/:id/incentives", allowedTo("admin", "super_admin"), userController.getIncentives);
 
-// ===== Tags Management =====
-router.post("/:id/tags", adminRole, userController.assignUserTags);
-router.delete("/:id/tags", adminRole, userController.removeUserTags);
+// ===== Tags =====
+// Accessible by: admin, super_admin
+router.post("/:id/tags", allowedTo("admin", "super_admin"), userController.assignUserTags);
+router.delete("/:id/tags", allowedTo("admin", "super_admin"), userController.removeUserTags);
 
-// ===== Segments Management =====
-router.post("/:id/segments", adminRole, userController.assignSegment);
-router.delete(
-  "/:id/segments/:segmentName",
-  adminRole,
-  userController.removeSegment
-);
-
-// ===== User Queries (Filter) =====
-router.get("/by-tag/:tag", adminRole, userController.getUsersByTag);
-router.get("/by-segment/:segment", adminRole, userController.getUsersBySegment);
+// ===== Segments =====
+// Accessible by: admin, super_admin
+router.post("/:id/segments", allowedTo("admin", "super_admin"), userController.assignSegment);
+router.delete("/:id/segments/:segmentName", allowedTo("admin", "super_admin"), userController.removeSegment);
+router.get("/by-tag/:tag", allowedTo("admin", "super_admin"), userController.getUsersByTag);
+router.get("/by-segment/:segment", allowedTo("admin", "super_admin"), userController.getUsersBySegment);
 
 // ===== Tier Management =====
-router.patch("/:id/tier", adminRole, userController.updateCustomerTier);
+// Accessible by: admin, super_admin
+router.patch("/:id/tier", allowedTo("admin", "super_admin"), userController.updateCustomerTier);
 
 // ===== Admin Request Management =====
-router.patch(
-  "/:id/request-admin",
-  adminRole,
-  userController.handleAdminRequest
-);
-router.get("/admin-requests", adminRole, userController.getAdminRequests);
-// ===== User Management (Admin Access) =====
-router.get("/:id", adminAccess, userController.getUserById);
-router.patch("/:id", adminAccess, userController.updateUser);
-router.delete("/:id", superAdminAccess, userController.deleteUser);
-router.post("/:id/restore", superAdminAccess, userController.restoreUser);
+// Accessible by: admin, super_admin
+router.patch("/:id/request-admin", allowedTo("super_admin"), userController.handleAdminRequest);
+router.get("/admin-requests", allowedTo("super_admin"), userController.getAdminRequests);
+
+
+// router.get('/:id/orders',allowedTo('user', 'admin', 'super_admin'),userController.getUserOrders);
+
 module.exports = router;

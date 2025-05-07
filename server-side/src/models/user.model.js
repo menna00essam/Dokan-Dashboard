@@ -85,6 +85,7 @@ const userSchema = new mongoose.Schema(
       default: function () {
         return this.role === "user" ? "approved" : "pending";
       },
+     
     },
     tags: {
       type: [String],
@@ -111,6 +112,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["basic", "silver", "gold", "platinum"],
       default: "basic",
+    },
+    state: {
+      type: String,
+      enum: ["active", "blocked"],
+      default: "active",
     },
     ordersCount: { type: Number, default: 0 },
     totalSpent: { type: Number, default: 0 },
@@ -154,45 +160,6 @@ const userSchema = new mongoose.Schema(
         date: { type: Date, default: Date.now },
       },
     ],
-    supportTickets: [
-      {
-        ticketId: { type: String, unique: true },
-        title: { type: String, required: true },
-        issueType: {
-          type: String,
-          enum: ["technical", "billing", "shipping", "product", "other"],
-          required: true,
-        },
-        description: { type: String, required: true },
-        status: {
-          type: String,
-          enum: ["open", "in-progress", "resolved", "closed"],
-          default: "open",
-        },
-        priority: {
-          type: String,
-          enum: ["low", "medium", "high", "critical"],
-          default: "medium",
-        },
-        assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        attachments: [String],
-        createdAt: { type: Date, default: Date.now },
-        updatedAt: Date,
-        resolvedAt: Date,
-        customerSatisfaction: { type: Number, min: 1, max: 5 },
-      },
-    ],
-    creditHistory: [
-      {
-        transactionId: { type: String, required: true },
-        amount: { type: Number, required: true },
-        type: { type: String, enum: ["credit", "debit"], required: true },
-        description: String,
-        reference: String,
-        processedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        date: { type: Date, default: Date.now },
-      },
-    ],
     creditLimit: { type: Number, default: 0 },
     currentCredit: { type: Number, default: 0 },
     specialCases: [
@@ -208,45 +175,46 @@ const userSchema = new mongoose.Schema(
         addedAt: { type: Date, default: Date.now },
         resolvedAt: Date,
         isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false },
       },
     ],
-    reviews: [
-      {
-        reviewId: { type: String, unique: true },
-        productId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
-        title: { type: String, required: true },
-        rating: {
-          type: Number,
-          required: true,
-          min: 1,
-          max: 5,
-        },
-        reviewText: String,
-        photos: [String],
-        isVerifiedPurchase: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
-    incentives: [
-      {
-        incentiveId: { type: String, unique: true },
-        incentiveType: {
-          type: String,
-          enum: ["discount", "coupon", "cashback", "gift", "points", "other"],
-          required: true,
-        },
-        amount: { type: Number, required: true },
-        description: String,
-        expiryDate: Date,
-        isUsed: { type: Boolean, default: false },
-        addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
+
+    //   {
+    //     reviewId: { type: String, unique: true },
+    //     productId: {
+    //       type: mongoose.Schema.Types.ObjectId,
+    //       ref: "Product",
+    //       required: true,
+    //     },
+    //     title: { type: String, required: true },
+    //     rating: {
+    //       type: Number,
+    //       required: true,
+    //       min: 1,
+    //       max: 5,
+    //     },
+    //     reviewText: String,
+    //     photos: [String],
+    //     isVerifiedPurchase: { type: Boolean, default: false },
+    //     createdAt: { type: Date, default: Date.now },
+    //   },
+    // ],
+    // incentives: [
+    //   {
+    //     incentiveId: { type: String, unique: true },
+    //     incentiveType: {
+    //       type: String,
+    //       enum: ["discount", "coupon", "cashback", "gift", "points", "other"],
+    //       required: true,
+    //     },
+    //     amount: { type: Number, required: true },
+    //     description: String,
+    //     expiryDate: Date,
+    //     isUsed: { type: Boolean, default: false },
+    //     addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    //     createdAt: { type: Date, default: Date.now },
+    //   },
+    // ],
     deletedAt: Date,
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     isActive: { type: Boolean, default: true },
