@@ -1,11 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Layouts
-import AuthLayout from '../layouts/AuthLayout.vue'
-const AppLayout = () => import('../layouts/AppLayout.vue')
-import AdminLayout from '../layouts/AdminLayout.vue'
-
-// Views
+// Views (keep these as direct imports)
 import NotFound from '../views/NotFound.vue'
 import AddProduct from '../views/AddProduct.vue'
 import EditProduct from '../views/EditProduct.vue'
@@ -26,50 +21,12 @@ import Currencies from '../components/Settings/Currencies.vue'
 import { useAuthStore } from '../store/auth'
 
 const routes = [
-  {
-    path: '/auth',
-    component: AuthLayout,
-    meta: { public: true },
-    children: [
-      {
-        path: 'login',
-        name: 'login',
-        component: Login,
-        meta: { breadcrumb: 'Login' }
-      },
-      {
-        path: '/login',
-        redirect: '/auth/login'
-      },
-      {
-        path: 'register',
-        name: 'register',
-        component: Register,
-        meta: { breadcrumb: 'Register' }
-      },
-      {
-        path: '/register',
-        redirect: '/auth/register'
-      },
-      {
-        path: 'pending',
-        name: 'pending',
-        component: Pending,
-        meta: { breadcrumb: 'Pending' }
-      },
-      {
-        path: '/pending',
-        redirect: '/auth/pending'
-      }
-    ]
-  },
-
   // Super Admin Routes
   {
     path: '/',
-    component: AppLayout,
-    meta: { 
-      requiresAuth: true, 
+    component: () => import('../layouts/AppLayout.vue'), // Dynamic import here
+    meta: {
+      requiresAuth: true,
       allowedRoles: ['super_admin'],
       breadcrumb: 'Dashboard'
     },
@@ -103,10 +60,10 @@ const routes = [
         meta: { breadcrumb: 'Order Details' }
       },
       {
-        path: 'config',
+        path: 'settings',
         name: 'super-admin-config',
         component: StoreConfig,
-        meta: { breadcrumb: 'Store Configuration' }
+        meta: { breadcrumb: 'Settings' }
       },
       {
         path: 'requests',
@@ -156,9 +113,9 @@ const routes = [
   },
   {
     path: '/admin',
-    component: AdminLayout,
-    meta: { 
-      requiresAuth: true, 
+    component: () => import('../layouts/AdminLayout.vue'), // Dynamic import here
+    meta: {
+      requiresAuth: true,
       allowedRoles: ['admin'],
       breadcrumb: 'Dashboard'
     },
@@ -225,6 +182,43 @@ const routes = [
       }
     ]
   },
+  {
+    path: '/auth',
+    component: () => import('../layouts/AuthLayout.vue'), // Dynamic import here
+    meta: { public: true },
+    children: [
+      {
+        path: 'login',
+        name: 'login',
+        component: Login,
+        meta: { breadcrumb: 'Login' }
+      },
+      {
+        path: '/login',
+        redirect: '/auth/login'
+      },
+      {
+        path: 'register',
+        name: 'register',
+        component: Register,
+        meta: { breadcrumb: 'Register' }
+      },
+      {
+        path: '/register',
+        redirect: '/auth/register'
+      },
+      {
+        path: 'pending',
+        name: 'pending',
+        component: Pending,
+        meta: { breadcrumb: 'Pending' }
+      },
+      {
+        path: '/pending',
+        redirect: '/auth/pending'
+      }
+    ]
+  },
   // 404 Catch-all
   {
     path: '/:pathMatch(.*)*',
@@ -241,23 +235,31 @@ const router = createRouter({
 // Improved Auth Guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  if (!authStore.user && authStore.token) {
-    await authStore.loadUserFromStorage()
-  }
+  try {
+    if (!authStore.user && authStore.token) {
+      await authStore.loadUserFromStorage()
+    }
 
-  if (to.meta.public && authStore.isLoggedIn) {
-    return next(redirectBasedOnRole(authStore.userRole))
-  }
+    if (to.meta.public && authStore.isLoggedIn) {
+      return next(redirectBasedOnRole(authStore.userRole))
+    }
 
-  if (!to.meta.public && !authStore.isLoggedIn) {
-    return next({ name: 'login', query: { redirect: to.fullPath } })
-  }
+    if (!to.meta.public && !authStore.isLoggedIn) {
+      return next({ name: 'login', query: { redirect: to.fullPath } })
+    }
 
-  if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(authStore.userRole)) {
-    return next(redirectBasedOnRole(authStore.userRole))
-  }
+    if (
+      to.meta.allowedRoles &&
+      !to.meta.allowedRoles.includes(authStore.userRole)
+    ) {
+      return next(redirectBasedOnRole(authStore.userRole))
+    }
 
-  return next()
+    next()
+  } catch (error) {
+    console.error('Navigation error:', error)
+    next(false) // cancel navigation
+  }
 })
 
 function redirectBasedOnRole(role) {

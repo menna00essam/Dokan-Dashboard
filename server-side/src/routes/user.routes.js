@@ -26,6 +26,13 @@ router.get("/approved", superAdminAccess, userController.getApprovedUsers);
 router.get("/denied", superAdminAccess, userController.getDeniedUsers);
 router.patch("/:id/approve", superAdminAccess, userController.approveUser);
 router.patch("/:id/deny", superAdminAccess, userController.denyUser);
+// ===== Role Management Routes =====
+router.get(
+  "/roles/available-users",
+  superAdminRole,
+  userController.getStandardRoleUsers
+);
+router.patch("/roles/:id", superAdminRole, userController.toggleUserRole);
 
 // ===== User Profile =====
 router.get("/profile", userController.getUserProfile);
