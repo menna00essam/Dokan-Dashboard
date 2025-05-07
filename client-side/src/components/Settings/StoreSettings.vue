@@ -151,17 +151,23 @@
       <!-- Loading state -->
       <template v-if="isLoading">
         <v-skeleton-loader type="article" class="mb-4"></v-skeleton-loader>
-
       </template>
 
       <!-- Error state -->
-      <template v-else-if="settingsStore.error">
-        <v-alert type="error" class="mb-4">
-          {{ settingsStore.error }}
-        </v-alert>
-        <v-btn color="primary" @click="loadSettings">
-          {{ $t('retry') }}
-        </v-btn>
+      <template v-else-if="settingsStore.error"
+        ><div
+          class="flex flex-col justify-center items-center text-center py-12"
+        >
+          <v-icon class="mx-2" size="96" color="grey lighten-1">
+            mdi-store
+          </v-icon>
+          <p class="text-h4 grey--text my-4">
+            {{ $t('error.failedToLoadSettings') }}
+          </p>
+          <v-btn color="secondary" @click="loadSettings">
+            {{ $t('retry') }}
+          </v-btn>
+        </div>
       </template>
 
       <!-- Content -->

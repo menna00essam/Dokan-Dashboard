@@ -62,9 +62,7 @@
         <!-- Empty state -->
         <template v-slot:no-data>
           <div class="text-center py-12">
-            <v-icon size="96" color="grey lighten-1"
-              >mdi-account-cog-off</v-icon
-            >
+            <v-icon size="96" color="grey lighten-1">mdi-account-cog</v-icon>
             <p class="text-h4 grey--text mt-4">
               {{ $t('noUsersFound') }}
             </p>

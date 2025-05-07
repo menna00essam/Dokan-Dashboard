@@ -142,8 +142,12 @@
   watch(searchQuery, handleSearch)
 
   onMounted(() => {
+    if (!requestsStore.searchQuery) {
+      fetchRequests() // Only fetch all if no search query exists initially
+    } else {
+      fetchRequests() // Re-fetch with the existing query if there is one
+    }
     columns.value = [t('user'), t('email'), t('actions')]
-    fetchRequests()
   })
 </script>
 
@@ -168,7 +172,6 @@
                 mdi-account-cog
               </v-icon>
               {{ $t('pendingUserRequests') }}
-         
             </div>
 
             <v-spacer></v-spacer>
@@ -199,9 +202,9 @@
 
           <v-card-text style="padding: 0">
             <!-- Error state -->
-            <v-alert v-if="error" type="error" variant="tonal" class="mb-6">
+            <!-- <v-templete v-if="error" type="error" variant="tonal" class="mb-6">
               {{ error }}
-            </v-alert>
+            </v-templete > -->
 
             <!-- Skeleton Loading -->
             <skeleton-loader
@@ -325,7 +328,7 @@
                     </td>
                   </tr>
                   <tr v-else>
-                    <td :colspan="columns.length+1" class="text-center">
+                    <td :colspan="columns.length + 1" class="text-center">
                       <div
                         class="d-flex flex-column align-center justify-center py-12"
                       >
