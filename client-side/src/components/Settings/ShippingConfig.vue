@@ -45,9 +45,9 @@
           <tbody>
             <tr>
               <td :colspan="shippingHeaders.length" class="text-center py-12">
-                <v-icon size="96" color="error"
-                  >mdi-alert-circle-outline</v-icon
-                >
+                <v-icon class="mx-2" size="96" color="error">
+                  mdi-truck
+                </v-icon>
                 <p class="text-h4 grey--text mt-4">
                   {{ $t('errorLoadingData') }}
                 </p>
@@ -61,7 +61,13 @@
         </template>
 
         <!-- Table toolbar -->
-        <template v-slot:top>
+        <template
+          v-slot:top
+          v-if="
+            shippingStore.shippingMethods &&
+            shippingStore.shippingMethods.length > 0
+          "
+        >
           <v-toolbar
             flat
             :color="$vuetify.theme.current.dark ? 'surface' : 'white'"
@@ -115,17 +121,19 @@
         <!-- Empty state -->
         <template v-slot:no-data>
           <div class="text-center py-12">
-            <v-icon size="96" color="grey lighten-1">mdi-truck-off</v-icon>
+            <v-icon class="mx-2" size="96" color="grey lighten-1">
+              mdi-truck
+            </v-icon>
             <p class="text-h4 grey--text mt-4">
               {{ $t('noShippingMethods') }}
             </p>
             <v-btn
-              color="primary"
+              color="secondary"
               class="mt-4"
               @click="openShippingDialog(null)"
             >
               <v-icon left>mdi-plus</v-icon>
-              {{ $t('addFirstMethod') }}
+              {{ $t('addMethod') }}
             </v-btn>
           </div>
         </template>

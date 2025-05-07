@@ -69,6 +69,9 @@
           <v-toolbar
             flat
             :color="$vuetify.theme.current.dark ? 'surface' : 'white'"
+            v-if="
+              currencyStore.currencies && currencyStore.currencies.length > 0
+            "
           >
             <v-btn
               color="secondary"
@@ -125,9 +128,9 @@
             <p class="text-h4 grey--text mt-4">
               {{ t('noCurrencies') }}
             </p>
-            <v-btn color="primary" class="mt-4" @click="openDialog()">
+            <v-btn color="secondary" class="mt-4" @click="openDialog()">
               <v-icon left>mdi-plus</v-icon>
-              {{ t('addFirstCurrency') }}
+              {{ t('addCurrency') }}
             </v-btn>
           </div>
         </template>

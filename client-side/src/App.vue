@@ -1,7 +1,5 @@
 <script setup>
-
   import { RouterView } from 'vue-router'
-  import AppLayout from './layouts/AppLayout.vue'
   import { watch, onMounted } from 'vue'
   import { useI18n } from 'vue-i18n'
 
@@ -31,7 +29,11 @@
   <RouterView />
 </template>
 
-<style >
+<style>
+  ::-webkit-scrollbar-track {
+    background-color: #d6d6d6;
+  }
+
   /* Toast Styles */
   .custom-toast {
     border-radius: 12px !important;

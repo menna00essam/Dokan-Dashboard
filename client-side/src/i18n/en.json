@@ -143,9 +143,10 @@
     "fetchingUsers": "Failed to load users",
     "failedToLoadSettings": "Failed to load settings",
     "failedToSaveSettings": "Failed to save settings",
-    "fetchingRequests": "Error loading requests",
-    "approvingUser": "Error approving user",
-    "denyingUser": "Error denying user"
+    "fetchingRequests": "Failed loading requests",
+    "approvingUser": "Failed approving user",
+    "denyingUser": "Failed denying user",
+    "fetchMethods": "Failed loading shipping methods"
   },
   "noShippingMethods": "No shipping methods available",
   "Config": "Configration",
@@ -316,5 +317,6 @@
   "retry": "Retry",
   "noResultsFound": "No results found",
   "tryDifferentSearch": "Try a different search term",
-  "requestDate":"Date"
+  "requestDate": "Date",
+  "noUsersFound": "No Users Found"
 }
