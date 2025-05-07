@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+  import { ref, onMounted, computed, watch } from 'vue'
   import { useToast } from 'vue-toastification'
   import { useI18n } from 'vue-i18n'
   import { useSettingsStore } from '../../store/useSettingsStore'
@@ -10,24 +10,25 @@
   const settingsStore = useSettingsStore()
   const currencyStore = useCurrencyStore()
 
-  // Reactive form model
+  // State
+  const isLoading = ref(true)
   const form = ref({
     name: '',
     currency: 'USD',
     language: 'en'
   })
 
-  // Safe reference to mounted state
-  let isMounted = false
-
   // Computed properties
   const currencies = computed(() => {
-    return settingsStore.currencies.map((c) => ({
-      title: `${c.symbol} - ${c.name}`,
-      value: c.code
-    }))
-  })
+    if (!Array.isArray(settingsStore.currencies)) return []
 
+    return settingsStore.currencies
+      .filter((c) => c && !c.is_deleted) // Filter out deleted currencies
+      .map((c) => ({
+        title: `${c.symbol} - ${c.name}`.trim(),
+        value: c.code.trim() // Trim whitespace (notice JPY has a space)
+      }))
+  })
   const languages = computed(() => [
     { text: t('english'), value: 'en' },
     { text: t('arabic'), value: 'ar' },
@@ -36,7 +37,6 @@
 
   // Language handling
   const applyLanguageSettings = (lang) => {
-    if (!isMounted) return
     locale.value = lang
     document.documentElement.lang = lang
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
@@ -46,6 +46,7 @@
   // Load initial settings
   const loadSettings = async () => {
     try {
+      isLoading.value = true
       await Promise.all([
         settingsStore.fetchStoreSettings(),
         settingsStore.fetchCurrencies()
@@ -53,10 +54,12 @@
 
       // Initialize form values
       form.value = {
-        name: settingsStore.storeName,
-        currency: settingsStore.currency,
+        name: settingsStore.storeName || '',
+        currency: settingsStore.currency || 'USD',
         language:
-          localStorage.getItem('userLanguage') || settingsStore.defaultLanguage
+          localStorage.getItem('userLanguage') ||
+          settingsStore.defaultLanguage ||
+          'en'
       }
 
       // Apply initial language
@@ -70,7 +73,9 @@
         currencyStore.setCurrency(selectedCurrency)
       }
     } catch (error) {
-      toast.error(t('failedToLoadSettings'))
+      toast.error(t('error.failedToLoadSettings'))
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -99,28 +104,28 @@
   // Save settings
   const saveSettings = async () => {
     try {
+      isLoading.value = true
       const settingsToSave = {
         storeName: form.value.name,
         currency: form.value.currency,
         defaultLanguage: form.value.language
       }
-
+      settingsStore.setStoreName(form.value.name)
+      settingsStore.setCurrency(form.value.currency)
+      settingsStore.setLanguage(form.value.language)
+      console.log('saves settings', settingsToSave)
       await settingsStore.updateStoreSettings(settingsToSave)
       toast.success(t('settingsSaved'))
     } catch (error) {
-      toast.error(t('failedToSaveSettings'))
+      toast.error(t('error.failedToSaveSettings'))
+    } finally {
+      isLoading.value = false
     }
   }
 
   // Component lifecycle
-  onMounted(() => {
-    isMounted = true
-    loadSettings()
-  })
-
-  onBeforeUnmount(() => {
-    isMounted = false
-    // Cleanup any pending operations
+  onMounted(async () => {
+    await loadSettings()
   })
 </script>
 
@@ -143,71 +148,93 @@
     </v-card-title>
 
     <v-card-text>
-      <v-progress-linear
-        v-if="settingsStore.loading"
-        indeterminate
-        color="primary"
-        class="mb-4"
-      ></v-progress-linear>
+      <!-- Loading state -->
+      <template v-if="isLoading">
+        <v-skeleton-loader type="article" class="mb-4"></v-skeleton-loader>
 
-      <v-form
-        :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-        @submit.prevent="saveSettings"
-      >
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="form.name"
-              :label="$t('storeName')"
-              :rules="[(v) => !!v || $t('fieldRequired')]"
-              outlined
-              required
-              :disabled="settingsStore.loading"
-            ></v-text-field>
-          </v-col>
+      </template>
 
-          <v-col cols="12" md="3">
-            <v-select
-              v-model="form.currency"
-              :items="currencies"
-              :label="$t('currency')"
-              :rules="[(v) => !!v || $t('fieldRequired')]"
-              outlined
-              required
-              :disabled="settingsStore.loading || !currencies.length"
-            ></v-select>
-          </v-col>
-
-          <v-col cols="12" md="3">
-            <v-select
-              v-model="form.language"
-              :items="languages"
-              item-title="text"
-              item-value="value"
-              :label="$t('language')"
-              :rules="[(v) => !!v || $t('fieldRequired')]"
-              outlined
-              required
-              :disabled="settingsStore.loading"
-            ></v-select>
-          </v-col>
-        </v-row>
-
-        <v-btn
-          type="submit"
-          color="secondary"
-          :disabled="
-            settingsStore.loading ||
-            !form.name ||
-            !form.currency ||
-            !form.language
-          "
-          :loading="settingsStore.loading"
-          class="mt-2"
-        >
-          {{ $t('saveSettings') }}
+      <!-- Error state -->
+      <template v-else-if="settingsStore.error">
+        <v-alert type="error" class="mb-4">
+          {{ settingsStore.error }}
+        </v-alert>
+        <v-btn color="primary" @click="loadSettings">
+          {{ $t('retry') }}
         </v-btn>
-      </v-form>
+      </template>
+
+      <!-- Content -->
+      <template v-else>
+        <v-form
+          :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+          @submit.prevent="saveSettings"
+        >
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.name"
+                :label="$t('storeName')"
+                :rules="[(v) => !!v || $t('fieldRequired')]"
+                outlined
+                required
+                :disabled="isLoading"
+              ></v-text-field>
+            </v-col>
+
+            <v-col cols="12" md="3">
+              <v-select
+                v-model="form.currency"
+                :items="currencies"
+                :label="$t('currency')"
+                :rules="[(v) => !!v || $t('fieldRequired')]"
+                outlined
+                required
+                :disabled="isLoading"
+                :loading="isLoading"
+              >
+                <template v-slot:no-data>
+                  <v-list-item>
+                    <v-list-item-title>
+                      {{
+                        currencies.length === 0
+                          ? $t('noCurrenciesAvailable')
+                          : $t('loadingCurrencies')
+                      }}
+                    </v-list-item-title>
+                  </v-list-item>
+                </template>
+              </v-select>
+            </v-col>
+
+            <v-col cols="12" md="3">
+              <v-select
+                v-model="form.language"
+                :items="languages"
+                item-title="text"
+                item-value="value"
+                :label="$t('language')"
+                :rules="[(v) => !!v || $t('fieldRequired')]"
+                outlined
+                required
+                :disabled="isLoading"
+              ></v-select>
+            </v-col>
+          </v-row>
+
+          <v-btn
+            type="submit"
+            color="secondary"
+            :disabled="
+              isLoading || !form.name || !form.currency || !form.language
+            "
+            :loading="isLoading"
+            class="mt-2"
+          >
+            {{ $t('saveSettings') }}
+          </v-btn>
+        </v-form>
+      </template>
     </v-card-text>
   </v-card>
 </template>

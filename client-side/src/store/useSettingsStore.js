@@ -37,8 +37,11 @@ export const useSettingsStore = defineStore('settings', {
             }
           }
         )
-        this.updateFromResponse(response.data)
-        return response.data // Return data for components to use
+        // Handle both direct settings object and nested response formats
+        const settingsData = response.data.data.settings
+        console.log('settingsData', settingsData)
+        this.updateFromResponse(settingsData)
+        return settingsData
       } catch (error) {
         this.handleError(error, 'Failed to fetch store settings')
         throw error // Re-throw for component handling
@@ -48,27 +51,37 @@ export const useSettingsStore = defineStore('settings', {
     },
 
     async fetchCurrencies() {
+      this.loading = true
+      this.error = null
       try {
-        const controller = new AbortController()
-        const response = await axios.get(`${API_BASE_URL}/api/currencies`, {
-          signal: controller.signal
-        })
-        this.currencies = response.data
-        return response.data
+        const response = await axios.get(`${API_BASE_URL}/api/currencies`)
+        // Ensure we always set an array, even if response is null/undefined
+        console.log('Currencies response:', response.data) // Add this line
+
+        this.currencies = Array.isArray(response?.data?.data)
+          ? response.data.data
+          : []
+        return this.currencies
       } catch (error) {
-        if (!axios.isCancel(error)) {
-          return this.handleError(error, 'Failed to load currencies')
-        }
+        this.handleError(error, 'Failed to load currencies')
+        this.currencies = [] // Fallback to empty array
+        throw error
+      } finally {
+        this.loading = false
       }
     },
-
     async updateStoreSettings(updatedSettings) {
       this.loading = true
       this.error = null
       try {
         const response = await axios.put(
           'http://localhost:5000/settings/store',
-          updatedSettings
+          updatedSettings,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          }
         )
         this.updateFromResponse(response.data)
         return true
@@ -79,51 +92,11 @@ export const useSettingsStore = defineStore('settings', {
         this.loading = false
       }
     },
-    async fetchShippingMethods(page = 1, limit = 10) {
-      this.loading = true
-      try {
-        const response = await axios.get(
-          'http://localhost:5000/settings/shipping-methods',
-          {
-            params: { page, limit }
-          }
-        )
-
-        this.shippingMethods = response.data.data.shippingMethods
-        this.pagination = response.data.data.pagination
-      } catch (error) {
-        this.error =
-          error.response?.data?.message || 'Failed to fetch shipping methods'
-      } finally {
-        this.loading = false
-      }
-    },
-    async deleteShippingMethod(methodId) {
-      this.loading = true
-      this.error = null
-      try {
-        await axios.delete(
-          `http://localhost:5000/settings/shipping-methods/${methodId}`
-        )
-        this.shippingMethods = this.shippingMethods.filter(
-          (method) => method._id !== methodId
-        )
-        return true
-      } catch (error) {
-        this.handleError(error, 'Failed to delete shipping method')
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
     updateFromResponse(data) {
-      const { storeName, currency, defaultLanguage, shippingMethods } =
-        data.settings
-      this.storeName = storeName
-      this.currency = currency
-      this.defaultLanguage = defaultLanguage
-      this.shippingMethods = shippingMethods || []
+      this.storeName = data.storeName || ''
+      this.currency = data.currency || 'USD'
+      this.defaultLanguage = data.defaultLanguage || 'en'
+      this.shippingMethods = data.shippingMethods || []
     },
 
     handleError(error, defaultMessage) {

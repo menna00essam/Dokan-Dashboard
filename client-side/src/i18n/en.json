@@ -138,7 +138,14 @@
   "error": {
     "saveCurrency": "Failed to save currency",
     "deleteCurrency": "Failed to delete currency",
-    "fetchCurrencies": "Failed to load currencies"
+    "fetchCurrencies": "Failed to load currencies",
+    "updatingRole": "Failed to update {name}'s role",
+    "fetchingUsers": "Failed to load users",
+    "failedToLoadSettings": "Failed to load settings",
+    "failedToSaveSettings": "Failed to save settings",
+    "fetchingRequests": "Error loading requests",
+    "approvingUser": "Error approving user",
+    "denyingUser": "Error denying user"
   },
   "noShippingMethods": "No shipping methods available",
   "Config": "Configration",
@@ -303,5 +310,11 @@
       "title": "Unblock Customer",
       "message": "Are you sure you want to unblock this customer? They will regain access to their account."
     }
-  }
+  },
+  "userRoleUpdated": "Updated {name}'s role to {role}",
+  "noCurrenciesAvailable": "No currencies available",
+  "retry": "Retry",
+  "noResultsFound": "No results found",
+  "tryDifferentSearch": "Try a different search term",
+  "requestDate":"Date"
 }

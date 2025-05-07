@@ -32,7 +32,7 @@ router.get(
   superAdminRole,
   userController.getStandardRoleUsers
 );
-router.patch("/:id/role", superAdminRole, userController.toggleUserRole);
+router.patch("/roles/:id", superAdminRole, userController.toggleUserRole);
 
 // ===== User Profile =====
 router.get("/profile", userController.getUserProfile);

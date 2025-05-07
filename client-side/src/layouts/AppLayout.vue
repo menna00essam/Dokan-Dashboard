@@ -10,7 +10,7 @@
         :location="isRTL ? 'right' : 'left'"
         style="
           height: 100vh;
-          /* position: fixed; */
+          position: fixed;
           display: flex;
           flex-direction: column;
           justify-content: space-between;

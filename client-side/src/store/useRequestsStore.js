@@ -6,11 +6,12 @@ export const useRequestsStore = defineStore('requests', {
     requests: [],
     loading: false,
     error: null,
+    searchQuery: '', // Add search query to state
     pagination: {
       total: 0,
       currentPage: 1,
       totalPages: 1,
-      itemsPerPage: 10
+      itemsPerPage: 5
     }
   }),
 
@@ -19,44 +20,54 @@ export const useRequestsStore = defineStore('requests', {
       this.loading = true
       this.error = null
       try {
-        const { data } = await axios.get(
+        // Use the search query from params OR from store state
+        const searchParam =
+          params.search !== undefined ? params.search : this.searchQuery
+
+        const response = await axios.get(
           'http://localhost:5000/users/pending',
           {
             params: {
-              page: params.page || this.pagination.currentPage,
-              limit: params.limit || this.pagination.itemsPerPage
+              page: params.page || 1, // Always use params.page if provided
+              limit: params.limit || this.pagination.itemsPerPage,
+              search: searchParam, // Use the determined search value
+              sortBy: 'createdAt', // Hardcoded to only sort by createdAt
+              sortDirection: params.sortDirection || 'desc'
             },
             headers: {
-              'Cache-Control': 'no-cache',
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
-              Pragma: 'no-cache'
+              Authorization: `Bearer ${localStorage.getItem('token')}`
             }
           }
         )
 
-        this.requests = data.data.users
+        this.requests = response.data.data.users
         this.updatePagination({
-          total: data.total,
-          currentPage: data.page,
-          totalPages: data.totalPages,
+          total: response.data.total,
+          currentPage: response.data.currentPage, // Update from API response
+          totalPages: response.data.totalPages,
           itemsPerPage: params.limit || this.pagination.itemsPerPage
         })
+        
       } catch (error) {
-        this.handleError(error)
+        this.error = error.response?.data?.message || error.message
         throw error
       } finally {
         this.loading = false
       }
     },
+    // Update setSearchQuery to not trigger fetch
+    setSearchQuery(query) {
+      this.searchQuery = query
+      // Don't fetch here - let the component handle it
+    },
 
+    // Keep all your existing actions (approveRequest, denyRequest, etc.)
     async approveRequest(userId) {
       this.loading = true
-      console.log(userId)
-
       try {
         await axios.patch(
           `http://localhost:5000/users/${userId}/approve`,
-          {}, // empty body
+          {},
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -99,7 +110,7 @@ export const useRequestsStore = defineStore('requests', {
       }
     },
 
-    // Helper methods
+    // Keep all your existing helper methods
     updatePagination(paginationData) {
       this.pagination = {
         ...this.pagination,
@@ -117,7 +128,6 @@ export const useRequestsStore = defineStore('requests', {
         this.pagination.total / this.pagination.itemsPerPage
       )
 
-      // Reset to first page if current page exceeds total pages
       if (this.pagination.currentPage > this.pagination.totalPages) {
         this.pagination.currentPage = 1
       }

@@ -1,3 +1,4 @@
+<!-- TableSkeleton.vue -->
 <script setup>
   import { defineProps } from 'vue'
 
@@ -8,35 +9,35 @@
     },
     rows: {
       type: Number,
-      required: true
+      default: 5
     },
     loading: {
       type: Boolean,
-      required: true
+      default: true
     }
   })
 </script>
 
 <template>
-  <template v-if="loading">
-    <v-table class="elevation-1">
-      <thead>
-        <tr>
-          <th v-for="column in columns" :key="column" class="text-left text-h6">
-            {{ column }}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="i in rows" :key="i">
-          <td v-for="column in columns" :key="column">
-            <v-skeleton-loader type="text" width="150"></v-skeleton-loader>
-          </td>
-        </tr>
-      </tbody>
-    </v-table>
-  </template>
+  <v-table class="elevation-1" v-if="loading">
+    <thead>
+      <tr>
+        <th v-for="column in columns" :key="column" class="text-left text-h6">
+          <v-skeleton-loader type="text" width="100"></v-skeleton-loader>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="i in rows" :key="i">
+        <td v-for="column in columns" :key="`${i}-${column}`">
+          <v-skeleton-loader type="text" width="150"></v-skeleton-loader>
+        </td>
+      </tr>
+    </tbody>
+  </v-table>
 </template>
+
+
 <style scoped>
   /* Skeleton animation */
   .v-skeleton-loader {

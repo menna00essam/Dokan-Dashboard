@@ -13,11 +13,16 @@ const paginate = async (model, query, options) => {
   const limit = parseInt(options.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const data = await model
-    .find(query)
-    .skip(skip)
-    .limit(limit)
-    .sort(options.sort);
+  // Build sort object
+  const sort = {};
+  if (options.sortBy) {
+    sort[options.sortBy] = options.sortDirection === "desc" ? -1 : 1;
+  } else {
+    // Default sort by createdAt descending if no sort specified
+    sort.createdAt = -1;
+  }
+
+  const data = await model.find(query).skip(skip).limit(limit).sort(sort); // Apply the sort
 
   const total = await model.countDocuments(query);
 
@@ -1010,25 +1015,42 @@ const updateCustomerTier = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users/pending
 // @access  Private (Admin/SuperAdmin)
 const getPendingUsers = asyncWrapper(async (req, res, next) => {
-  const { page = 1, limit = 10 } = req.query;
-
   const {
-    data: users,
-    total,
-    page: currentPage,
-    totalPages,
-  } = await paginate(User, { status: "pending" }, { page, limit });
+    page = 1,
+    limit = 10,
+    search = "",
+    sortDirection = "desc", // Only need direction now
+  } = req.query;
+
+  // Build query
+  const query = { status: "pending" };
+
+  if (search) {
+    query.$or = [
+      { username: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { fullName: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  // Sort only by createdAt
+  const sort = { createdAt: sortDirection === "desc" ? -1 : 1 };
+
+  const result = await User.find(query)
+    .sort(sort)
+    .skip((page - 1) * limit)
+    .limit(limit);
+
+  const total = await User.countDocuments(query);
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    results: users.length,
+    data: { users: result },
     total,
-    currentPage,
-    totalPages,
-    data: { users },
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
   });
 });
-
 // @desc    Get approved users
 // @route   GET /api/users/approved
 // @access  Private (Admin/SuperAdmin)
@@ -1241,8 +1263,8 @@ const getStandardRoleUsers = asyncWrapper(async (req, res, next) => {
   const { page = 1, limit = 10, search, isActive } = req.query;
 
   // Base query to only include admin or user roles
-  const query = { 
-    role: { $in: ['admin', 'user'] } 
+  const query = {
+    role: { $in: ["admin", "user"] },
   };
 
   // Optional filters
@@ -1292,24 +1314,24 @@ const toggleUserRole = asyncWrapper(async (req, res, next) => {
   }
 
   // Check if user has a role that can be toggled
-  if (!['admin', 'user'].includes(user.role)) {
+  if (!["admin", "user"].includes(user.role)) {
     return next(
       new AppError(
-        "Can only toggle roles between admin and user", 
-        400, 
+        "Can only toggle roles between admin and user",
+        400,
         httpStatusText.FAIL
       )
     );
   }
 
   // Toggle the role
-  const newRole = user.role === 'admin' ? 'user' : 'admin';
-  
+  const newRole = user.role === "admin" ? "user" : "admin";
+
   const updatedUser = await User.findByIdAndUpdate(
     id,
     { role: newRole },
     { new: true, runValidators: true }
-  ).select('-password -__v');
+  ).select("-password -__v");
 
   // Send notification email if needed
   try {
@@ -1317,10 +1339,10 @@ const toggleUserRole = asyncWrapper(async (req, res, next) => {
       email: updatedUser.email,
       subject: `Your account role has been updated to ${newRole}`,
       template: "role-updated",
-      context: { 
-        name: updatedUser.firstName || "User", 
+      context: {
+        name: updatedUser.firstName || "User",
         newRole,
-        oldRole: user.role 
+        oldRole: user.role,
       },
     });
   } catch (e) {
@@ -1331,7 +1353,7 @@ const toggleUserRole = asyncWrapper(async (req, res, next) => {
   res.status(200).json({
     status: httpStatusText.SUCCESS,
     data: { user: updatedUser },
-    message: `User role changed from ${user.role} to ${newRole}`
+    message: `User role changed from ${user.role} to ${newRole}`,
   });
 });
 
