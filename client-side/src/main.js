@@ -38,6 +38,7 @@ const toastOptions = {
 
 // Vuetify Theme Configuration
 const vuetify = createVuetify({
+  rtl: true, // Enable RTL support
   components,
   directives,
   icons: {

@@ -14,12 +14,6 @@
       <span>{{ $t('shippingMethods') }}</span>
     </v-card-title>
     <v-card-text>
-      <SkeletonLoader
-        v-if="isLoading"
-        :columns="['Method Name', 'Cost', 'Actions']"
-        :rows="5"
-        :loading="isLoading"
-      />
       <v-data-table
         :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
         :headers="shippingHeaders"
@@ -29,8 +23,51 @@
         :page.sync="shippingStore.pagination.page"
         :items-per-page="shippingStore.pagination.limit"
         :server-items-length="shippingStore.pagination.total"
+        :loading="isLoading"
+        loading-text="Loading shipping methods... Please wait"
       >
-        <template v-slot:top>
+        <!-- Skeleton loading state -->
+        <template v-slot:loading>
+          <tbody>
+            <tr v-for="i in 5" :key="`skeleton-row-${i}`">
+              <td
+                v-for="header in shippingHeaders"
+                :key="`skeleton-${header.value}`"
+              >
+                <v-skeleton-loader type="text" />
+              </td>
+            </tr>
+          </tbody>
+        </template>
+
+        <!-- Error state -->
+        <template v-slot:error>
+          <tbody>
+            <tr>
+              <td :colspan="shippingHeaders.length" class="text-center py-12">
+                <v-icon class="mx-2" size="96" color="error">
+                  mdi-truck
+                </v-icon>
+                <p class="text-h4 grey--text mt-4">
+                  {{ $t('errorLoadingData') }}
+                </p>
+                <p class="text-body-1 mt-2">{{ shippingStore.error }}</p>
+                <v-btn color="primary" class="mt-4" @click="retryFetch">
+                  {{ $t('retry') }}
+                </v-btn>
+              </td>
+            </tr>
+          </tbody>
+        </template>
+
+        <!-- Table toolbar -->
+        <template
+          v-slot:top
+          v-if="
+            shippingStore.shippingMethods &&
+            shippingStore.shippingMethods.length > 0
+          "
+        >
           <v-toolbar
             flat
             :color="$vuetify.theme.current.dark ? 'surface' : 'white'"
@@ -39,6 +76,7 @@
               color="secondary"
               @click="openShippingDialog(null)"
               class="w-100"
+              :disabled="isLoading || !!shippingStore.error"
             >
               <v-icon left>mdi-plus</v-icon>
               {{ $t('addMethod') }}
@@ -46,6 +84,7 @@
           </v-toolbar>
         </template>
 
+        <!-- Table header -->
         <template v-slot:header="{ headers }">
           <thead>
             <tr>
@@ -56,39 +95,57 @@
           </thead>
         </template>
 
+        <!-- Normal data rows -->
         <template v-slot:item.actions="{ item }">
-          <v-icon @click="openShippingDialog(item)" color="" class="mx-2"
-            >mdi-pencil</v-icon
+          <v-icon
+            @click="openShippingDialog(item)"
+            color=""
+            class="mx-2"
+            :disabled="isLoading"
           >
-          <v-icon @click="confirmDelete(item._id)" color="red"
-            >mdi-delete</v-icon
+            mdi-pencil
+          </v-icon>
+          <v-icon
+            @click="confirmDelete(item._id)"
+            color="red"
+            :disabled="isLoading"
           >
+            mdi-delete
+          </v-icon>
         </template>
 
         <template v-slot:item.cost="{ item }">
           {{ formatCurrency(item.cost) }}
         </template>
 
-        <template v-slot:loading>
-          <v-progress-circular
-            indeterminate
-            color="primary"
-            size="64"
-            class="ma-auto"
-          ></v-progress-circular>
-        </template>
-
+        <!-- Empty state -->
         <template v-slot:no-data>
           <div class="text-center py-12">
-            <v-icon size="96" color="grey lighten-1">mdi-truck-off</v-icon>
+            <v-icon class="mx-2" size="96" color="grey lighten-1">
+              mdi-truck
+            </v-icon>
             <p class="text-h4 grey--text mt-4">
               {{ $t('noShippingMethods') }}
             </p>
+            <v-btn
+              color="secondary"
+              class="mt-4"
+              @click="openShippingDialog(null)"
+            >
+              <v-icon left>mdi-plus</v-icon>
+              {{ $t('addMethod') }}
+            </v-btn>
           </div>
         </template>
       </v-data-table>
 
+      <!-- Pagination controls -->
       <PaginationControls
+        v-if="
+          !isLoading &&
+          !shippingStore.error &&
+          shippingStore.pagination.total > 0
+        "
         v-model:page="shippingStore.pagination.page"
         v-model:itemsPerPage="shippingStore.pagination.limit"
         :total-items="shippingStore.pagination.total"
@@ -170,7 +227,6 @@
   import { useCurrencyStore } from '../../store/useCurrencyStore'
   import PaginationControls from '../Shared/PaginationControls.vue'
   import ConfirmDialog from '../Shared/ConfirmDialog.vue'
-  import SkeletonLoader from '../Shared/SkeletonLoader.vue'
 
   const { t } = useI18n()
   const shippingStore = useShippingStore()
@@ -221,28 +277,31 @@
     )
   })
 
-  // Pagination handlers
-const handlePageChange = async (newPage) => {
-  try {
+  // Retry fetching data
+  const retryFetch = async () => {
     isLoading.value = true
-    await shippingStore.fetchShippingMethods(newPage, shippingStore.pagination.limit)
-  } catch (error) {
-    toast.error(t('error.fetchMethods'))
-  } finally {
-    isLoading.value = false
+    try {
+      await shippingStore.fetchShippingMethods(
+        shippingStore.pagination.page,
+        shippingStore.pagination.limit
+      )
+    } catch (error) {
+      toast.error(t('error.fetchMethods'))
+    } finally {
+      isLoading.value = false
+    }
   }
-}
 
-const handleItemsPerPageChange = async (newSize) => {
-  try {
-    isLoading.value = true
-    await shippingStore.fetchShippingMethods(1, newSize)
-  } catch (error) {
-    toast.error(t('error.fetchMethods'))
-  } finally {
-    isLoading.value = false
+  // Pagination handlers
+  const handlePageChange = async (newPage) => {
+    await retryFetch()
   }
-}
+
+  const handleItemsPerPageChange = async (newSize) => {
+    shippingStore.pagination.page = 1
+    await retryFetch()
+  }
+
   // Dialog methods
   const openShippingDialog = (item = null) => {
     editingShipping.value = !!item
@@ -270,6 +329,7 @@ const handleItemsPerPageChange = async (newSize) => {
         toast.success(t('methodAdded'))
       }
       closeShippingDialog()
+      await retryFetch()
     } catch (error) {
       toast.error(error.message)
     }
@@ -284,10 +344,7 @@ const handleItemsPerPageChange = async (newSize) => {
     try {
       await shippingStore.deleteShippingMethod(shippingStore.itemToDelete)
       toast.success(t('methodDeleted'))
-      await shippingStore.fetchShippingMethods({
-        page: shippingStore.pagination.page,
-        limit: shippingStore.pagination.limit
-      })
+      await retryFetch()
     } catch (error) {
       toast.error(t('error.deleteMethod'))
     }
@@ -299,15 +356,8 @@ const handleItemsPerPageChange = async (newSize) => {
   }
 
   // Initial load
-  onMounted(async() => {
-   try {
-    isLoading.value = true
-    await shippingStore.fetchShippingMethods()
-  } catch (error) {
-    toast.error(t('error.fetchMethods'))
-  } finally {
-    isLoading.value = false
-  }
+  onMounted(async () => {
+    await retryFetch()
   })
 </script>
 
