@@ -152,44 +152,52 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
+
+
   async function fetchCustomerById(id) {
     try {
-      loading.value = true
-      const response = await apiClient.get(`/${id}`)
-      const customerData =
-        response?.data?.data?.user || response?.data?.user || null
-
-      if (customerData && customerData._id) {
-        currentCustomer.value = {
-          id: customerData._id,
-          firstName: customerData.firstName,
-          lastName: customerData.lastName,
-          email: customerData.email,
-          mobile: customerData.mobile,
-          isBlocked: customerData.state === 'blocked',
-          tier: customerData.customerTier,
-          joinDate: customerData.joinDate,
-          avatar: customerData.avatar,
-          addresses: customerData.addresses || [],
-          ordersCount: customerData.ordersCount,
-          totalSpent: customerData.totalSpent,
-          lastOrderDate: customerData.lastOrderDate,
-          activityLog: customerData.activityLog || [],
-          communicationPreferences: customerData.communicationPreferences || {},
-          notes: customerData.notes || ''
-        }
-
-        currentCustomerActivity.value = customerData.activityLog || []
-      } else {
-        throw new Error('Invalid customer data structure')
+      loading.value = true;
+      const response = await apiClient.get(`/${id}`);
+  
+      if (!response.data?.data?.user) {
+        throw new Error('Customer data not found in response');
       }
+  
+      const customerData = response.data.data.user;
+  
+      currentCustomer.value = {
+        id: customerData._id,
+        firstName: customerData.firstName,
+        lastName: customerData.lastName,
+        email: customerData.email,
+        mobile: customerData.mobile,
+        isBlocked: customerData.state === 'blocked',
+        tier: customerData.customerTier,
+        joinDate: customerData.joinDate,
+        avatar: customerData.avatar,
+        addresses: customerData.addresses || [],
+        ordersCount: customerData.ordersCount,
+        totalSpent: customerData.totalSpent,
+        lastOrderDate: customerData.lastOrderDate,
+        activityLog: customerData.activityLog || [],
+        communicationPreferences: customerData.communicationPreferences || {},
+        notes: customerData.notes || '',
+      };
+  
+      currentCustomerActivity.value = customerData.activityLog || [];
+  
+      console.log('currentCustomer updated:', currentCustomer.value);
     } catch (err) {
-      toast.error('Failed to fetch customer details')
-      throw err
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+      });
+      throw err;
     } finally {
       loading.value = false
     }
   }
+  
 
   async function createCustomer(data) {
     try {
@@ -284,47 +292,31 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
-  // In store (corrected toggleBlockStatus)
-  async function toggleBlockStatus(customerId) {
-    try {
-      loading.value = true
 
-      // Get current state
-      const customer = customers.value.find((c) => c.id === customerId)
-      if (!customer) throw new Error('Customer not found')
-
-      // Toggle state
-      const newState = customer.state === 'blocked' ? 'active' : 'blocked'
-
-      // API call
-      const response = await apiClient.patch(`/${customerId}`, {
-        state: newState
-      })
-
-      // Update local state
-      const updatedCustomer = response.data.data.user
-
-      // Update customers list
-      const index = customers.value.findIndex((c) => c.id === customerId)
-      if (index !== -1) customers.value[index] = updatedCustomer
-
-      // Update current customer if needed
-      if (currentCustomer.value.id === customerId) {
-        currentCustomer.value = {
-          ...currentCustomer.value,
-          state: newState,
-          isBlocked: newState === 'blocked'
-        }
-      }
-
-      return updatedCustomer
-    } catch (err) {
-      toast.error('Failed to update customer status')
-      throw err
-    } finally {
-      loading.value = false
+async function toggleBlockStatus(customerId) {
+  try {
+    const customer = customers.value.find(c => c.id === customerId);
+    if (!customer) throw new Error('Customer not found');
+    
+    const newState = customer.state === 'blocked' ? 'active' : 'blocked';
+    
+    await apiClient.patch(`/${customerId}`, { state: newState });
+    
+    // تحديث الحالة المحلية
+    customer.state = newState;
+    
+    // إذا كان العميل الحالي هو الذي تم تحديثه
+    if (currentCustomer.value.id === customerId) {
+      currentCustomer.value.state = newState;
     }
+    
+    return true;
+  } catch (err) {
+    toast.error(t('customers.statusUpdateError'));
+    throw err;
   }
+}
+  
 
   async function fetchCustomerOrders(id) {
     try {
