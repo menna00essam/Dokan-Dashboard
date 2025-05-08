@@ -1,5 +1,9 @@
 <template>
+  <error-boundary @catch="handleComponentError">
   <v-container>
+    <template v-if="!customer.id">
+      <v-skeleton-loader type="card, actions"></v-skeleton-loader>
+    </template>
     <!-- Back Button -->
     <v-btn color="primary" class="mb-4" @click="$router.push('/customers')">
       <v-icon left>mdi-arrow-left</v-icon>
@@ -544,6 +548,7 @@
       />
     </template>
   </v-container>
+</error-boundary>
 </template>
 
 <script setup>
@@ -601,10 +606,29 @@
   })
 
 // In component script (corrected computed property)
-const customer = computed(() => ({
-  ...customerStore.currentCustomer,
-  isBlocked: customerStore.currentCustomer.state === 'blocked'
-}));
+// في الـ component script
+const customer = computed(() => {
+  if (!customerStore.currentCustomer || Object.keys(customerStore.currentCustomer).length === 0) {
+    return {
+      id: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      isBlocked: false,
+      state: 'active',            
+      isActive: true,
+      addresses: [],
+      activityLog:[],
+
+
+
+    };
+  }
+  return {
+    ...customerStore.currentCustomer,
+    isBlocked: customerStore.currentCustomer.state === 'blocked'
+  };
+});
 
 
   const customerActivity = computed(() =>
@@ -614,6 +638,12 @@ const customer = computed(() => ({
   const handleBlockToggle = async () => {
     await customerStore.toggleBlockStatus(currentCustomer.value.id)
   }
+
+  const handleComponentError = (error) => {
+  toast.error(t('errors.componentError'));
+  console.error('Component error:', error);
+  router.push('/customers');
+};
 
   // Lifecycle
   onMounted(async () => {

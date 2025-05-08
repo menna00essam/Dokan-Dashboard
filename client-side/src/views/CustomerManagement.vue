@@ -12,8 +12,8 @@
               clearable
               hide-details
               :dir="locale"
-              @update:modelValue="refreshData"
-            />
+              @update:modelValue="handleSearch"
+              />
           </v-col>
 
           <v-col cols="6" md="2">
@@ -245,17 +245,23 @@
 
   const defaultAvatar = 'https://cdn.vuetifyjs.com/images/profiles/male1.jpg'
 
-  const statusOptions = ['active', 'blocked'].map((state) => ({
+  const statusOptions = [
+  { value: 'all', title: t('all') },
+  ...['active', 'blocked'].map((state) => ({
     value: state,
     title: t(state)
   }))
+]
 
-  const tierOptions = ['basic', 'silver', 'gold', 'platinum'].map(
+const tierOptions = [
+  { value: 'all', title: t('all') }, 
+  ...['basic', 'silver', 'gold', 'platinum'].map(
     (customerTier) => ({
       value: customerTier,
       title: t(customerTier)
     })
   )
+]
 
   const resetAll = async () => {
     customerStore.resetFilters()
@@ -271,6 +277,15 @@
 
 const handlePageChange = (newPage) => {
   customerStore.currentPage = newPage
+  refreshData()
+}
+
+
+const handleSearch = (value) => {
+  // Reset filters to 'all' when searching
+  customerStore.statusFilter = 'all'
+  customerStore.tierFilter = 'all'
+  // Trigger data refresh
   refreshData()
 }
 
@@ -298,7 +313,7 @@ const handlePageChange = (newPage) => {
   })
 
   const refreshData = async () => {
-    await customerStore.fetchCustomers(customerStore.currentPage)
+    await customerStore.fetchCustomers()
   }
 
   // const handlePageChange = async (newPage) => {
