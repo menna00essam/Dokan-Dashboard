@@ -33,40 +33,27 @@
 
   const emit = defineEmits(['update:page', 'update:itemsPerPage'])
 
-  const internalPage = ref(props.page)
-  const internalItemsPerPage = ref(props.itemsPerPage)
-
   // Computed properties
   const totalPages = computed(() =>
-    Math.max(1, Math.ceil(props.totalItems / internalItemsPerPage.value))
+    Math.max(1, Math.ceil(props.totalItems / props.itemsPerPage))
   )
 
   const showingFrom = computed(() => {
     return props.totalItems === 0
       ? 0
-      : (internalPage.value - 1) * internalItemsPerPage.value + 1
+      : (props.page - 1) * props.itemsPerPage + 1
   })
 
   const showingTo = computed(() => {
-    return Math.min(
-      internalPage.value * internalItemsPerPage.value,
-      props.totalItems
-    )
+    return Math.min(props.page * props.itemsPerPage, props.totalItems)
   })
-
-  // Watchers
-  watch(
-    () => props.page,
-    (newVal) => (internalPage.value = newVal)
-  )
-  watch(
-    () => props.itemsPerPage,
-    (newVal) => (internalItemsPerPage.value = newVal)
-  )
 
   // Event handlers
   const handlePageChange = (newPage) => {
-    emit('update:page', newPage)
+    if (newPage !== props.page) {
+      // Only emit if actually changed
+      emit('update:page', newPage)
+    }
   }
 
   const handleItemsPerPageChange = (newSize) => {
@@ -96,7 +83,7 @@
         >{{ t('itemsPerPage') }}:</span
       >
       <v-select
-        v-model="internalItemsPerPage"
+        :model-value="itemsPerPage"
         :items="pageSizeOptions"
         density="compact"
         variant="outlined"
@@ -107,13 +94,14 @@
     </div>
 
     <v-pagination
-      v-model="internalPage"
+      :model-value="page"
       :length="totalPages"
       :total-visible="mobile ? 5 : 7"
       :density="mobile ? 'comfortable' : 'default'"
       class="my-2 my-sm-0"
       :class="{ 'mx-sm-2': !mobile }"
       @update:model-value="handlePageChange"
+      active-color="secondary"
     ></v-pagination>
 
     <div

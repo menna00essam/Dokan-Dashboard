@@ -118,18 +118,15 @@
     <!-- Data Table -->
     <v-data-table
       :headers="enhancedHeaders"
-      :items="customerStore.filteredCustomers"
+      :items="customerStore.customers"
       :items-per-page="customerStore.itemsPerPage"
-      v-model:page="customerStore.currentPage"
       v-model="selected"
       show-select
       item-value="id"
       class="elevation-1"
       :loading="customerStore.loading"
-      @update:page="handlePageChange"
-      @click:row="(event, { item }) => viewCustomerDetails(item.id)"
       hide-default-footer
-
+      @click:row="(event, { item }) => viewCustomerDetails(item.id)"
     >
       <!-- Table Content Templates -->
       <template #item.fullname="{ item }">
@@ -187,19 +184,15 @@
     </v-data-table>
 
     <!-- Pagination -->
-    <div class="d-flex justify-center mt-4">
-      <PaginationControls
-        v-model:page="customerStore.currentPage"
-        v-model:itemsPerPage="customerStore.itemsPerPage"
-        :totalItems="customerStore.totalItems"
-        :pageSizeOptions="[5, 10, 20, 50]"
-        :direction="locale === 'ar' ? 'rtl' : 'ltr'"
-        @update:page="handlePageChange"
-        @update:itemsPerPage="handleItemsPerPageChange"
-         :loading="isLoading"
-        loading-text="Loading shipping methods... Please wait"
-      />
-    </div>
+    <PaginationControls
+      :key="`pagination-${customerStore.currentPage}-${customerStore.itemsPerPage}`"
+      :page="customerStore.currentPage"
+      :items-per-page="customerStore.itemsPerPage"
+      :total-items="customerStore.total"
+      @update:page="handlePageChange"
+      @update:items-per-page="handleItemsPerPageChange"
+      :loading="customerStore.loading"
+    />
 
     <!-- Confirm Dialogs -->
     <ConfirmDialog
@@ -231,7 +224,6 @@
   import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
   import PaginationControls from '../components/Shared/PaginationControls.vue'
 
-
   const { t, locale } = useI18n()
   const toast = useToast()
   const router = useRouter()
@@ -262,18 +254,28 @@
     await refreshData()
     toast.success(t('filtersReset'))
   }
+  const handlePageChange = async (newPage) => {
+  if (newPage === customerStore.currentPage) return;
+  try {
+    console.log('Changing to page:', newPage);
+    await customerStore.fetchCustomers(newPage);
+  } catch (error) {
+    console.error('Page change error:', error);
+    toast.error(t('pageChangeError'));
+  }
+};
 
+const handleItemsPerPageChange = async (newSize) => {
+  console.log('Changing items per page to:', newSize);
+  customerStore.itemsPerPage = newSize;
+  customerStore.currentPage = 1;
+  await customerStore.fetchCustomers();
+};
 
-  const handleItemsPerPageChange = (newSize) => {
-  customerStore.itemsPerPage = newSize
-  refreshData()
-}
-
-const handlePageChange = (newPage) => {
-  customerStore.currentPage = newPage
-  refreshData()
-}
-
+const refreshData = async () => {
+  customerStore.currentPage = 1;
+  await customerStore.fetchCustomers();
+};
   const sortOptions = [
     { value: 'name', title: t('name') },
     { value: 'joinDate', title: t('joinDate') },
@@ -296,10 +298,6 @@ const handlePageChange = (newPage) => {
   onMounted(async () => {
     await customerStore.fetchCustomers()
   })
-
-  const refreshData = async () => {
-    await customerStore.fetchCustomers(customerStore.currentPage)
-  }
 
   // const handlePageChange = async (newPage) => {
   //   await customerStore.fetchCustomers(newPage)
