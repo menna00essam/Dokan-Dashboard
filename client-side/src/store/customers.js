@@ -1,9 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
-import { useToast } from 'vue-toastification';
 import axios from 'axios';
-import { reactive } from 'vue'
-
+import { useToast } from 'vue-toastification';
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:5000/users',
@@ -26,10 +24,11 @@ export const useCustomerStore = defineStore('customer', () => {
   // ------------------ State ------------------
   const customers = ref([]);
   const currentCustomer = ref({});
+  const currentCustomerOrders = ref([]);
+  const currentCustomerActivity = ref([]);
+  const selectedCustomers = ref([]);
   const loading = ref(false);
   const error = ref(null);
-  const currentCustomerOrders = ref([]);
-const currentCustomerActivity = ref([]);
 
   const searchQuery = ref('');
   const statusFilter = ref('all');
@@ -39,7 +38,6 @@ const currentCustomerActivity = ref([]);
   const currentPage = ref(1);
   const itemsPerPage = ref(10);
   const totalPages = ref(1);
-  const selectedCustomers = ref([]);
 
   const provinces = ref([
     { id: 1, name: 'Cairo' },
@@ -52,7 +50,7 @@ const currentCustomerActivity = ref([]);
     { id: 3, provinceId: 2, name: 'Montaza' }
   ]);
 
-  // ------------------ Getters ------------------
+  // ------------------ Computed Getters ------------------
   const filteredCustomers = computed(() => {
     let result = [...customers.value];
 
@@ -98,16 +96,28 @@ const currentCustomerActivity = ref([]);
     totalSpent: customers.value.reduce((sum, c) => sum + c.totalSpent, 0),
   }));
 
-
+  const getCustomerOrders = computed(() => currentCustomerOrders.value);
+  const getCustomerActivityLog = computed(() => currentCustomerActivity.value);
 
   // ------------------ Actions ------------------
-  async function fetchCustomers(page = 1, itemsCount = 10) {
+
+  function resetFilters() {
+    searchQuery.value = '';
+    statusFilter.value = 'all';
+    tierFilter.value = 'all';
+    sortBy.value = 'name';
+    sortOrder.value = 'asc';
+    currentPage.value = 1;
+    itemsPerPage.value = 10;
+  }
+
+  async function fetchCustomers() {
     try {
       loading.value = true;
       const response = await apiClient.get('/', {
         params: {
-          page,
-          limit: itemsCount,
+          page: currentPage.value,
+          limit: itemsPerPage.value,
           search: searchQuery.value,
           state: statusFilter.value,
           customerTier: tierFilter.value,
@@ -132,13 +142,8 @@ const currentCustomerActivity = ref([]);
     try {
       loading.value = true;
       const response = await apiClient.get(`/${id}`);
-      console.log('API Response Data Structure:', response);
-  
-      const customerData =
-        response?.data?.data?.user || 
-        response?.data?.user ||      
-        null;
-  
+      const customerData = response?.data?.data?.user || response?.data?.user || null;
+
       if (customerData && customerData._id) {
         currentCustomer.value = {
           id: customerData._id,
@@ -158,33 +163,25 @@ const currentCustomerActivity = ref([]);
           communicationPreferences: customerData.communicationPreferences || {},
           notes: customerData.notes || '',
         };
-  
+
         currentCustomerActivity.value = customerData.activityLog || [];
       } else {
-        const errorMessage = response?.data?.status
-          ? `Invalid customer data structure: ${response?.data?.status}`
-          : 'Invalid customer data structure';
-        throw new Error(errorMessage);
+        throw new Error('Invalid customer data structure');
       }
-    } catch (error) {
+    } catch (err) {
       toast.error('Failed to fetch customer details');
-      console.error('Fetch error:', error);
-      console.error('Error details:', error.message || error);
-      console.error('Response data:', error.response?.data || error);
-      throw error;
+      throw err;
     } finally {
       loading.value = false;
     }
   }
-  
-  
-  
+
   async function createCustomer(data) {
     try {
       loading.value = true;
       await apiClient.post('/', data);
       toast.success('Customer created successfully');
-      await fetchCustomers(currentPage.value, itemsPerPage.value);
+      await fetchCustomers();
     } catch (err) {
       error.value = err.message;
       toast.error('Failed to create customer');
@@ -197,20 +194,14 @@ const currentCustomerActivity = ref([]);
   async function updateCustomer(id, customerData) {
     try {
       loading.value = true;
-      const response = await apiClient.patch(`/${id}`, {
-        ...customerData,
-        state: customerData.state,
-        customerTier: customerData.customerTier
-      });
-
+      const response = await apiClient.patch(`/${id}`, customerData);
       const updated = response.data.data.user;
       const index = customers.value.findIndex(c => c.id === id);
       if (index !== -1) customers.value[index] = updated;
       currentCustomer.value = updated;
-
       return updated;
     } catch (error) {
-      console.error('Error updating customer:', error);
+      toast.error('Error updating customer');
       throw error;
     } finally {
       loading.value = false;
@@ -222,7 +213,7 @@ const currentCustomerActivity = ref([]);
       loading.value = true;
       await apiClient.delete(`/${id}`);
       toast.success('Customer deleted successfully');
-      await fetchCustomers(currentPage.value, itemsPerPage.value);
+      await fetchCustomers();
     } catch (err) {
       error.value = err.message;
       toast.error('Failed to delete customer');
@@ -236,7 +227,7 @@ const currentCustomerActivity = ref([]);
       loading.value = true;
       await apiClient.post('/bulk-delete', { ids });
       toast.success(`${ids.length} customers deleted`);
-      await fetchCustomers(currentPage.value, itemsPerPage.value);
+      await fetchCustomers();
       selectedCustomers.value = [];
     } catch (err) {
       error.value = err.message;
@@ -246,25 +237,6 @@ const currentCustomerActivity = ref([]);
     }
   }
 
-async function fetchCustomerOrders(id) {
-  try {
-    ordersLoading.value = true;
-    const response = await apiClient.get(`/users/${id}/orders`);
-    currentCustomerOrders.value = response.data?.orders?.map(order => ({
-      id: order._id,
-      orderDate: order.createdAt,
-      total: order.totalAmount,
-      status: order.status
-    })) || [];
-  } catch (error) {
-    toast.error('Failed to fetch orders');
-    throw error;
-  } finally {
-    ordersLoading.value = false;
-  }
-}
-  
-
   async function bulkUpdateStatus(ids, state) {
     try {
       loading.value = true;
@@ -272,7 +244,7 @@ async function fetchCustomerOrders(id) {
       customers.value = customers.value.map(c =>
         ids.includes(c.id) ? { ...c, state } : c
       );
-      toast.success(`${ids.length} customers updated to ${state}`);
+      toast.success(`${ids.length} customers updated`);
     } catch (err) {
       error.value = err.message;
       toast.error('Failed to update status');
@@ -290,7 +262,7 @@ async function fetchCustomerOrders(id) {
           ? { ...c, tags: [...(c.tags || []), ...tags] }
           : c
       );
-      toast.success(`${tags.length} tags added to ${ids.length} customers`);
+      toast.success('Tags added successfully');
     } catch (err) {
       error.value = err.message;
       toast.error('Failed to add tags');
@@ -300,38 +272,78 @@ async function fetchCustomerOrders(id) {
   }
 
 
-  // async function fetchCustomerOrders(id) {
-  //   try {
-  //     loading.value = true;
-  //     const response = await apiClient.get(`/${id}/orders`);
-  //     currentCustomerOrders.value = response.data.data.orders;
-  //   } catch (error) {
-  //     toast.error('Failed to fetch customer orders');
-  //     throw error;
-  //   } finally {
-  //     loading.value = false;
-  //   }
-  // }
+ // In store (corrected toggleBlockStatus)
+async function toggleBlockStatus(customerId) {
+  try {
+    loading.value = true;
+    
+    // Get current state
+    const customer = customers.value.find(c => c.id === customerId);
+    if (!customer) throw new Error('Customer not found');
+    
+    // Toggle state
+    const newState = customer.state === 'blocked' ? 'active' : 'blocked';
+    
+    // API call
+    const response = await apiClient.patch(`/${customerId}`, { 
+      state: newState 
+    });
+    
+    // Update local state
+    const updatedCustomer = response.data.data.user;
+    
+    // Update customers list
+    const index = customers.value.findIndex(c => c.id === customerId);
+    if (index !== -1) customers.value[index] = updatedCustomer;
+    
+    // Update current customer if needed
+    if (currentCustomer.value.id === customerId) {
+      currentCustomer.value = {
+        ...currentCustomer.value,
+        state: newState,
+        isBlocked: newState === 'blocked'
+      };
+    }
+    
+    return updatedCustomer;
+  } catch (err) {
+    toast.error('Failed to update customer status');
+    throw err;
+  } finally {
+    loading.value = false;
+  }
+}
+  
 
-
- 
+  async function fetchCustomerOrders(id) {
+    try {
+      loading.value = true;
+      const response = await apiClient.get(`/${id}/orders`);
+      currentCustomerOrders.value = response.data?.orders?.map(order => ({
+        id: order._id,
+        orderDate: order.createdAt,
+        total: order.totalAmount,
+        status: order.status
+      })) || [];
+    } catch (error) {
+      toast.error('Failed to fetch orders');
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
 
   function changePage(newPage) {
     if (newPage >= 1 && newPage <= totalPages.value) {
       currentPage.value = newPage;
-      fetchCustomers(newPage, itemsPerPage.value);
+      fetchCustomers();
     }
   }
-
-  const getCustomerOrders = computed(() => currentCustomerOrders.value);
-  const getCustomerActivityLog = computed(() => currentCustomerActivity.value);
-
-
 
   // ------------------ Watchers ------------------
   watch([searchQuery, statusFilter, tierFilter, sortBy, sortOrder], () => {
     currentPage.value = 1;
-    fetchCustomers(currentPage.value, itemsPerPage.value);
+    fetchCustomers();
   });
 
   // ------------------ Return ------------------
@@ -339,6 +351,8 @@ async function fetchCustomerOrders(id) {
     // State
     customers,
     currentCustomer,
+    currentCustomerOrders,
+    currentCustomerActivity,
     loading,
     error,
     provinces,
@@ -357,6 +371,9 @@ async function fetchCustomerOrders(id) {
     filteredCustomers,
     paginatedCustomers,
     customerStats,
+    getCustomerOrders,
+    getCustomerActivityLog,
+    toggleBlockStatus,
 
     // Actions
     fetchCustomers,
@@ -367,9 +384,8 @@ async function fetchCustomerOrders(id) {
     bulkDeleteCustomers,
     bulkUpdateStatus,
     addTagsToCustomers,
-    changePage,
-    getCustomerActivityLog,
-    getCustomerOrders,
     fetchCustomerOrders,
+    changePage,
+    resetFilters,
   };
 });

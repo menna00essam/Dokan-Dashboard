@@ -66,7 +66,7 @@ const createUser = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users
 // @access  Public
 const getAllUsers = asyncWrapper(async (req, res, next) => {
-  const { page = 1, limit = 10, search, isActive } = req.query;
+  const { page = 15, limit = 1000, search, isActive } = req.query;
 
   const query = {
     role: "user",

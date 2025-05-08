@@ -52,12 +52,7 @@
           </v-col>
 
           <v-col cols="6" md="2" class="d-flex align-center">
-            <v-btn
-              color="secondary"
-              class="pa-6"
-              @click="resetAll"
-              block
-            >
+            <v-btn color="secondary" class="pa-6" @click="resetAll" block>
               {{ t('reset') }}
             </v-btn>
           </v-col>
@@ -66,7 +61,10 @@
     </v-card>
 
     <!-- Action Toolbar -->
-    <div class="d-flex align-center mb-4" :class="{ 'flex-row-reverse': locale === 'ar' }">
+    <div
+      class="d-flex align-center mb-4"
+      :class="{ 'flex-row-reverse': locale === 'ar' }"
+    >
       <v-btn
         class="mr-3"
         variant="tonal"
@@ -90,10 +88,16 @@
           </v-btn>
         </template>
         <v-list density="compact">
-          <v-list-item @click="bulkUpdateStatus('active')" prepend-icon="mdi-account-check">
+          <v-list-item
+            @click="bulkUpdateStatus('active')"
+            prepend-icon="mdi-account-check"
+          >
             <v-list-item-title>{{ t('markAsActive') }}</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="bulkUpdateStatus('blocked')" prepend-icon="mdi-account-cancel">
+          <v-list-item
+            @click="bulkUpdateStatus('blocked')"
+            prepend-icon="mdi-account-cancel"
+          >
             <v-list-item-title>{{ t('markAsBlocked') }}</v-list-item-title>
           </v-list-item>
         </v-list>
@@ -124,10 +128,15 @@
       :loading="customerStore.loading"
       @update:page="handlePageChange"
       @click:row="(event, { item }) => viewCustomerDetails(item.id)"
+      hide-default-footer
+
     >
       <!-- Table Content Templates -->
       <template #item.fullname="{ item }">
-        <div class="d-flex align-center" :class="{ 'flex-row-reverse': locale === 'ar' }">
+        <div
+          class="d-flex align-center"
+          :class="{ 'flex-row-reverse': locale === 'ar' }"
+        >
           <v-avatar size="36" class="mr-2">
             <v-img :src="item.avatar || defaultAvatar" />
           </v-avatar>
@@ -142,14 +151,26 @@
       </template>
 
       <template #item.status="{ item }">
-        <v-chip :color="item.state === 'active' ? 'success' : 'error'" size="small">
+        <v-chip
+          :color="item.state === 'active' ? 'success' : 'error'"
+          size="small"
+        >
           {{ t(item.state) }}
         </v-chip>
       </template>
 
       <template #item.actions="{ item }">
-        <div class="d-flex align-center" :class="{ 'flex-row-reverse': locale === 'ar' }">
-          <v-btn icon size="small" color="info" class="mr-2" @click.stop="editCustomer(item)">
+        <div
+          class="d-flex align-center"
+          :class="{ 'flex-row-reverse': locale === 'ar' }"
+        >
+          <v-btn
+            icon
+            size="small"
+            color="info"
+            class="mr-2"
+            @click.stop="editCustomer(item)"
+          >
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
           <v-btn
@@ -167,12 +188,17 @@
 
     <!-- Pagination -->
     <div class="d-flex justify-center mt-4">
-      <v-pagination
-        v-model="customerStore.currentPage"
-        :length="customerStore.totalPages"
-        :total-visible="7"
-        @update:modelValue="handlePageChange"
-      ></v-pagination>
+      <PaginationControls
+        v-model:page="customerStore.currentPage"
+        v-model:itemsPerPage="customerStore.itemsPerPage"
+        :totalItems="customerStore.totalItems"
+        :pageSizeOptions="[5, 10, 20, 50]"
+        :direction="locale === 'ar' ? 'rtl' : 'ltr'"
+        @update:page="handlePageChange"
+        @update:itemsPerPage="handleItemsPerPageChange"
+         :loading="isLoading"
+        loading-text="Loading shipping methods... Please wait"
+      />
     </div>
 
     <!-- Confirm Dialogs -->
@@ -197,164 +223,180 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useCustomerStore } from '../store/customers'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useToast } from 'vue-toastification'
-import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+  import { ref, computed, onMounted } from 'vue'
+  import { useCustomerStore } from '../store/customers'
+  import { useRouter } from 'vue-router'
+  import { useI18n } from 'vue-i18n'
+  import { useToast } from 'vue-toastification'
+  import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+  import PaginationControls from '../components/Shared/PaginationControls.vue'
 
-const { t, locale } = useI18n()
-const toast = useToast()
-const router = useRouter()
-const customerStore = useCustomerStore()
 
-const selected = ref([])
-const isDeleting = ref(false)
-const customerToDelete = ref(null)
-const deleteConfirmDialog = ref(null)
-const singleDeleteDialog = ref(null)
+  const { t, locale } = useI18n()
+  const toast = useToast()
+  const router = useRouter()
+  const customerStore = useCustomerStore()
 
-const defaultAvatar = 'https://cdn.vuetifyjs.com/images/profiles/male1.jpg'
+  const selected = ref([])
+  const isDeleting = ref(false)
+  const customerToDelete = ref(null)
+  const deleteConfirmDialog = ref(null)
+  const singleDeleteDialog = ref(null)
 
-const statusOptions = ['active', 'blocked'].map(state => ({
-  value: state,
-  title: t(state)
-}))
+  const defaultAvatar = 'https://cdn.vuetifyjs.com/images/profiles/male1.jpg'
 
-const tierOptions = ['basic', 'silver', 'gold', 'platinum'].map(customerTier => ({
-  value: customerTier,
-  title: t(customerTier)
-}))
+  const statusOptions = ['active', 'blocked'].map((state) => ({
+    value: state,
+    title: t(state)
+  }))
 
-const sortOptions = [
-  { value: 'name', title: t('name') },
-  { value: 'joinDate', title: t('joinDate') },
-  { value: 'totalSpent', title: t('totalSpent') }
-]
+  const tierOptions = ['basic', 'silver', 'gold', 'platinum'].map(
+    (customerTier) => ({
+      value: customerTier,
+      title: t(customerTier)
+    })
+  )
 
-const enhancedHeaders = computed(() => [
-  { title: t('customer'), key: 'fullname', sortable: true },
-  { title: t('email'), key: 'email' },
-  { title: t('phone'), key: 'mobile' },
-  { title: t('customerTier'), key: 'customerTier', sortable: true },
-  { title: t('state'), key: 'state' },
-  { title: t('actions'), key: 'actions', sortable: false }
-])
+  const resetAll = async () => {
+    customerStore.resetFilters()
+    await refreshData()
+    toast.success(t('filtersReset'))
+  }
 
-const deleteMessage = computed(() =>
-  t('deleteCustomerConfirm', { count: selected.value.length })
-)
 
-onMounted(async () => {
-  await customerStore.fetchCustomers()
-})
-
-const refreshData = async () => {
-  await customerStore.fetchCustomers(customerStore.currentPage)
-}
-
-const resetAll = () => {
-  customerStore.resetFilters()
+  const handleItemsPerPageChange = (newSize) => {
+  customerStore.itemsPerPage = newSize
   refreshData()
 }
 
-const handlePageChange = async (newPage) => {
-  await customerStore.fetchCustomers(newPage)
+const handlePageChange = (newPage) => {
+  customerStore.currentPage = newPage
+  refreshData()
 }
 
-const viewCustomerDetails = (id) => {
-  router.push(`/customers/${id}`)
-}
+  const sortOptions = [
+    { value: 'name', title: t('name') },
+    { value: 'joinDate', title: t('joinDate') },
+    { value: 'totalSpent', title: t('totalSpent') }
+  ]
 
-const editCustomer = (customer) => {
-  router.push(`/customers/edit/${customer.id}`)
-}
+  const enhancedHeaders = computed(() => [
+    { title: t('customer'), key: 'fullname', sortable: true },
+    { title: t('email'), key: 'email' },
+    { title: t('phone'), key: 'mobile' },
+    { title: t('customerTier'), key: 'customerTier', sortable: true },
+    { title: t('state'), key: 'state' },
+    { title: t('actions'), key: 'actions', sortable: false }
+  ])
 
-const deleteSingleCustomer = (id) => {
-  customerToDelete.value = id
-  singleDeleteDialog.value.open()
-}
+  const deleteMessage = computed(() =>
+    t('deleteCustomerConfirm', { count: selected.value.length })
+  )
 
-const confirmSingleDelete = async () => {
-  isDeleting.value = true
-  try {
-    const success = await customerStore.deleteCustomer(customerToDelete.value)
-    if (success) {
-      await customerStore.fetchCustomers(customerStore.currentPage)
-    }
-  } finally {
-    isDeleting.value = false
-    customerToDelete.value = null
+  onMounted(async () => {
+    await customerStore.fetchCustomers()
+  })
+
+  const refreshData = async () => {
+    await customerStore.fetchCustomers(customerStore.currentPage)
   }
-}
 
-const confirmDelete = async () => {
-  isDeleting.value = true
-  try {
-    const success = await customerStore.bulkDeleteCustomers(selected.value)
-    if (success) {
+  // const handlePageChange = async (newPage) => {
+  //   await customerStore.fetchCustomers(newPage)
+  // }
+
+  const viewCustomerDetails = (id) => {
+    router.push(`/customers/${id}`)
+  }
+
+  const editCustomer = (customer) => {
+    router.push(`/customers/edit/${customer.id}`)
+  }
+
+  const deleteSingleCustomer = (id) => {
+    customerToDelete.value = id
+    singleDeleteDialog.value.open()
+  }
+
+  const confirmSingleDelete = async () => {
+    isDeleting.value = true
+    try {
+      const success = await customerStore.deleteCustomer(customerToDelete.value)
+      if (success) {
+        await customerStore.fetchCustomers(customerStore.currentPage)
+      }
+    } finally {
+      isDeleting.value = false
+      customerToDelete.value = null
+    }
+  }
+
+  const confirmDelete = async () => {
+    isDeleting.value = true
+    try {
+      const success = await customerStore.bulkDeleteCustomers(selected.value)
+      if (success) {
+        await customerStore.fetchCustomers(customerStore.currentPage)
+        selected.value = []
+      }
+    } finally {
+      isDeleting.value = false
+    }
+  }
+
+  const bulkUpdateStatus = async (state) => {
+    try {
+      // You'll need to implement this function in your store
+      await customerStore.bulkUpdateStatus(selected.value, state)
       await customerStore.fetchCustomers(customerStore.currentPage)
       selected.value = []
+      toast.success(t('statusUpdated', { count: selected.value.length }))
+    } catch (error) {
+      toast.error(t('updateError'))
     }
-  } finally {
-    isDeleting.value = false
   }
-}
 
-const bulkUpdateStatus = async (state) => {
-  try {
-    // You'll need to implement this function in your store
-    await customerStore.bulkUpdateStatus(selected.value, state)
-    await customerStore.fetchCustomers(customerStore.currentPage)
-    selected.value = []
-    toast.success(t('statusUpdated', { count: selected.value.length }))
-  } catch (error) {
-    toast.error(t('updateError'))
+  const formatTier = (customerTier) => {
+    if (!customerTier) return t('unknown')
+    return t(customerTier)
   }
-}
 
-const formatTier = (customerTier) => {
-  if (!customerTier) return t('unknown')
-  return t(customerTier)
-}
-
-const getTierColor = (customerTier) => {
-  const colors = {
-    basic: 'grey',
-    silver: 'blue-grey',
-    gold: 'amber',
-    platinum: 'blue'
+  const getTierColor = (customerTier) => {
+    const colors = {
+      basic: 'grey',
+      silver: 'blue-grey',
+      gold: 'amber',
+      platinum: 'blue'
+    }
+    return colors[customerTier] || 'primary'
   }
-  return colors[customerTier] || 'primary'
-}
 </script>
 
 <style scoped>
-[dir="rtl"] .v-data-table-header th {
-  text-align: right;
-}
-[dir="rtl"] .v-btn__prepend {
-  margin-right: 0;
-  margin-left: 8px;
-}
-.v-avatar {
-  flex-shrink: 0;
-}
-[dir="rtl"] .v-list-item__prepend {
-  margin-right: 0;
-  margin-left: 16px;
-}
-[dir="rtl"] .v-text-field .v-input__control {
-  direction: rtl;
-}
-[dir="rtl"] .v-text-field .v-label {
-  right: 0;
-  left: auto;
-  transform-origin: top right;
-}
-[dir="rtl"] .v-select .v-select__selection {
-  direction: rtl;
-  text-align: right;
-}
+  [dir='rtl'] .v-data-table-header th {
+    text-align: right;
+  }
+  [dir='rtl'] .v-btn__prepend {
+    margin-right: 0;
+    margin-left: 8px;
+  }
+  .v-avatar {
+    flex-shrink: 0;
+  }
+  [dir='rtl'] .v-list-item__prepend {
+    margin-right: 0;
+    margin-left: 16px;
+  }
+  [dir='rtl'] .v-text-field .v-input__control {
+    direction: rtl;
+  }
+  [dir='rtl'] .v-text-field .v-label {
+    right: 0;
+    left: auto;
+    transform-origin: top right;
+  }
+  [dir='rtl'] .v-select .v-select__selection {
+    direction: rtl;
+    text-align: right;
+  }
 </style>
