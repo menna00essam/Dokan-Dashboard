@@ -1,715 +1,348 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { useToast } from 'vue-toastification'
+import { defineStore } from 'pinia';
+import { ref, computed, watch } from 'vue';
+import { useToast } from 'vue-toastification';
+import axios from 'axios';
+import { reactive } from 'vue'
+
+
+const apiClient = axios.create({
+  baseURL: 'http://localhost:5000/users',
+  headers: {
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+  },
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No authentication token found');
+  config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
 export const useCustomerStore = defineStore('customer', () => {
-  const toast = useToast()
+  const toast = useToast();
 
-  // Sample provinces and cities data (unchanged)
+  // ------------------ State ------------------
+  const customers = ref([]);
+  const currentCustomer = ref({});
+  const loading = ref(false);
+  const error = ref(null);
+  const currentCustomerOrders = ref([]);
+const currentCustomerActivity = ref([]);
+
+  const searchQuery = ref('');
+  const statusFilter = ref('all');
+  const tierFilter = ref('all');
+  const sortBy = ref('name');
+  const sortOrder = ref('asc');
+  const currentPage = ref(1);
+  const itemsPerPage = ref(10);
+  const totalPages = ref(1);
+  const selectedCustomers = ref([]);
+
   const provinces = ref([
-    { id: '1', name: 'Cairo' },
-    { id: '2', name: 'Alexandria' },
-    { id: '3', name: 'Giza' },
-    { id: '4', name: 'Sharqia' },
-    { id: '5', name: 'Dakahlia' }
-  ])
+    { id: 1, name: 'Cairo' },
+    { id: 2, name: 'Alexandria' }
+  ]);
 
   const cities = ref([
-    { id: '1', provinceId: '1', name: 'Nasr City' },
-    { id: '2', provinceId: '1', name: 'Maadi' },
-    { id: '3', provinceId: '1', name: 'Heliopolis' },
-    { id: '4', provinceId: '2', name: 'Roushdy' },
-    { id: '5', provinceId: '2', name: 'Smouha' },
-    { id: '6', provinceId: '3', name: 'Dokki' },
-    { id: '7', provinceId: '3', name: 'Haram' }
-  ])
+    { id: 1, provinceId: 1, name: 'Downtown Cairo' },
+    { id: 2, provinceId: 1, name: 'Nasr City' },
+    { id: 3, provinceId: 2, name: 'Montaza' }
+  ]);
 
-  // Sample customer data
-  const customers = ref([
-    {
-      id: '1',
-      firstName: 'Mohamed',
-      lastName: 'Ahmed',
-      fullName: 'Mohamed Ahmed',
-      email: 'mohamed.ahmed@example.com',
-      mobile: '01012345678',
-      addresses: [
-        {
-          id: '1',
-          province: { id: '1', name: 'Cairo' },
-          city: { id: '1', name: 'Nasr City' },
-          street: '123 Main Street',
-          building: 'Building 5',
-          floor: '3',
-          apartment: '12',
-          postalCode: '11511',
-          isDefault: true
-        }
-      ],
-      joinDate: new Date('2022-05-15'),
-      birthDate: new Date('1990-08-20'),
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      ordersCount: 5,
-      orders: [],
-      totalSpent: 12500,
-      lastOrderDate: new Date('2023-04-10'),
-      tags: ['VIP', 'Frequent Buyer'],
-      status: 'active',
-      tier: 'gold',
-      isBlocked: false,
-      notes: 'Prefers evening deliveries',
-      communicationPreferences: {
-        email: true,
-        sms: false,
-        whatsapp: true
-      },
-      activityLog: []
-    },
-    {
-      id: '2',
-      firstName: 'Menna',
-      lastName: 'Ahmed',
-      fullName: 'Mohamed Ahmed',
-      email: 'mohamed.ahmed@example.com',
-      mobile: '01012345678',
-      addresses: [
-        {
-          id: '1',
-          province: { id: '1', name: 'Cairo' },
-          city: { id: '1', name: 'Nasr City' },
-          street: '123 Main Street',
-          building: 'Building 5',
-          floor: '3',
-          apartment: '12',
-          postalCode: '11511',
-          isDefault: true
-        }
-      ],
-      joinDate: new Date('2022-05-15'),
-      birthDate: new Date('1990-08-20'),
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      ordersCount: 5,
-      orders: [],
-      totalSpent: 12500,
-      lastOrderDate: new Date('2023-04-10'),
-      tags: ['VIP', 'Frequent Buyer'],
-      status: 'active',
-      tier: 'gold',
-      isBlocked: false,
-      notes: 'Prefers evening deliveries',
-      communicationPreferences: {
-        email: true,
-        sms: false,
-        whatsapp: true
-      },
-      activityLog: []
-    },
-    {
-      id: '3',
-      firstName: 'Mariem',
-      lastName: 'Ahmed',
-      fullName: 'Mohamed Ahmed',
-      email: 'mohamed.ahmed@example.com',
-      mobile: '01012345678',
-      addresses: [
-        {
-          id: '1',
-          province: { id: '1', name: 'Cairo' },
-          city: { id: '1', name: 'Nasr City' },
-          street: '123 Main Street',
-          building: 'Building 5',
-          floor: '3',
-          apartment: '12',
-          postalCode: '11511',
-          isDefault: true
-        }
-      ],
-      joinDate: new Date('2022-05-15'),
-      birthDate: new Date('1990-08-20'),
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      ordersCount: 5,
-      orders: [],
-      totalSpent: 12500,
-      lastOrderDate: new Date('2023-04-10'),
-      tags: ['VIP', 'Frequent Buyer'],
-      status: 'active',
-      tier: 'gold',
-      isBlocked: false,
-      notes: 'Prefers evening deliveries',
-      communicationPreferences: {
-        email: true,
-        sms: false,
-        whatsapp: true
-      },
-      activityLog: []
-    }
-  ])
-
-  // Search and filter states
-  const searchQuery = ref('')
-  const statusFilter = ref('all')
-  const tierFilter = ref('all')
-  const sortBy = ref('name')
-  const sortOrder = ref('asc')
-  const currentPage = ref(1)
-  const itemsPerPage = ref(10)
-
-  // New state for selected customers (for bulk operations)
-  const selectedCustomers = ref([])
-
-  // Computed properties
+  // ------------------ Getters ------------------
   const filteredCustomers = computed(() => {
-    let result = [...customers.value]
+    let result = [...customers.value];
 
-    // Apply search
     if (searchQuery.value) {
-      const query = searchQuery.value.toLowerCase()
-      result = result.filter((c) =>
-        `${c.firstName} ${c.lastName} ${c.email} ${c.mobile} ${c.tags?.join(' ')}`
-          .toLowerCase()
-          .includes(query)
-      )
+      const query = searchQuery.value.toLowerCase();
+      result = result.filter(c =>
+        `${c.firstName} ${c.lastName} ${c.email} ${c.mobile}`.toLowerCase().includes(query)
+      );
     }
 
-    // Apply filters
     if (statusFilter.value !== 'all') {
-      result = result.filter((c) => c.status === statusFilter.value)
+      result = result.filter(c => c.state === statusFilter.value);
     }
 
     if (tierFilter.value !== 'all') {
-      result = result.filter((c) => c.tier === tierFilter.value)
+      result = result.filter(c => c.customerTier === tierFilter.value);
     }
 
-    // Apply sorting
     result.sort((a, b) => {
-      let comparison = 0
-      switch (sortBy.value) {
-        case 'name':
-          comparison = `${a.firstName} ${a.lastName}`.localeCompare(
-            `${b.firstName} ${b.lastName}`
-          )
-          break
-        case 'joinDate':
-          comparison = new Date(a.joinDate) - new Date(b.joinDate)
-          break
-        case 'lastOrder':
-          comparison =
-            new Date(a.lastOrderDate || 0) - new Date(b.lastOrderDate || 0)
-          break
-        case 'totalSpent':
-          comparison = a.totalSpent - b.totalSpent
-          break
+      let comparison = 0;
+      if (sortBy.value === 'name') {
+        comparison = `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+      } else if (sortBy.value === 'joinDate') {
+        comparison = new Date(a.joinDate) - new Date(b.joinDate);
+      } else if (sortBy.value === 'totalSpent') {
+        comparison = a.totalSpent - b.totalSpent;
       }
-      return sortOrder.value === 'asc' ? comparison : -comparison
-    })
+      return sortOrder.value === 'asc' ? comparison : -comparison;
+    });
 
-    return result
-  })
+    return result;
+  });
 
-  // Paginated customers
   const paginatedCustomers = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value
-    const end = start + itemsPerPage.value
-    return filteredCustomers.value.slice(start, end)
-  })
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    return filteredCustomers.value.slice(start, start + itemsPerPage.value);
+  });
 
-  // Total pages for pagination
-  const totalPages = computed(() =>
-    Math.ceil(filteredCustomers.value.length / itemsPerPage.value)
-  )
+  const customerStats = computed(() => ({
+    total: customers.value.length,
+    active: customers.value.filter(c => c.state === 'active').length,
+    blocked: customers.value.filter(c => c.state === 'blocked').length,
+    totalSpent: customers.value.reduce((sum, c) => sum + c.totalSpent, 0),
+  }));
 
-  // Enhanced customer stats
-  const customerStats = computed(() => {
-    const all = customers.value
-    const active = all.filter((c) => c.status === 'active')
-    const newCustomers = all.filter((c) => {
-      const joinDate = new Date(c.joinDate)
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      return joinDate >= thirtyDaysAgo
-    })
 
-    return {
-      total: all.length,
-      active: active.length,
-      new: newCustomers.length,
-      vip: all.filter((c) => c.tier === 'platinum').length,
-      blocked: all.filter((c) => c.isBlocked).length,
-      totalSpent: all.reduce((sum, c) => sum + c.totalSpent, 0),
-      avgOrderValue:
-        all.length > 0
-          ? all.reduce((sum, c) => sum + c.totalSpent, 0) /
-            all.reduce((sum, c) => sum + c.ordersCount, 0)
-          : 0
+
+  // ------------------ Actions ------------------
+  async function fetchCustomers(page = 1, itemsCount = 10) {
+    try {
+      loading.value = true;
+      const response = await apiClient.get('/', {
+        params: {
+          page,
+          limit: itemsCount,
+          search: searchQuery.value,
+          state: statusFilter.value,
+          customerTier: tierFilter.value,
+          sortBy: sortBy.value,
+          sortOrder: sortOrder.value,
+        },
+      });
+
+      customers.value = response.data?.data?.users || [];
+      currentPage.value = response.data?.currentPage || 1;
+      totalPages.value = response.data?.totalPages || 1;
+      error.value = null;
+    } catch (err) {
+      error.value = err.message;
+      toast.error('Failed to fetch customers');
+    } finally {
+      loading.value = false;
     }
-  })
-
-  // Methods for customer operations
-  function addCustomer(newCustomer) {
-    const customer = {
-      id: Date.now().toString(),
-      addresses: [],
-      ordersCount: 0,
-      totalSpent: 0,
-      lastOrderDate: null,
-      tags: [],
-      status: 'active',
-      tier: 'basic',
-      isBlocked: false,
-      notes: '',
-      communicationPreferences: {
-        email: true,
-        sms: false,
-        whatsapp: false
-      },
-      ...newCustomer
-    }
-
-    customers.value.push(customer)
-    toast.success('Customer added successfully')
-    return customer
   }
 
-  function updateCustomer(id, updatedData) {
-    const index = customers.value.findIndex((c) => c.id === id)
-    if (index !== -1) {
-      customers.value[index] = {
-        ...customers.value[index],
-        ...updatedData
+  async function fetchCustomerById(id) {
+    try {
+      loading.value = true;
+      const response = await apiClient.get(`/${id}`);
+      console.log('API Response Data Structure:', response);
+  
+      const customerData =
+        response?.data?.data?.user || 
+        response?.data?.user ||      
+        null;
+  
+      if (customerData && customerData._id) {
+        currentCustomer.value = {
+          id: customerData._id,
+          firstName: customerData.firstName,
+          lastName: customerData.lastName,
+          email: customerData.email,
+          mobile: customerData.mobile,
+          isBlocked: customerData.state === 'blocked',
+          tier: customerData.customerTier,
+          joinDate: customerData.joinDate,
+          avatar: customerData.avatar,
+          addresses: customerData.addresses || [],
+          ordersCount: customerData.ordersCount,
+          totalSpent: customerData.totalSpent,
+          lastOrderDate: customerData.lastOrderDate,
+          activityLog: customerData.activityLog || [],
+          communicationPreferences: customerData.communicationPreferences || {},
+          notes: customerData.notes || '',
+        };
+  
+        currentCustomerActivity.value = customerData.activityLog || [];
+      } else {
+        const errorMessage = response?.data?.status
+          ? `Invalid customer data structure: ${response?.data?.status}`
+          : 'Invalid customer data structure';
+        throw new Error(errorMessage);
       }
-      toast.success('Customer updated successfully')
-      return true
+    } catch (error) {
+      toast.error('Failed to fetch customer details');
+      console.error('Fetch error:', error);
+      console.error('Error details:', error.message || error);
+      console.error('Response data:', error.response?.data || error);
+      throw error;
+    } finally {
+      loading.value = false;
     }
-    toast.error('Customer not found')
-    return false
   }
-
-  function removeCustomer(id) {
-    const initialLength = customers.value.length
-    customers.value = customers.value.filter((c) => c.id !== id)
-    if (customers.value.length < initialLength) {
-      toast.success('Customer removed successfully')
-      return true
+  
+  
+  
+  async function createCustomer(data) {
+    try {
+      loading.value = true;
+      await apiClient.post('/', data);
+      toast.success('Customer created successfully');
+      await fetchCustomers(currentPage.value, itemsPerPage.value);
+    } catch (err) {
+      error.value = err.message;
+      toast.error('Failed to create customer');
+      throw err;
+    } finally {
+      loading.value = false;
     }
-    toast.error('Customer not found')
-    return false
   }
 
-  function setDefaultAddress(customerId, addressId) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      const address = customer.addresses.find((a) => a.id === addressId)
-      if (address) {
-        // Set all addresses to non-default first
-        customer.addresses.forEach((addr) => {
-          addr.isDefault = false
-        })
-        // Then set the selected address as default
-        address.isDefault = true
-        toast.success('Default address updated successfully')
-        return true
-      }
-      toast.error('Address not found')
-      return false
+  async function updateCustomer(id, customerData) {
+    try {
+      loading.value = true;
+      const response = await apiClient.patch(`/${id}`, {
+        ...customerData,
+        state: customerData.state,
+        customerTier: customerData.customerTier
+      });
+
+      const updated = response.data.data.user;
+      const index = customers.value.findIndex(c => c.id === id);
+      if (index !== -1) customers.value[index] = updated;
+      currentCustomer.value = updated;
+
+      return updated;
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      throw error;
+    } finally {
+      loading.value = false;
     }
-    toast.error('Customer not found')
-    return false
   }
 
-  function getCustomerActivityLog(customerId) {
-    // In a real app, this would come from an API
-    // Here we're generating sample activity data
-    const customer = getCustomerById(customerId)
-    if (!customer) return []
-
-    const activities = [
-      {
-        type: 'login',
-        date: new Date(),
-        description: 'Logged in to the website',
-        ipAddress: '192.168.1.1'
-      },
-      {
-        type: 'purchase',
-        date: new Date(Date.now() - 86400000), // 1 day ago
-        description: `Placed order #${Math.floor(1000 + Math.random() * 9000)}`,
-        ipAddress: '192.168.1.1'
-      },
-      {
-        type: 'contact',
-        date: new Date(Date.now() - 172800000), // 2 days ago
-        description: 'Contacted customer support',
-        ipAddress: '192.168.1.2'
-      }
-    ]
-
-    // Add more activities based on customer data
-    if (customer.lastOrderDate) {
-      activities.push({
-        type: 'purchase',
-        date: new Date(customer.lastOrderDate),
-        description: `Placed order #${Math.floor(1000 + Math.random() * 9000)}`,
-        ipAddress: '192.168.1.3'
-      })
+  async function deleteCustomer(id) {
+    try {
+      loading.value = true;
+      await apiClient.delete(`/${id}`);
+      toast.success('Customer deleted successfully');
+      await fetchCustomers(currentPage.value, itemsPerPage.value);
+    } catch (err) {
+      error.value = err.message;
+      toast.error('Failed to delete customer');
+    } finally {
+      loading.value = false;
     }
-
-    return activities.sort((a, b) => new Date(b.date) - new Date(a.date))
   }
 
-  function getCustomerOrders(customerId) {
-    // In a real app, this would come from an API
-    // Here we're generating sample order data
-    const customer = getCustomerById(customerId)
-    if (!customer) return []
-
-    const statuses = [
-      'pending',
-      'processing',
-      'shipped',
-      'delivered',
-      'cancelled'
-    ]
-    const orders = []
-
-    for (let i = 0; i < customer.ordersCount; i++) {
-      const daysAgo = Math.floor(Math.random() * 30)
-      const orderDate = new Date(Date.now() - daysAgo * 86400000)
-      const status = statuses[Math.floor(Math.random() * statuses.length)]
-      const total = Math.floor(100 + Math.random() * 900)
-
-      orders.push({
-        id: `ORD-${1000 + i}`,
-        orderDate,
-        status,
-        total,
-        items: Math.floor(1 + Math.random() * 5)
-      })
+  async function bulkDeleteCustomers(ids) {
+    try {
+      loading.value = true;
+      await apiClient.post('/bulk-delete', { ids });
+      toast.success(`${ids.length} customers deleted`);
+      await fetchCustomers(currentPage.value, itemsPerPage.value);
+      selectedCustomers.value = [];
+    } catch (err) {
+      error.value = err.message;
+      toast.error('Failed to delete customers');
+    } finally {
+      loading.value = false;
     }
-
-    return orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
   }
 
-  // Enhanced bulk operations
-  function removeCustomers(ids) {
-    const initialLength = customers.value.length
-    customers.value = customers.value.filter((c) => !ids.includes(c.id))
-    const removedCount = initialLength - customers.value.length
-    if (removedCount > 0) {
-      toast.success(`Removed ${removedCount} customers`)
-      selectedCustomers.value = []
-      return removedCount
+async function fetchCustomerOrders(id) {
+  try {
+    ordersLoading.value = true;
+    const response = await apiClient.get(`/users/${id}/orders`);
+    currentCustomerOrders.value = response.data?.orders?.map(order => ({
+      id: order._id,
+      orderDate: order.createdAt,
+      total: order.totalAmount,
+      status: order.status
+    })) || [];
+  } catch (error) {
+    toast.error('Failed to fetch orders');
+    throw error;
+  } finally {
+    ordersLoading.value = false;
+  }
+}
+  
+
+  async function bulkUpdateStatus(ids, state) {
+    try {
+      loading.value = true;
+      await apiClient.patch('/bulk-update-status', { ids, state });
+      customers.value = customers.value.map(c =>
+        ids.includes(c.id) ? { ...c, state } : c
+      );
+      toast.success(`${ids.length} customers updated to ${state}`);
+    } catch (err) {
+      error.value = err.message;
+      toast.error('Failed to update status');
+    } finally {
+      loading.value = false;
     }
-    toast.error('No customers were removed')
-    return 0
   }
 
-  function toggleBlockStatus(id) {
-    const customer = customers.value.find((c) => c.id === id)
-    if (customer) {
-      customer.isBlocked = !customer.isBlocked
-      const action = customer.isBlocked ? 'blocked' : 'unblocked'
-      toast.success(`Customer ${action} successfully`)
-      return true
+  async function addTagsToCustomers(ids, tags) {
+    try {
+      loading.value = true;
+      await apiClient.post('/bulk-assign-tags', { ids, tags });
+      customers.value = customers.value.map(c =>
+        ids.includes(c.id)
+          ? { ...c, tags: [...(c.tags || []), ...tags] }
+          : c
+      );
+      toast.success(`${tags.length} tags added to ${ids.length} customers`);
+    } catch (err) {
+      error.value = err.message;
+      toast.error('Failed to add tags');
+    } finally {
+      loading.value = false;
     }
-    toast.error('Customer not found')
-    return false
   }
 
-  function bulkUpdateStatus(ids, status) {
-    let updatedCount = 0
-    customers.value.forEach((customer) => {
-      if (ids.includes(customer.id)) {
-        customer.status = status
-        updatedCount++
-      }
-    })
 
-    if (updatedCount > 0) {
-      toast.success(`Updated status for ${updatedCount} customers`)
-      selectedCustomers.value = []
-      return updatedCount
+  // async function fetchCustomerOrders(id) {
+  //   try {
+  //     loading.value = true;
+  //     const response = await apiClient.get(`/${id}/orders`);
+  //     currentCustomerOrders.value = response.data.data.orders;
+  //   } catch (error) {
+  //     toast.error('Failed to fetch customer orders');
+  //     throw error;
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // }
+
+
+ 
+
+  function changePage(newPage) {
+    if (newPage >= 1 && newPage <= totalPages.value) {
+      currentPage.value = newPage;
+      fetchCustomers(newPage, itemsPerPage.value);
     }
-    toast.error('No customers were updated')
-    return 0
   }
 
-  // Address operations
-  function addAddress(customerId, newAddress) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      // Set as default if first address or explicitly set
-      if (customer.addresses.length === 0 || newAddress.isDefault) {
-        customer.addresses.forEach((addr) => {
-          addr.isDefault = false
-        })
-        newAddress.isDefault = true
-      }
+  const getCustomerOrders = computed(() => currentCustomerOrders.value);
+  const getCustomerActivityLog = computed(() => currentCustomerActivity.value);
 
-      newAddress.id = Date.now().toString()
-      customer.addresses.push(newAddress)
-      toast.success('Address added successfully')
-      return newAddress
-    }
-    toast.error('Customer not found')
-    return null
-  }
 
-  function updateAddress(customerId, addressId, updatedData) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      const address = customer.addresses.find((a) => a.id === addressId)
-      if (address) {
-        if (updatedData.isDefault) {
-          customer.addresses.forEach((addr) => {
-            addr.isDefault = addr.id === addressId
-          })
-        }
-        Object.assign(address, updatedData)
-        toast.success('Address updated successfully')
-        return true
-      }
-    }
-    toast.error('Address not found')
-    return false
-  }
 
-  function deleteAddress(customerId, addressId) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      const initialLength = customer.addresses.length
-      customer.addresses = customer.addresses.filter((a) => a.id !== addressId)
+  // ------------------ Watchers ------------------
+  watch([searchQuery, statusFilter, tierFilter, sortBy, sortOrder], () => {
+    currentPage.value = 1;
+    fetchCustomers(currentPage.value, itemsPerPage.value);
+  });
 
-      // If we deleted the default address and there are others left
-      if (
-        initialLength > customer.addresses.length &&
-        customer.addresses.length > 0 &&
-        !customer.addresses.some((a) => a.isDefault)
-      ) {
-        customer.addresses[0].isDefault = true
-      }
-
-      toast.success('Address deleted successfully')
-      return true
-    }
-    toast.error('Customer not found')
-    return false
-  }
-
-  // Tag operations
-  function addTag(customerId, tag) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      if (!customer.tags.includes(tag)) {
-        customer.tags.push(tag)
-        toast.success('Tag added successfully')
-        return true
-      }
-      toast.warning('Customer already has this tag')
-      return false
-    }
-    toast.error('Customer not found')
-    return false
-  }
-
-  function removeTag(customerId, tag) {
-    const customer = customers.value.find((c) => c.id === customerId)
-    if (customer) {
-      const initialLength = customer.tags.length
-      customer.tags = customer.tags.filter((t) => t !== tag)
-      if (customer.tags.length < initialLength) {
-        toast.success('Tag removed successfully')
-        return true
-      }
-      toast.warning('Tag not found')
-      return false
-    }
-    toast.error('Customer not found')
-    return false
-  }
-
-  // New methods for additional functionality
-  function getCustomerById(id) {
-    return customers.value.find((c) => parseInt(c.id) === parseInt(id))
-  }
-
-  function searchCustomers(query) {
-    searchQuery.value = query
-    currentPage.value = 1 // Reset to first page when searching
-  }
-
-  function resetFilters() {
-    searchQuery.value = ''
-    statusFilter.value = 'all'
-    tierFilter.value = 'all'
-    sortBy.value = 'name'
-    sortOrder.value = 'asc'
-    currentPage.value = 1
-  }
-
-  // Export functionality
-  function exportCustomers(format = 'csv') {
-    // This would be implemented with actual export logic
-    console.log(`Exporting customers in ${format} format`)
-    toast.info(`Preparing ${format} export...`)
-    // In a real app, this would generate a file download
-    return filteredCustomers.value
-  }
-
-  // State for segments
-  const segments = ref([
-    {
-      id: '1',
-      name: 'High Value',
-      criteria: {
-        totalSpent: { $gt: 1000 },
-        status: 'active'
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '2',
-      name: 'Frequent Buyers',
-      criteria: {
-        ordersCount: { $gt: 5 },
-        status: 'active'
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '3',
-      name: 'Inactive',
-      criteria: {
-        lastOrderDate: { $lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '4',
-      name: 'New Customers',
-      criteria: {
-        joinDate: { $gt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ])
-
-  // Computed property for segment statistics
-  const segmentStats = computed(() => {
-    return segments.value.map((segment) => {
-      const customersInSegment = getCustomersInSegment(segment.id)
-      return {
-        id: segment.id,
-        name: segment.name,
-        customerCount: customersInSegment.length,
-        totalSpent: customersInSegment.reduce(
-          (sum, c) => sum + c.totalSpent,
-          0
-        ),
-        avgOrderValue:
-          customersInSegment.length > 0
-            ? customersInSegment.reduce((sum, c) => sum + c.totalSpent, 0) /
-              customersInSegment.reduce((sum, c) => sum + c.ordersCount, 0)
-            : 0
-      }
-    })
-  })
-
-  // Methods for segmentation
-  function createSegment(name, criteria) {
-    const newSegment = {
-      id: Date.now().toString(),
-      name,
-      criteria,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-    segments.value.push(newSegment)
-    toast.success('Segment created successfully')
-    return newSegment
-  }
-
-  function updateSegment(segmentId, updates) {
-    const segment = segments.value.find((s) => s.id === segmentId)
-    if (segment) {
-      Object.assign(segment, updates, { updatedAt: new Date() })
-      toast.success('Segment updated successfully')
-      return true
-    }
-    toast.error('Segment not found')
-    return false
-  }
-
-  function deleteSegment(segmentId) {
-    const initialLength = segments.value.length
-    segments.value = segments.value.filter((s) => s.id !== segmentId)
-    if (segments.value.length < initialLength) {
-      toast.success('Segment deleted successfully')
-      return true
-    }
-    toast.error('Segment not found')
-    return false
-  }
-
-  function getCustomersInSegment(segmentId) {
-    const segment = segments.value.find((s) => s.id === segmentId)
-    if (!segment) return []
-
-    return customers.value.filter((customer) => {
-      return Object.entries(segment.criteria).every(([key, condition]) => {
-        if (typeof condition === 'object') {
-          // Handle comparison operators
-          if (condition.$gt !== undefined) return customer[key] > condition.$gt
-          if (condition.$lt !== undefined) return customer[key] < condition.$lt
-          if (condition.$gte !== undefined)
-            return customer[key] >= condition.$gte
-          if (condition.$lte !== undefined)
-            return customer[key] <= condition.$lte
-          if (condition.$ne !== undefined)
-            return customer[key] !== condition.$ne
-          if (condition.$in) return condition.$in.includes(customer[key])
-          if (condition.$nin) return !condition.$nin.includes(customer[key])
-        }
-        // Simple equality check
-        return customer[key] === condition
-      })
-    })
-  }
-  function evaluateCustomerForSegments(customerId) {
-    const customer = getCustomerById(customerId)
-    if (!customer) return []
-
-    return segments.value
-      .filter((segment) => {
-        return Object.entries(segment.criteria).every(([key, condition]) => {
-          if (typeof condition === 'object') {
-            if (condition.$gt !== undefined)
-              return customer[key] > condition.$gt
-            if (condition.$lt !== undefined)
-              return customer[key] < condition.$lt
-            if (condition.$gte !== undefined)
-              return customer[key] >= condition.$gte
-            if (condition.$lte !== undefined)
-              return customer[key] <= condition.$lte
-            if (condition.$ne !== undefined)
-              return customer[key] !== condition.$ne
-            if (condition.$in) return condition.$in.includes(customer[key])
-            if (condition.$nin) return !condition.$nin.includes(customer[key])
-          }
-          return customer[key] === condition
-        })
-      })
-      .map((segment) => segment.id)
-  }
-
+  // ------------------ Return ------------------
   return {
     // State
+    customers,
+    currentCustomer,
+    loading,
+    error,
     provinces,
     cities,
-    customers,
     searchQuery,
     statusFilter,
     tierFilter,
@@ -717,37 +350,26 @@ export const useCustomerStore = defineStore('customer', () => {
     sortOrder,
     currentPage,
     itemsPerPage,
+    totalPages,
     selectedCustomers,
 
-    // Computed
+    // Getters
     filteredCustomers,
     paginatedCustomers,
-    totalPages,
     customerStats,
 
-    // Methods
-    addCustomer,
+    // Actions
+    fetchCustomers,
+    fetchCustomerById,
+    createCustomer,
     updateCustomer,
-    removeCustomer,
-    toggleBlockStatus,
-    addAddress,
-    updateAddress,
-    deleteAddress,
-    addTag,
-    removeTag,
-    removeCustomers,
+    deleteCustomer,
+    bulkDeleteCustomers,
     bulkUpdateStatus,
-    getCustomerById,
-    searchCustomers,
-    resetFilters,
-    exportCustomers,
-    setDefaultAddress,
+    addTagsToCustomers,
+    changePage,
     getCustomerActivityLog,
     getCustomerOrders,
-    deleteSegment,
-    updateSegment,
-    createSegment,
-    evaluateCustomerForSegments,
-    getCustomersInSegment
-  }
-})
+    fetchCustomerOrders,
+  };
+});

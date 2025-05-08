@@ -186,7 +186,57 @@ const restoreOrder = asyncWrapper(async (req, res, next) => {
   })
 })
 
-module.exports = { createOrder, getOrders, updateOrderStatus, softDeleteOrder, restoreOrder };
+
+const getCustomerOrders = asyncWrapper(async (req, res, next) => {
+  const customerId = req.params.customerId;
+  
+  if (!mongoose.Types.ObjectId.isValid(customerId)) {
+    return next(new AppError('Invalid customer ID', 400));
+  }
+
+  const { limit = 10, page = 1 } = req.query;
+  const skip = (page - 1) * limit;
+
+  const orders = await Order.find({ 
+    userId: customerId,
+    isDeleted: false 
+  })
+  .sort({ createdAt: -1 })
+  .skip(skip)
+  .limit(limit)
+  .populate('userId', 'firstName lastName');
+
+  const totalOrders = await Order.countDocuments({
+    userId: customerId,
+    isDeleted: false
+  });
+
+  const formattedOrders = orders.map((order) => ({
+    id: order._id,
+    orderNumber: order.orderNumber,
+    status: order.status,
+    total: `${order.totalAmount.toFixed(2)}`,
+    user: {
+      firstName: order.userId?.firstName || "",
+      lastName: order.userId?.lastName || "",
+    },
+    createdAt: order.createdAt.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }),
+  }));
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: { 
+      orders: formattedOrders,
+      totalOrders 
+    }
+  });
+});
+
+module.exports = { createOrder, getOrders, updateOrderStatus, softDeleteOrder, restoreOrder,getCustomerOrders };
 
 
 

@@ -49,7 +49,7 @@
                 </v-col>
                 <v-col cols="12" md="6">
                   <v-select
-                    v-model="customer.tier"
+                    v-model="customer.customerTier"
                     :items="tierOptions"
                     :item-title="item => $t(item)"
                     :label="$t('tier')"
@@ -58,8 +58,8 @@
                 </v-col>
                 <v-col cols="12" md="6">
                   <v-select
-                    v-model="customer.status"
-                    :items="statusOptions"
+                    v-model="customer.state"
+                    :items="stateOptions"
                     :item-title="item => $t(item)"
                     :label="$t('status')"
                     :dir="locale"
@@ -233,30 +233,18 @@ const router = useRouter()
 const customerStore = useCustomerStore()
 const toast = useToast()
 
-// Constants
-const statusOptions = ['active', 'blocked']
-const tierOptions = ['basic', 'silver', 'gold', 'platinum']
-const commonTags = ['VIP', 'Frequent Buyer', 'New', 'At Risk', 'Wholesale']
-
-// Initialize empty customer with all required fields
+// Customer data structure
 const customer = ref({
   id: '',
   firstName: '',
   lastName: '',
   email: '',
   mobile: '',
+  state: 'active',
+  status: 'pending', 
+  customerTier: 'basic', 
   addresses: [],
-  joinDate: null,
-  birthDate: null,
-  avatar: '',
-  ordersCount: 0,
-  totalSpent: 0,
-  lastOrderDate: null,
   tags: [],
-  status: 'active',
-  tier: 'basic',
-  isBlocked: false,
-  notes: '',
   communicationPreferences: {
     email: true,
     sms: false,
@@ -265,59 +253,52 @@ const customer = ref({
 })
 
 const isSaving = ref(false)
-const isAddressLoading = ref(false)
+const stateOptions = ['active', 'blocked']
+const tierOptions = ['basic', 'silver', 'gold', 'platinum']
+const commonTags = ['VIP', 'Frequent Buyer', 'New', 'At Risk', 'Wholesale']
 
-// Get provinces and cities from store
-const provinces = customerStore.provinces
-const cities = customerStore.cities
 
 // Validation rules
 const required = (value) => !!value || t('requiredField')
 const emailRule = (value) => /.+@.+\..+/.test(value) || t('invalidEmail')
 
-// Initialize component
+// Component initialization
 onMounted(async () => {
   try {
     if (!route.params.id) {
       toast.error(t('noCustomerId'))
-      router.back()
-      return
+      return router.back()
     }
 
-    const existingCustomer = customerStore.getCustomerById(route.params.id)
+    await customerStore.fetchCustomerById(route.params.id)
+    const existingCustomer = customerStore.currentCustomer
+    
     if (!existingCustomer) {
       toast.error(t('customerNotFound'))
-      router.back()
-      return
+      return router.back()
     }
 
-    // Deep clone and initialize customer data
-    customer.value = JSON.parse(
-      JSON.stringify({
-        ...existingCustomer,
-        // Ensure all required fields exist
-        addresses:
-          existingCustomer.addresses?.map((addr) => ({
-            ...addr,
-            // Ensure province/city objects match select options
-            province:
-              provinces.value?.find((p) => p.id === addr.province?.id) ||
-              addr.province,
-            city:
-              cities.value?.find((c) => c.id === addr.city?.id) || addr.city
-          })) || [],
-        communicationPreferences: {
-          email: existingCustomer.communicationPreferences?.email ?? true,
-          sms: existingCustomer.communicationPreferences?.sms ?? false,
-          whatsapp:
-            existingCustomer.communicationPreferences?.whatsapp ?? false
-        }
-      })
-    )
+    // Transform API data to UI format
+    customer.value = {
+  ...existingCustomer,
+  state: existingCustomer.state,
+  status: existingCustomer.status,
+  customerTier: existingCustomer.customerTier,
+  addresses: (existingCustomer.addresses || []).map(addr => ({
+    ...addr,
+    province: customerStore.provinces.find(p => p.id === Number(addr.provinceId)),
+    city: customerStore.cities.find(c => c.id === Number(addr.cityId))
+  })),
+  communicationPreferences: {
+    email: existingCustomer.communicationPreferences?.email || false,
+    sms: existingCustomer.communicationPreferences?.sms || false,
+    whatsapp: existingCustomer.communicationPreferences?.whatsapp || false
+  }
+}
 
-    // Ensure at least one address exists
+
     if (customer.value.addresses.length === 0) {
-      await addNewAddress(true)
+      addNewAddress(true)
     }
   } catch (error) {
     toast.error(t('failedToLoadCustomer'))
@@ -325,147 +306,79 @@ onMounted(async () => {
   }
 })
 
-// Filter cities based on selected province
-const filteredCities = (provinceId) => {
-  if (!provinceId || !cities.value) return []
-  return cities.value.filter((city) => city.provinceId === provinceId)
+// Address management
+const addNewAddress = (makeDefault = false) => {
+  customer.value.addresses.push({
+    id: Date.now().toString(),
+    province: null,
+    city: null,
+    street: '',
+    building: '',
+    floor: '',
+    apartment: '',
+    postalCode: '',
+    isDefault: makeDefault
+  })
 }
 
-// Add new address
-async function addNewAddress(makeDefault = false) {
-  isAddressLoading.value = true
-  try {
-    const newAddress = {
-      id: Date.now().toString(),
-      province: null,
-      city: null,
-      street: '',
-      building: '',
-      floor: '',
-      apartment: '',
-      postalCode: '',
-      isDefault: makeDefault
-    }
-
-    // Add to local state
-    customer.value.addresses.push(newAddress)
-
-    // Sync with store if customer exists
-    if (customer.value.id) {
-      await customerStore.addAddress(customer.value.id, {
-        ...newAddress,
-        province: newAddress.province
-          ? { id: newAddress.province.id, name: newAddress.province.name }
-          : null,
-        city: newAddress.city
-          ? { id: newAddress.city.id, name: newAddress.city.name }
-          : null
-      })
-    }
-  } catch (error) {
-    toast.error(t('failedToAddAddress'))
-    console.error(error)
-    // Rollback if error
-    if (customer.value.addresses.length > 0) {
-      customer.value.addresses.pop()
-    }
-  } finally {
-    isAddressLoading.value = false
-  }
-}
-
-// Remove address
-async function removeAddress(index) {
+const removeAddress = (index) => {
   if (customer.value.addresses.length <= 1) {
-    toast.warning(t('cannotRemoveLastAddress'))
-    return
+    return toast.warning(t('cannotRemoveLastAddress'))
   }
-
-  isAddressLoading.value = true
-  try {
-    const addressId = customer.value.addresses[index].id
-    const wasDefault = customer.value.addresses[index].isDefault
-
-    // Remove from local state
-    customer.value.addresses.splice(index, 1)
-
-    // Sync with store
-    if (customer.value.id) {
-      await customerStore.deleteAddress(customer.value.id, addressId)
-    }
-
-    // Set new default if needed
-    if (wasDefault && customer.value.addresses.length > 0) {
-      await setDefaultAddress(0)
-    }
-  } catch (error) {
-    toast.error(t('failedToRemoveAddress'))
-    console.error(error)
-  } finally {
-    isAddressLoading.value = false
-  }
+  customer.value.addresses.splice(index, 1)
 }
 
-// Set default address
-async function setDefaultAddress(index) {
-  try {
-    const addressId = customer.value.addresses[index].id
-
-    // Update local state
-    customer.value.addresses.forEach((addr, i) => {
-      addr.isDefault = i === index
-    })
-
-    // Sync with store
-    if (customer.value.id) {
-      await customerStore.updateAddress(customer.value.id, addressId, {
-        isDefault: true
-      })
-    }
-  } catch (error) {
-    toast.error(t('failedToSetDefaultAddress'))
-    console.error(error)
-  }
+const setDefaultAddress = (index) => {
+  customer.value.addresses.forEach((addr, i) => {
+    addr.isDefault = i === index
+  })
 }
 
-// Save operations
-async function saveCustomer() {
+// Save handler
+const saveCustomer = async () => {
   isSaving.value = true
   try {
-    // Validate before saving
-    if (
-      !customer.value.firstName ||
-      !customer.value.lastName ||
-      !customer.value.email
-    ) {
+    // Validation
+    if (!customer.value.firstName || !customer.value.lastName || !customer.value.email) {
       throw new Error(t('fillRequiredFields'))
     }
 
-    for (const addr of customer.value.addresses) {
-      if (!addr.street || !addr.province || !addr.city) {
-        throw new Error(t('fillAddressFields'))
-      }
+    // Transform data for API
+    const customerData = {
+      ...customer.value,
+      addresses: customer.value.addresses.map(addr => ({
+        ...addr,
+        provinceId: addr.province?.id,
+        cityId: addr.city?.id,
+        // Remove object properties
+        province: undefined,
+        city: undefined
+      }))
     }
 
-    await customerStore.updateCustomer(customer.value.id, customer.value)
+    await customerStore.updateCustomer(customer.value.id, customerData)
     toast.success(t('customerSaved'))
     router.push('/customers')
-    return true
   } catch (error) {
     toast.error(error.message || t('failedToSaveCustomer'))
     console.error(error)
-    return false
   } finally {
     isSaving.value = false
   }
 }
 
-function saveAndBack() {
-  saveCustomer().then((success) => {
+// Computed properties
+const filteredCities = computed(() => (provinceId) => {
+  return customerStore.cities.filter(c => c.provinceId === provinceId)
+})
+
+const saveAndBack = () => {
+  saveCustomer().then(success => {
     if (success) router.push('/customers')
   })
 }
 </script>
+
 
 <style scoped>
 .v-card {
