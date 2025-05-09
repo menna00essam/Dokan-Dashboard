@@ -13,7 +13,7 @@
               hide-details
               :dir="locale"
               @update:modelValue="handleSearch"
-              />
+            />
           </v-col>
 
           <v-col cols="6" md="2">
@@ -52,8 +52,14 @@
           </v-col>
 
           <v-col cols="6" md="2" class="d-flex align-center">
-            <v-btn color="secondary" class="pa-6" @click="resetAll" block>
-              {{ t('reset') }}
+            <v-btn
+              color="secondary"
+              class="pa-6"
+              style="font-size: 1.2rem"
+              @click="customerStore.resetFilters"
+              block
+            >
+              Reset
             </v-btn>
           </v-col>
         </v-row>
@@ -238,22 +244,20 @@
   const defaultAvatar = 'https://cdn.vuetifyjs.com/images/profiles/male1.jpg'
 
   const statusOptions = [
-  { value: 'all', title: t('all') },
-  ...['active', 'blocked'].map((state) => ({
-    value: state,
-    title: t(state)
-  }))
-]
+    { value: 'all', title: t('all') },
+    ...['active', 'blocked'].map((state) => ({
+      value: state,
+      title: t(state)
+    }))
+  ]
 
-const tierOptions = [
-  { value: 'all', title: t('all') }, 
-  ...['basic', 'silver', 'gold', 'platinum'].map(
-    (customerTier) => ({
+  const tierOptions = [
+    { value: 'all', title: t('all') },
+    ...['basic', 'silver', 'gold', 'platinum'].map((customerTier) => ({
       value: customerTier,
       title: t(customerTier)
-    })
-  )
-]
+    }))
+  ]
 
   const resetAll = async () => {
     customerStore.resetFilters()
@@ -261,34 +265,34 @@ const tierOptions = [
     toast.success(t('filtersReset'))
   }
   const handlePageChange = async (newPage) => {
-  if (newPage === customerStore.currentPage) return;
-  try {
-    console.log('Changing to page:', newPage);
-    await customerStore.fetchCustomers(newPage);
-  } catch (error) {
-    console.error('Page change error:', error);
-    toast.error(t('pageChangeError'));
+    if (newPage === customerStore.currentPage) return
+    try {
+      console.log('Changing to page:', newPage)
+      await customerStore.fetchCustomers(newPage)
+    } catch (error) {
+      console.error('Page change error:', error)
+      toast.error(t('pageChangeError'))
+    }
   }
-};
 
-const handleItemsPerPageChange = async (newSize) => {
-  console.log('Changing items per page to:', newSize);
-  customerStore.itemsPerPage = newSize;
-  customerStore.currentPage = 1;
-  await customerStore.fetchCustomers();
-};
+  const handleItemsPerPageChange = async (newSize) => {
+    console.log('Changing items per page to:', newSize)
+    customerStore.itemsPerPage = newSize
+    customerStore.currentPage = 1
+    await customerStore.fetchCustomers()
+  }
 
-const refreshData = async () => {
-  customerStore.currentPage = 1;
-  await customerStore.fetchCustomers();
-};
-const handleSearch = (value) => {
-  // Reset filters to 'all' when searching
-  customerStore.statusFilter = 'all'
-  customerStore.tierFilter = 'all'
-  // Trigger data refresh
-  refreshData()
-}
+  const refreshData = async () => {
+    customerStore.currentPage = 1
+    await customerStore.fetchCustomers()
+  }
+  const handleSearch = (value) => {
+    // Reset filters to 'all' when searching
+    customerStore.statusFilter = 'all'
+    customerStore.tierFilter = 'all'
+    // Trigger data refresh
+    refreshData()
+  }
   const sortOptions = [
     { value: 'name', title: t('name') },
     { value: 'joinDate', title: t('joinDate') },
@@ -311,7 +315,6 @@ const handleSearch = (value) => {
   onMounted(async () => {
     await customerStore.fetchCustomers()
   })
-
 
   // const handlePageChange = async (newPage) => {
   //   await customerStore.fetchCustomers(newPage)

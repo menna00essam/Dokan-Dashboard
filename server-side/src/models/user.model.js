@@ -4,12 +4,12 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      // required: [true, "First name is required"],
+      required: [true, "First name is required"],
       trim: true,
     },
     lastName: {
       type: String,
-      // required: [true, "Last name is required"],
+      required: [true, "Last name is required"],
       trim: true,
     },
     username: {
@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
         },
-        message: (props) => `${props.value} is not a valid email!`,
+        message: (props) => `${props.value} is not a valid email!`, 
       },
     },
     password: {
@@ -162,11 +162,68 @@ const userSchema = new mongoose.Schema(
         date: { type: Date, default: Date.now },
       },
     ],
+    supportTickets: [
+      {
+        ticketId: { type: String, unique: true },
+        title: {
+          type: String,
+          required: true
+        },
+        issueType: {
+          type: String,
+          enum: ["technical", "billing", "shipping", "product", "other"],
+          required: true,
+        },
+        description: {
+          type: String,
+          required: true
+        },
+        status: {
+          type: String,
+          enum: ["open", "in-progress", "resolved", "closed"],
+          default: "open",
+        },
+        priority: {
+          type: String,
+          enum: ["low", "medium", "high", "critical"],
+          default: "medium",
+        },
+        assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        attachments: [String],
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: Date,
+        resolvedAt: Date,
+        customerSatisfaction: { type: Number, min: 1, max: 5 },
+      },
+    ],
+    creditHistory: [
+      {
+        transactionId: {
+          type: String,
+          required: true
+        },
+        amount: {
+          type: Number,
+          required: true
+        },
+        type: {
+          type: String, enum: ["credit", "debit"],
+          required: true
+        },
+        description: String,
+        reference: String,
+        processedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        date: { type: Date, default: Date.now },
+      },
+    ],
     creditLimit: { type: Number, default: 0 },
     currentCredit: { type: Number, default: 0 },
     specialCases: [
       {
-        caseType: { type: String, required: true },
+        caseType: {
+          type: String,
+          required: true
+        },
         description: String,
         severity: {
           type: String,
