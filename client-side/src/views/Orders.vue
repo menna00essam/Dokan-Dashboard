@@ -54,87 +54,95 @@
 
   <v-card>
     <v-container>
-      <v-data-table
-        :headers="headers"
-        :items="ordersStore.sortedOrders"
-        item-value="_id"
-        :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-        class="elevation-0"
-        hide-default-footer
-        :no-data-text="t('No data available')"
-      >
-        <template #item.product="{ item }">
-          <div class="d-flex align-center ga-5">
-            <div class="product-image-wrapper">
-              <v-img
-                :src="item.orderItems[0]?.selectedColors[0]?.image"
-                alt="Product Image"
-                cover
-              />
-            </div>
-            <div>
-              {{ item.orderItems[0]?.name }}
-              <v-tooltip v-if="item.orderItems.length > 1" location="bottom">
-                <template #activator="{ props }">
-                  <span
-                    v-bind="props"
-                    class="text-grey-darken-1 text-caption cursor-pointer"
-                  >
-                    +{{ item.orderItems.length - 1 }} more
+      <template v-if="ordersStore.loading">
+        <SkeletonLoader
+          :columns="headers.map((h) => h.title)"
+          :rows="ordersStore.itemsPerPage"
+        />
+      </template>
+      <template v-else>
+        <v-data-table
+          :headers="headers"
+          :items="ordersStore.sortedOrders"
+          item-value="_id"
+          :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+          class="elevation-0"
+          hide-default-footer
+          :no-data-text="t('No data available')"
+        >
+          <template #item.product="{ item }">
+            <div class="d-flex align-center ga-5">
+              <div class="product-image-wrapper">
+                <v-img
+                  :src="item.orderItems[0]?.selectedColors[0]?.image"
+                  alt="Product Image"
+                  cover
+                />
+              </div>
+              <div>
+                {{ item.orderItems[0]?.name }}
+                <v-tooltip v-if="item.orderItems.length > 1" location="bottom">
+                  <template #activator="{ props }">
+                    <span
+                      v-bind="props"
+                      class="text-grey-darken-1 text-caption cursor-pointer"
+                    >
+                      +{{ item.orderItems.length - 1 }} more
+                    </span>
+                  </template>
+                  <span>
+                    {{
+                      item.orderItems
+                        .slice(1)
+                        .map((p) => p.name)
+                        .join(', ')
+                    }}
                   </span>
-                </template>
-                <span>
-                  {{
-                    item.orderItems
-                      .slice(1)
-                      .map((p) => p.name)
-                      .join(', ')
-                  }}
-                </span>
-              </v-tooltip>
+                </v-tooltip>
+              </div>
             </div>
-          </div>
-        </template>
+          </template>
 
-        <template #item.user="{ item }">
-          <div>{{ item.user?.firstName }} {{ item.user?.lastName }}</div>
-        </template>
+          <template #item.user="{ item }">
+            <div>{{ item.user?.firstName }} {{ item.user?.lastName }}</div>
+          </template>
 
-        <template #item.total="{ item }"> ${{ item.total }} </template>
+          <template #item.total="{ item }"> ${{ item.total }} </template>
 
-        <template #item.date="{ item }"> {{ item.createdAt }} </template>
+          <template #item.date="{ item }"> {{ item.createdAt }} </template>
 
-        <template #item.payment="{ item }">
-          <div>{{ item.shippingMethod?.name }}</div>
-        </template>
+          <template #item.payment="{ item }">
+            <div>{{ item.shippingMethod?.name }}</div>
+          </template>
 
-        <template #item.status="{ item }">
-          <v-chip :color="statusColor(item.status)" variant="tonal" small>
-            {{ item.status }}
-          </v-chip>
-        </template>
+          <template #item.status="{ item }">
+            <v-chip :color="statusColor(item.status)" variant="tonal" small>
+              {{ item.status }}
+            </v-chip>
+          </template>
 
-        <template #item.actions="{ item }">
-          <v-btn
-            icon="mdi-pencil"
-            @click="openEditDialog(item)"
-            size="small"
-            variant="text"
-          />
-          <v-btn
-            icon="mdi-eye"
-            @click="orderDetails(item)"
-            size="small"
-            variant="text"
-          />
-          <v-btn
-            icon="mdi-delete"
-            @click="deleteItem(item)"
-            size="small"
-            variant="text"
-          />
-        </template>
-      </v-data-table>
+          <template #item.actions="{ item }">
+            <v-btn
+              icon="mdi-pencil"
+              @click="openEditDialog(item)"
+              size="small"
+              variant="text"
+            />
+            <v-btn
+              icon="mdi-eye"
+              @click="orderDetails(item)"
+              size="small"
+              variant="text"
+            />
+            <v-btn
+              icon="mdi-delete"
+              @click="deleteItem(item)"
+              size="small"
+              variant="text"
+            />
+          </template>
+        </v-data-table>
+      </template>
     </v-container>
   </v-card>
 
@@ -198,19 +206,32 @@
     confirm-color="error"
     @confirm="handleConfirmDelete"
   />
+
+  <PaginationControls
+    class="px-10"
+    :page="ordersStore.currentPage"
+    :items-per-page="ordersStore.itemsPerPage"
+    :total-items="ordersStore.totalOrders"
+    @update:page="handlePageChange"
+    @update:itemsPerPage="handleItemsPerPageChange"
+    :loading="ordersStore.loading"
+  />
 </template>
 
 <script setup>
   import { onMounted, ref, computed } from 'vue'
   import { useOrderStore } from '../store/order'
   import router from '../router'
+  import { useI18n } from 'vue-i18n'
+  import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+  import PaginationControls from '../components/Shared/PaginationControls.vue'
+  import SkeletonLoader from '../components/Shared/SkeletonLoader.vue'
+
   const ordersStore = useOrderStore()
   onMounted(async () => {
     await ordersStore.getOrders()
   })
 
-  import { useI18n } from 'vue-i18n'
-  import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
   const { t } = useI18n()
 
   const headers = computed(() => [
@@ -339,6 +360,18 @@
     } catch (err) {
       console.error(err)
     }
+  }
+
+  const handlePageChange = async (newPage) => {
+    if (newPage === ordersStore.currentPage) return
+    ordersStore.currentPage = newPage
+    await ordersStore.getOrders({ page: newPage })
+  }
+
+  const handleItemsPerPageChange = async (newSize) => {
+    ordersStore.itemsPerPage = newSize
+    ordersStore.currentPage = 1
+    await ordersStore.getOrders({ page: 1, limit: newSize })
   }
 </script>
 

@@ -13,6 +13,9 @@ export const useOrderStore = defineStore('order', {
         sortBy: 'userName',
         sortOrder: 'asc',
         searchQuery: '',
+        currentPage: 1,
+        itemsPerPage: 10,
+        totalPages: 1
     }),
     getters: {
         filteredOrders: (state) => {
@@ -57,7 +60,14 @@ export const useOrderStore = defineStore('order', {
         },
     },
     actions: {
-        async getOrders({ page = 1, limit = 10, search = this.searchQuery, status, sort = this.selectedSort, sortDirection = this.sortOrder } = {}) {
+        async getOrders({
+            page = this.currentPage,
+            limit = this.itemsPerPage,
+            search = this.searchQuery,
+            status,
+            sort = this.sortBy,
+            sortDirection = this.sortOrder
+        } = {}) {
             this.loading = true;
             this.error = null;
             try {
@@ -68,6 +78,8 @@ export const useOrderStore = defineStore('order', {
                 if (res.data && res.data.data) {
                     this.orders = res.data.data.orders || [];
                     this.totalOrders = res.data.data.totalOrders || 0;
+                    this.totalPages = Math.ceil(this.totalOrders / this.itemsPerPage);
+                    this.currentPage = page;
                 } else {
                     console.error("Unexpected data format:", res.data);
                 }
