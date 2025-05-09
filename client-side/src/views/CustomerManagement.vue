@@ -47,6 +47,7 @@
             <v-btn
               color="secondary"
               class="pa-6"
+              style="font-size: 1.2rem"
               @click="customerStore.resetFilters"
               block
             >
@@ -158,28 +159,27 @@
       </template>
 
       <template #item.actions="{ item }">
-  <div class="d-flex align-center">
-    <v-btn
-      icon
-      size="small"
-      color="info"
-      class="mr-2"
-      @click.stop="editCustomer(item)"
-    >
-      <v-icon>mdi-pencil</v-icon>
-    </v-btn>
-    <v-btn
-      icon
-      size="small"
-      color="error"
-      @click.stop="deleteSingleCustomer(item.id)"
-      :loading="isDeleting && customerToDelete === item.id"
-    >
-      <v-icon>mdi-delete</v-icon>
-    </v-btn>
-  </div>
-</template>
-
+        <div class="d-flex align-center">
+          <v-btn
+            icon
+            size="small"
+            color="info"
+            class="mr-2"
+            @click.stop="editCustomer(item)"
+          >
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="small"
+            color="error"
+            @click.stop="deleteSingleCustomer(item.id)"
+            :loading="isDeleting && customerToDelete === item.id"
+          >
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
+        </div>
+      </template>
     </v-data-table>
 
     <!-- Delete Confirmation -->

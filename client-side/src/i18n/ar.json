@@ -60,7 +60,8 @@
     "Processing": "قيد المعالجة",
     "Shipped": "تم الشحن",
     "Delivered": "تم التوصيل",
-    "Cancelled": "أُلغي"
+    "Cancelled": "أُلغي",
+    "All": "الكل"
   },
   "TotalRevenue": "إجمالي الإيرادات",
   "NumberofOrders": "عدد الطلبات",
@@ -103,5 +104,25 @@
   "password": "كلمة المرور",
   "noAccount": "ليس لديك حساب؟",
   "signUp": "سجل الآن",
-  "login": "تسجيل الدخول"
+  "login": "تسجيل الدخول",
+  "Search Orders": "بحث في الطلبات",
+  "Sort By": "فرز حسب",
+  "Customer Name": "اسم العميل",
+  "Order Details": "تفاصيل الطلب",
+  "Order No.": "رقم الطلب",
+  "Order Date": "تاريخ الطلب",
+  "Payment & Shipping Details": "تفاصيل الدفع والشحن",
+  "Payment method": "طريقة الدفع",
+  "Deliverd to": "التسليم إلي",
+  "Delivery address": "عنوان التسليم",
+  "Subtotal": "المجموع الفرعي",
+  "Shipping Fee": "رسوم الشحن",
+  "Total": "المجموع الكلي",
+  "User Name": "اسم المستخدم",
+  "Total Price": "السعر الإجمالي",
+  "Reset": "إعادة ضبط",
+  "No data available": "لا يوجد بيانات متاحة ",
+  "Confirm Delete": "تأكيد الحذف",
+  "Cancel": "إلغاء",
+  "Delete": "حذف"
 }

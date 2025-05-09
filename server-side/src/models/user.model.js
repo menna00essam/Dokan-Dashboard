@@ -5,12 +5,12 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      // required: [true, "First name is required"],
+      required: [true, "First name is required"],
       trim: true,
     },
     lastName: {
       type: String,
-      // required: [true, "Last name is required"],
+      required: [true, "Last name is required"],
       trim: true,
     },
     email: {
@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
         },
-        message: (props) => `${props.value} is not a valid email!`, 
+        message: (props) => `${props.value} is not a valid email!`,
       },
     },
     password: {
@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^[0-9]{10,15}$/.test(v);
         },
-        message: (props) => `${props.value} is not a valid phone number!`, 
+        message: (props) => `${props.value} is not a valid phone number!`,
       },
     },
     addresses: [
@@ -66,7 +66,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^(https?:\/\/).+\.(jpg|jpeg|png|gif)$/i.test(v);
         },
-        message: (props) => `${props.value} is not a valid image URL!`, 
+        message: (props) => `${props.value} is not a valid image URL!`,
       },
     },
     role: {
@@ -157,13 +157,19 @@ const userSchema = new mongoose.Schema(
     supportTickets: [
       {
         ticketId: { type: String, unique: true },
-        title: { type: String, required: true },
+        title: {
+          type: String,
+          required: true
+        },
         issueType: {
           type: String,
           enum: ["technical", "billing", "shipping", "product", "other"],
           required: true,
         },
-        description: { type: String, required: true },
+        description: {
+          type: String,
+          required: true
+        },
         status: {
           type: String,
           enum: ["open", "in-progress", "resolved", "closed"],
@@ -184,9 +190,18 @@ const userSchema = new mongoose.Schema(
     ],
     creditHistory: [
       {
-        transactionId: { type: String, required: true },
-        amount: { type: Number, required: true },
-        type: { type: String, enum: ["credit", "debit"], required: true },
+        transactionId: {
+          type: String,
+          required: true
+        },
+        amount: {
+          type: Number,
+          required: true
+        },
+        type: {
+          type: String, enum: ["credit", "debit"],
+          required: true
+        },
         description: String,
         reference: String,
         processedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -197,7 +212,10 @@ const userSchema = new mongoose.Schema(
     currentCredit: { type: Number, default: 0 },
     specialCases: [
       {
-        caseType: { type: String, required: true },
+        caseType: {
+          type: String,
+          required: true
+        },
         description: String,
         severity: {
           type: String,
@@ -218,7 +236,10 @@ const userSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
-        title: { type: String, required: true },
+        title: {
+          type: String,
+          required: true
+        },
         rating: {
           type: Number,
           required: true,
@@ -239,7 +260,10 @@ const userSchema = new mongoose.Schema(
           enum: ["discount", "coupon", "cashback", "gift", "points", "other"],
           required: true,
         },
-        amount: { type: Number, required: true },
+        amount: {
+          type: Number,
+          required: true
+        },
         description: String,
         expiryDate: Date,
         isUsed: { type: Boolean, default: false },
@@ -260,7 +284,7 @@ const userSchema = new mongoose.Schema(
 
 // Virtuals
 userSchema.virtual("fullName").get(function () {
-  return `${this.firstName} ${this.lastName}`; 
+  return `${this.firstName} ${this.lastName}`;
 });
 
 userSchema.virtual("age").get(function () {

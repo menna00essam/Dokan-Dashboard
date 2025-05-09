@@ -64,7 +64,8 @@
     "Processing": "Processing",
     "Shipped": "Shipped",
     "Delivered": "Delivered",
-    "Cancelled": "Cancelled"
+    "Cancelled": "Cancelled",
+    "All": "All"
   },
   "TotalRevenue": "Total Revenue",
   "NumberofOrders": "Number of Orders",
@@ -108,5 +109,25 @@
   "password": "Password",
   "noAccount": "Don't have an account?",
   "signUp": "Sign Up",
-  "login": "Login"
+  "login": "Login",
+  "Search Orders": "Search Orders",
+  "Sort By": "Sort By",
+  "Customer Name": "Customer Name",
+  "Order Details": "Order Details",
+  "Order No.": "Order No.",
+  "Order Date": "Order Date:",
+  "Payment & Shipping Details": "Payment & Shipping Details",
+  "Payment method": "Payment method",
+  "Deliverd to": "Deliverd to",
+  "Delivery address": "Delivery address",
+  "Subtotal": "Subtotal",
+  "Shipping Fee": "Shipping Fee",
+  "Total": "Total",
+  "User Name": "User Name",
+  "Total Price": "Total Price",
+  "Reset": "Reset",
+  "No data available": "No data available",
+  "Confirm Delete": "Confirm Delete",
+  "Cancel": "Cancel",
+  "Delete": "Delete"
 }

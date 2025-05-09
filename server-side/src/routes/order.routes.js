@@ -12,9 +12,9 @@ const orderController = require('../controllers/order.controller');
 // router.use(limiter);
 
 router.post('/', orderController.createOrder);
-router.route('/').get(verifyToken, orderController.getOrders);
-router.route('/:id').put(verifyToken, orderController.updateOrderStatus);
-router.route('/:id/soft-delete').patch(verifyToken, orderController.softDeleteOrder);
-router.route('/:id/restore').patch(verifyToken, orderController.restoreOrder);
+router.route('/').get(orderController.getOrders);
+router.route('/:id').put(orderController.updateOrderStatus);
+router.route('/:id/soft-delete').patch(orderController.softDeleteOrder);
+router.route('/:id/restore').patch(orderController.restoreOrder);
 
 module.exports = router;

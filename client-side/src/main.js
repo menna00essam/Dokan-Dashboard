@@ -135,7 +135,7 @@ const vuetify = createVuetify({
           secondary: '#2196F3', //all btns
           error: '#FF5252',
           background: '#FFFFFF', // Light background
-          text:'#000000',
+          text: '#000000',
           surface: '#FFFFFF' // Cards/forms background
           // ... (other colors)
         }
@@ -145,7 +145,7 @@ const vuetify = createVuetify({
           primary: '#0f172a',
           'dark-primary': '#283045',
           secondary: '#2196F3', //all btns
-          text:'#F5F5F5',
+          text: '#F5F5F5',
           background: '#1e2936',
           surface: '#0f172a', // Cards/forms background
           'on-surface': '#FFFFFF', // Text on surfaces
