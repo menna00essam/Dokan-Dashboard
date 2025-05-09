@@ -268,7 +268,7 @@ const createProduct = asyncWrapper(async (req, res, next) => {
     brand = "",
     colors,
     additionalInformation = {},
-    dimensions = {} // هيتم استقبالها من req.body
+    dimensions = {}, // هيتم استقبالها من req.body
   } = req.body;
 
   if (
@@ -295,7 +295,7 @@ const createProduct = asyncWrapper(async (req, res, next) => {
         const imageDocument = await Image.create({
           publicId: imageData.public_id,
           imageUrl: imageData.url,
-          reference: { model: 'Product', field: 'colors.images' }
+          reference: { model: "Product", field: "colors.images" },
         });
         productImagesIds.push(imageDocument._id);
       }
@@ -318,7 +318,7 @@ const createProduct = asyncWrapper(async (req, res, next) => {
     categories,
     brand,
     colors: validatedColors,
-   additionalInformation: additionalInformation
+    additionalInformation: additionalInformation,
   });
 
   res.status(201).json({ status: httpStatusText.SUCCESS, data: { product } });
@@ -339,11 +339,13 @@ const getProductById = asyncWrapper(async (req, res, next) => {
 
   const product = await Product.findById(product_id)
     .populate({
-      path: 'colors.images',
-      select: 'publicId imageUrl'
+      path: "colors.images",
+      select: "publicId imageUrl",
     })
-    .populate('categories', 'name')
-    .select('name subtitle price description additionalInformation categories colors totalQuantity')
+    .populate("categories", "name")
+    .select(
+      "name subtitle price description additionalInformation categories colors totalQuantity"
+    )
     .lean();
 
   if (!product) {
@@ -443,106 +445,106 @@ const getProductById = asyncWrapper(async (req, res, next) => {
 // Update product
 // Update product
 const updateProduct = asyncWrapper(async (req, res, next) => {
-  console.log('Inside updateProduct - req.body:', req.body);
   const { product_id } = req.params;
-  const updateData = {};
+  let updateData = {};
 
+  // Parse form data
   if (req.body.name) updateData.name = req.body.name;
   if (req.body.subtitle) updateData.subtitle = req.body.subtitle;
   if (req.body.price) updateData.price = req.body.price;
 
+  // Handle categories
   if (req.body.categories) {
-      let categoriesArray = Array.isArray(req.body.categories) ? req.body.categories : [req.body.categories];
-      updateData.categories = categoriesArray
-          .filter(catId => catId && catId !== 'undefined')
-          .map(catId => new mongoose.Types.ObjectId(catId));
-  } else {
-      updateData.categories = [];
+    updateData.categories = Array.isArray(req.body.categories)
+      ? req.body.categories.map((id) => new mongoose.Types.ObjectId(id))
+      : [new mongoose.Types.ObjectId(req.body.categories)];
   }
 
-  if (req.body.colors && Array.isArray(req.body.colors)) {
-      const updatedColors = [];
-      for (const colorData of req.body.colors) {
+  // Handle colors and images
+  if (req.body.colors) {
+    try {
+      const colors = JSON.parse(req.body.colors);
+      updateData.colors = await Promise.all(
+        colors.map(async (color) => {
           const images = [];
-          if (colorData.images && Array.isArray(colorData.images)) {
-              for (const imageData of colorData.images) {
-                  console.log('imageData:', imageData);
-                  if (imageData && imageData._id) {
-                      // صورة موجودة بالفعل
-                      images.push(imageData._id);
-                  } else if (imageData.public_id && imageData._oldPublicId) {
-                      // صورة اتغيرت
-                      try {
-                          const deleteResult = await cloudinary.uploader.destroy(imageData._oldPublicId);
-                          console.log('Cloudinary Delete Result:', deleteResult);
 
-                          const newImageDocument = await Image.create({
-                              publicId: imageData.public_id,
-                              imageUrl: imageData.url,
-                              reference: { model: 'Product', field: 'colors.images' } // Add reference
-                          });
-                          images.push(newImageDocument._id);
+          for (const img of color.images) {
+            // Existing image being updated
+            if (img._id && img._oldPublicId) {
+              // Delete old image from Cloudinary
+              await cloudinary.uploader.destroy(img._oldPublicId);
 
-                          // Find and delete the old image document AFTER updating the product
-                          const findOldImage = await Image.findOne({ publicId: imageData._oldPublicId });
-                          if (findOldImage) {
-                              // We will delete it later
-                              imageData._oldImageIdToDelete = findOldImage._id;
-                          }
+              // Update image document
+              const updatedImg = await Image.findByIdAndUpdate(
+                img._id,
+                {
+                  publicId: img.public_id,
+                  imageUrl: img.url,
+                },
+                { new: true }
+              );
 
-                      } catch (error) {
-                          console.error("Error updating image:", error);
-                          return next(new AppError("Error updating image", 500, httpStatusText.FAIL));
-                      }
-                  } else if (imageData.public_id && !imageData._oldPublicId) {
-                      // صورة جديدة
-                      const newImageDocument = await Image.create({
-                          publicId: imageData.public_id,
-                          imageUrl: imageData.url,
-                          reference: { model: 'Product', field: 'colors.images' } // Add reference
-                      });
-                      images.push(newImageDocument._id);
-                  }
-              }
+              images.push(updatedImg._id);
+            }
+            // New image
+            else if (img.public_id && !img._id) {
+              const newImg = await Image.create({
+                publicId: img.public_id,
+                imageUrl: img.url,
+                reference: {
+                  model: "Product",
+                  field: "colors.images",
+                  documentId: product_id,
+                },
+              });
+              images.push(newImg._id);
+            }
+            // Existing unchanged image
+            else if (img._id) {
+              images.push(new mongoose.Types.ObjectId(img._id));
+            }
           }
-          updatedColors.push({ ...colorData, images });
-      }
-      updateData.colors = updatedColors;
+
+          return {
+            name: color.name,
+            hex: color.hex,
+            quantity: color.quantity,
+            sku: color.sku,
+            images: images,
+          };
+        })
+      );
+    } catch (err) {
+      console.error("Error processing colors:", err);
+      return next(new AppError("Invalid colors data", 400));
+    }
   }
+
+  // Handle dimensions
   if (req.body.dimensions) {
     updateData.additionalInformation = {
-      ...updateData.additionalInformation,
-      dimensions: req.body.dimensions
+      dimensions: JSON.parse(req.body.dimensions),
     };
   }
+
+  // Update product
   try {
-      const product = await Product.findByIdAndUpdate(product_id, updateData, {
-          new: true,
-      }).populate('colors.images', 'publicId imageUrl');
+    const product = await Product.findByIdAndUpdate(product_id, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate("colors.images");
 
-      if (!product) {
-          return next(new AppError(`No product found with ID: ${product_id}`, 404, httpStatusText.FAIL));
-      }
+    if (!product) {
+      return next(new AppError("Product not found", 404));
+    }
 
-      // Delete old images after the product is updated
-      if (req.body.colors && Array.isArray(req.body.colors)) {
-          for (const colorData of req.body.colors) {
-              if (colorData.images && Array.isArray(colorData.images)) {
-                  for (const imageData of colorData.images) {
-                      if (imageData._oldImageIdToDelete) {
-                          await Image.findByIdAndDelete(imageData._oldImageIdToDelete);
-                          console.log('Old image document deleted:', imageData._oldImageIdToDelete);
-                      }
-                  }
-              }
-          }
-      }
-
-      res.status(200).json({ status: httpStatusText.SUCCESS, data: { product } });
-
-  } catch (error) {
-      console.error("Error updating product in database:", error);
-      return next(new AppError("Error updating product in database", 500, httpStatusText.FAIL));
+    res.status(200).json({
+      status: httpStatusText.SUCCESS,
+      data: { product },
+    });
+  } catch (err) {
+    console.error("Update error:", err);
+    next(new AppError("Failed to update product", 500));
   }
 });
 
@@ -579,7 +581,6 @@ const getProductForComparison = asyncWrapper(async (req, res, next) => {
 
   const product = await Product.findById(product_id).lean();
 
-
   if (!product) {
     return next(new AppError("Product not found", 404, httpStatusText.FAIL));
   }
@@ -609,7 +610,6 @@ const getSearchProducts = asyncWrapper(async (req, res, next) => {
       { categories: { $in: categoryIds } },
     ],
   }).lean();
-
 
   if (!products.length) {
     return next(new AppError("No products found.", 404, httpStatusText.FAIL));

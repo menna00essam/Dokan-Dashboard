@@ -1,7 +1,7 @@
 <template>
-  <v-container  class="mb-8 pa-4 rounded-lg elevation-2">
+  <v-container class="mb-8 pa-4 rounded-lg elevation-2">
     <v-form ref="form" @submit.prevent="updateProduct">
-      <h3 class="text-h6 mb-2 ">General information</h3>
+      <h3 class="text-h6 mb-2">General information</h3>
       <v-text-field
         v-model="editedProduct.Product"
         :rules="[rules.required]"
@@ -12,34 +12,34 @@
         v-model="editedProduct.Description"
         label="Description"
       ></v-textarea>
-      <h3 class="text-h6 mb-2  ">Dimensions</h3>
+      <h3 class="text-h6 mb-2">Dimensions</h3>
       <v-row>
-      <!-- width -->
-       <v-col cols="4">
-      <v-text-field
-        v-model="editedProduct.dimensions.width"
-        label="Width"
-        type="number"
-      ></v-text-field>
-    </v-col>
-      <!-- Height -->
-      <v-col cols="4">
-      <v-text-field
-        v-model="editedProduct.dimensions.height"
-        label="Height"
-        type="number"
-      ></v-text-field>
-      </v-col>
-      <!-- Depth -->
-      <v-col cols="4">
-      <v-text-field
-        v-model="editedProduct.dimensions.depth"
-        label="Depth"
-        type="number"
-      ></v-text-field>
-    </v-col>
-    </v-row>
-    <h3 class="text-h6 mb-2 ">Categorey</h3>
+        <!-- width -->
+        <v-col cols="4">
+          <v-text-field
+            v-model="editedProduct.dimensions.width"
+            label="Width"
+            type="number"
+          ></v-text-field>
+        </v-col>
+        <!-- Height -->
+        <v-col cols="4">
+          <v-text-field
+            v-model="editedProduct.dimensions.height"
+            label="Height"
+            type="number"
+          ></v-text-field>
+        </v-col>
+        <!-- Depth -->
+        <v-col cols="4">
+          <v-text-field
+            v-model="editedProduct.dimensions.depth"
+            label="Depth"
+            type="number"
+          ></v-text-field>
+        </v-col>
+      </v-row>
+      <h3 class="text-h6 mb-2">Categorey</h3>
       <v-select
         v-model="editedProduct.ProductCategory"
         :items="categoriesList"
@@ -55,118 +55,117 @@
         label="Product Tags (comma-separated)"
       ></v-text-field> -->
 
-  
-      <h3 class="text-h6 mb-2 ">Pricing</h3>
+      <h3 class="text-h6 mb-2">Pricing</h3>
       <v-row>
         <v-col cols="4">
-      <v-text-field
-        v-model="editedProduct.BasePrice"
-        :rules="[rules.required]"
-        label=" Price"
-        type="number"
-      ></v-text-field>
-    </v-col>
-    <v-col cols="4">
-      <v-select
-        v-model="editedProduct.DiscountType"
-        :items="['Percentage', 'Fixed']"
-        label="Discount Type"
-      ></v-select>
-    </v-col>
-    <v-col cols="4">
-      <v-text-field
-        v-model="editedProduct.DiscountValue"
-        label="Discount Value"
-        type="number"
-      ></v-text-field>
-    </v-col>
-    </v-row>
-      <h3 class="text-h6 mb-2 ">Inventory</h3>
+          <v-text-field
+            v-model="editedProduct.BasePrice"
+            :rules="[rules.required]"
+            label=" Price"
+            type="number"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="4">
+          <v-select
+            v-model="editedProduct.DiscountType"
+            :items="['Percentage', 'Fixed']"
+            label="Discount Type"
+          ></v-select>
+        </v-col>
+        <v-col cols="4">
+          <v-text-field
+            v-model="editedProduct.DiscountValue"
+            label="Discount Value"
+            type="number"
+          ></v-text-field>
+        </v-col>
+      </v-row>
+      <h3 class="text-h6 mb-2">Inventory</h3>
       <v-row>
-        <v-col cols="4"> 
-      <v-text-field
-        v-model="editedProduct.SKU"
-        :rules="[rules.required]"
-        label="SKU"
-        readonly
-      ></v-text-field>
-    </v-col>
-    <v-col cols="4">
-      <v-text-field
-        v-model="editedProduct.Quantity"
-        :rules="[rules.required]"
-        label="Quantity"
-        type="number"
-      ></v-text-field>
-    </v-col>
-    <v-col cols="4">
-    <v-select
-        v-model="editedProduct.ProductStatus"
-        :items="['Draft', 'Published']"
-        label="Product Status"
-      ></v-select>
-    </v-col>
-    </v-row>
- 
+        <v-col cols="4">
+          <v-text-field
+            v-model="editedProduct.SKU"
+            :rules="[rules.required]"
+            label="SKU"
+            readonly
+          ></v-text-field>
+        </v-col>
+        <v-col cols="4">
+          <v-text-field
+            v-model="editedProduct.Quantity"
+            :rules="[rules.required]"
+            label="Quantity"
+            type="number"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="4">
+          <v-select
+            v-model="editedProduct.ProductStatus"
+            :items="['Draft', 'Published']"
+            label="Product Status"
+          ></v-select>
+        </v-col>
+      </v-row>
+
       <div>
         <div
           v-for="(color, index) in editedProduct.colors"
           :key="'color_' + index"
-         
         >
           <h3 class="text-h6 mb-4">Color {{ index + 1 }}</h3>
           <v-row>
             <v-col cols="6">
-          <v-select
-            v-model="color.name"
-            :items="colorsList"
-            item-value="name"
-            item-title="name"
-            label="Select Color Name"
-            :rules="[rules.required]"
-            @change="updateColorHex(index)"
-            class="mb-4"
-          ></v-select>
-        </v-col>
-<v-col cols="6">
-          <v-text-field
-            v-model="color.hex"
-            label="Color Hex Value"
-            readonly
-            class="mb-4"
-          >
-            <template v-slot:append-inner>
-              <div
-                :style="{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '4px',
-                  backgroundColor: color.hex,
-                  border: '1px solid #ccc',
-                  marginRight: '8px'
-                }"
-              ></div>
-            </template>
-            ></v-text-field>
-          </v-col>
-<v-col cols="6">
-          <v-text-field
-            v-model="color.quantity"
-            label="Color Quantity"
-            type="number"
-            :rules="[rules.required]"
-            class="mb-4"
-          ></v-text-field>
-        </v-col>
-        <v-col cols="6">
-          <v-text-field
-            v-model="color.sku"
-            label="Color SKU"
-            :rules="[rules.required]"
-            class="mb-6"
-          ></v-text-field>
-        </v-col>
-        </v-row>
+              <v-select
+                v-model="color.name"
+                :items="colorsList"
+                item-value="name"
+                item-title="name"
+                label="Select Color Name"
+                :rules="[rules.required]"
+                @change="updateColorHex(index)"
+                class="mb-4"
+              ></v-select>
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="color.hex"
+                label="Color Hex Value"
+                readonly
+                class="mb-4"
+              >
+                <template v-slot:append-inner>
+                  <div
+                    :style="{
+                      width: '30px',
+                      height: '30px',
+                      borderRadius: '4px',
+                      backgroundColor: color.hex,
+                      border: '1px solid #ccc',
+                      marginRight: '8px'
+                    }"
+                  ></div>
+                </template>
+                ></v-text-field
+              >
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="color.quantity"
+                label="Color Quantity"
+                type="number"
+                :rules="[rules.required]"
+                class="mb-4"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="color.sku"
+                label="Color SKU"
+                :rules="[rules.required]"
+                class="mb-6"
+              ></v-text-field>
+            </v-col>
+          </v-row>
 
           <h5 class="text-h6 mb-2">Images for Color {{ index + 1 }}</h5>
           <v-row dense class="mb-4">
@@ -349,96 +348,108 @@
   }
   const loadProductDetails = async () => {
     console.log('loadProductDetails تم استدعاؤها')
-  try {
-    console.log('القيمة الأولية لـ editedProduct.Quantity:', editedProduct.value.Quantity); // أو quantity
-    const response = await api.get(`/products/${productId.value}`)
-    console.log('Full Product Details Response:', JSON.stringify(response.data, null, 2));
-    if (response.data && response.data.data && response.data.data.product) {
-      const productData = response.data.data.product
-      console.log('قيمة productData.totalQuantity من الـ API:', productData.totalQuantity);
+    try {
+      console.log(
+        'القيمة الأولية لـ editedProduct.Quantity:',
+        editedProduct.value.Quantity
+      ) // أو quantity
+      const response = await api.get(`/products/${productId.value}`)
+      console.log(
+        'Full Product Details Response:',
+        JSON.stringify(response.data, null, 2)
+      )
+      if (response.data && response.data.data && response.data.data.product) {
+        const productData = response.data.data.product
+        console.log(
+          'قيمة productData.totalQuantity من الـ API:',
+          productData.totalQuantity
+        )
 
-      editedProduct.value = {
-        Product: productData.name || '',
-        Description: productData.subtitle || '',
-        ProductCategory: productData.categories || [],
-        ProductTags: productData.tags ? productData.tags.join(', ') : '',
-        ProductStatus: productData.status || 'Draft',
-        BasePrice: productData.price !== undefined ? productData.price : null,
-        DiscountType: editedProduct.value.DiscountType || null,
-        DiscountValue:
-          productData.sale !== undefined ? productData.sale : null,
-        SKU:
-          productData.colors && productData.colors[0]
-            ? productData.colors[0].sku
-            : '',
-            Quantity:
+        editedProduct.value = {
+          Product: productData.name || '',
+          Description: productData.subtitle || '',
+          ProductCategory: productData.categories || [],
+          ProductTags: productData.tags ? productData.tags.join(', ') : '',
+          ProductStatus: productData.status || 'Draft',
+          BasePrice: productData.price !== undefined ? productData.price : null,
+          DiscountType: editedProduct.value.DiscountType || null,
+          DiscountValue:
+            productData.sale !== undefined ? productData.sale : null,
+          SKU:
+            productData.colors && productData.colors[0]
+              ? productData.colors[0].sku
+              : '',
+          Quantity:
             productData.totalQuantity !== undefined
               ? productData.totalQuantity
               : null,
-    
+
           dimensions: {
-            
             width: productData.additionalInformation?.dimensions?.width || null,
-            height: productData.additionalInformation?.dimensions?.height || null,
+            height:
+              productData.additionalInformation?.dimensions?.height || null,
             depth: productData.additionalInformation?.dimensions?.depth || null
           },
-        colors: productData.colors
-          ? productData.colors.map((color) => {
-              return {
-                name: color.name || '',
-                hex: color.hex || '',
-                quantity:
-                  color.quantity !== undefined ? color.quantity : null,
-                sku: color.sku || '',
-                images: color.images
-                  ? color.images.map((img) => ({
-                      imageUrl: img.imageUrl,
-                      publicId: img.publicId,
-                      _id: img._id
-                    }))
-                  : [],
-                uploadedImages: color.images
-                  ? color.images.map((img) => ({
-                      imageUrl: img.imageUrl,
-                      publicId: img.publicId,
-                      _id: img._id
-                    }))
-                  : [],
-                localPreviewUrls: color.images
-                  ? color.images.map((img) => img.imageUrl)
-                  : [],
-                changingImageIndex: -1,
-                newlyUploadedImages: [] // **التأكيد على الإضافة هنا**
-              }
-            })
-          : [
-              {
-                name: '',
-                hex: '',
-                quantity: null,
-                sku: '',
-                images: [],
-                uploadedImages: [],
-                localPreviewUrls: [],
-                changingImageIndex: -1,
-                newlyUploadedImages: []
-              }
-            ] // وبرضه هنا للـ initial state
+          colors: productData.colors
+            ? productData.colors.map((color) => {
+                return {
+                  name: color.name || '',
+                  hex: color.hex || '',
+                  quantity:
+                    color.quantity !== undefined ? color.quantity : null,
+                  sku: color.sku || '',
+                  images: color.images
+                    ? color.images.map((img) => ({
+                        imageUrl: img.imageUrl,
+                        publicId: img.publicId,
+                        _id: img._id
+                      }))
+                    : [],
+                  uploadedImages: color.images
+                    ? color.images.map((img) => ({
+                        imageUrl: img.imageUrl,
+                        publicId: img.publicId,
+                        _id: img._id
+                      }))
+                    : [],
+                  localPreviewUrls: color.images
+                    ? color.images.map((img) => img.imageUrl)
+                    : [],
+                  changingImageIndex: -1,
+                  newlyUploadedImages: [] // **التأكيد على الإضافة هنا**
+                }
+              })
+            : [
+                {
+                  name: '',
+                  hex: '',
+                  quantity: null,
+                  sku: '',
+                  images: [],
+                  uploadedImages: [],
+                  localPreviewUrls: [],
+                  changingImageIndex: -1,
+                  newlyUploadedImages: []
+                }
+              ] // وبرضه هنا للـ initial state
+        }
+        console.log(
+          'editedProduct.value.colors after load:',
+          editedProduct.value.colors
+        )
+        console.log(
+          'قيمة editedProduct.Quantity بعد التعيين:',
+          editedProduct.value.Quantity
+        ) // <---- الـ console.log هنا بعد تعريف الـ editedProduct.value كله
+      } else {
+        console.error('Product not found with ID:', productId.value)
+        router.push('/products')
       }
-      console.log(
-        'editedProduct.value.colors after load:',
-        editedProduct.value.colors
-      )
-      console.log('قيمة editedProduct.Quantity بعد التعيين:', editedProduct.value.Quantity); // <---- الـ console.log هنا بعد تعريف الـ editedProduct.value كله
-    } else {
-      console.error('Product not found with ID:', productId.value)
+    } catch (error) {
+      console.error('Error loading product details:', error)
       router.push('/products')
     }
-  } catch (error) {
-    console.error('Error loading product details:', error)
-    router.push('/products')
   }
-}
 
   onMounted(async () => {
     await fetchCategories()
@@ -478,55 +489,45 @@
   }
 
   const handleImageChange = async (colorIndex, imageIndex, files) => {
-    console.log(files);
-    
-    if (files && files.length > 0) {
-      const file = files[0]
-      const formData = new FormData()
-      formData.append('image', file)
+    if (!files || files.length === 0) {
+      editedProduct.value.colors[colorIndex].changingImageIndex = -1
+      return
+    }
 
-      const productNameForFolder = editedProduct.value.Product.replace(
-        /\s+/g,
-        '-'
-      ).toLowerCase()
-      const uploadUrl = `http://localhost:5000/api/${productNameForFolder}`
+    const file = files[0]
+    const formData = new FormData()
+    formData.append('image', file)
 
-      try {
-        const response = await axios.post(uploadUrl, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/${editedProduct.value.Product.replace(/\s+/g, '-').toLowerCase()}`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
 
-        if (response.data.data && response.data.data.length > 0) {
-           const newImageData = response.data.data[0]
-          console.log('Response from image upload:', newImageData) // **تأكدي إن ده موجود**
-          if (newImageData.publicId && newImageData.imageUrl) {
-            // Store the old publicId temporarily
-            const oldPublicId =
-              editedProduct.value.colors[colorIndex].uploadedImages[imageIndex]
-                .publicId
+      if (response.data.data?.length > 0) {
+        const newImage = response.data.data[0]
+        const oldImage =
+          editedProduct.value.colors[colorIndex].uploadedImages[imageIndex]
 
-            // Update both uploadedImages and images arrays with the new image data
-            editedProduct.value.colors[colorIndex].uploadedImages[imageIndex] =
-              newImageData
-            editedProduct.value.colors[colorIndex].images[imageIndex] = {
-              public_id: newImageData.publicId,
-              url: newImageData.imageUrl,
-              _oldPublicId: oldPublicId // Add the old publicId
-            }
-            console.log(
-              'After updating images array:',
-              editedProduct.value.colors[colorIndex].images
-            ) // **وتأكدي إن ده كمان موجود**
-          }
+        // Update the image data with proper structure
+        editedProduct.value.colors[colorIndex].uploadedImages[imageIndex] = {
+          ...newImage,
+          _id: oldImage._id, // Keep original ID
+          _oldPublicId: oldImage.publicId // Mark old publicId for deletion
         }
-        editedProduct.value.colors[colorIndex].changingImageIndex = -1
-        console.log('form date after update',formData)
-      } catch (error) {
-        console.error('Error changing image:', error)
+
+        // Also update the images array that will be sent to backend
+        editedProduct.value.colors[colorIndex].images[imageIndex] = {
+          _id: oldImage._id,
+          public_id: newImage.publicId,
+          url: newImage.imageUrl,
+          _oldPublicId: oldImage.publicId
+        }
       }
-    } else {
+    } catch (error) {
+      console.error('Image upload failed:', error)
+    } finally {
       editedProduct.value.colors[colorIndex].changingImageIndex = -1
     }
   }
@@ -592,36 +593,70 @@
     editedProduct.value.colors[colorIndex].images.splice(imageIndex, 1)
   }
   const updateProduct = async () => {
-  const { valid } = await form.value.validate();
-  if (valid) {
-    try {
-      const formData = new FormData();
-      formData.append('name', editedProduct.value.Product);
-      formData.append('subtitle', editedProduct.value.Description || '');
-      editedProduct.value.ProductCategory.filter(
-        (cat) => cat !== null && cat !== undefined
-      ).forEach((cat) => formData.append('categories', cat._id));
-      formData.append('price', editedProduct.value.BasePrice);
+    const { valid } = await form.value.validate()
+    if (valid) {
+      try {
+        const formData = new FormData()
 
-      // تعديل هنا: إنشاء additionalInformation كـ Object مباشر
-      const additionalInfo = {
-        width: editedProduct.value.dimensions.width || null,
-        height: editedProduct.value.dimensions.height || null,
-        depth: editedProduct.value.dimensions.depth || null,
-        // لو عندك حقول تانية في additionalInformation، ضيفيها هنا بنفس الطريقة
-      };
-      formData.append('additionalInformation', JSON.stringify(additionalInfo));
+        // Add basic product info
+        formData.append('name', editedProduct.value.Product)
+        formData.append('subtitle', editedProduct.value.Description || '')
+        formData.append('price', editedProduct.value.BasePrice)
 
-      // ... باقي الكود الخاص بإضافة الألوان والصور ...
+        // Add categories
+        editedProduct.value.ProductCategory.forEach((cat) => {
+          formData.append('categories', cat._id || cat)
+        })
 
-      console.log('Full FormData object before API call:', formData);
-      await productStore.updateProduct(route.params.id, formData);
-      router.push('/products');
-    } catch (error) {
-      console.error('Error updating product:', error);
+        // Prepare colors data
+        const colorsData = editedProduct.value.colors.map((color) => {
+          const colorObj = {
+            name: color.name,
+            hex: color.hex,
+            quantity: color.quantity,
+            sku: color.sku,
+            images: color.uploadedImages.map((img) => ({
+              _id: img._id, // Keep existing ID
+              public_id: img.publicId, // Current publicId
+              url: img.imageUrl, // Current URL
+              ...(img._oldPublicId ? { _oldPublicId: img._oldPublicId } : {}) // Only include if exists
+            }))
+          }
+
+          // Add newly uploaded images
+          if (
+            color.newlyUploadedImages &&
+            color.newlyUploadedImages.length > 0
+          ) {
+            color.newlyUploadedImages.forEach((newImg) => {
+              colorObj.images.push({
+                public_id: newImg.public_id,
+                url: newImg.url
+              })
+            })
+          }
+
+          return colorObj
+        })
+
+        // Stringify colors data and append to formData
+        formData.append('colors', JSON.stringify(colorsData))
+
+        // Add dimensions
+        formData.append(
+          'dimensions',
+          JSON.stringify(editedProduct.value.dimensions)
+        )
+
+        console.log('Sending update with:', Array.from(formData.entries()))
+
+        await productStore.updateProduct(route.params.id, formData)
+        router.push('/products')
+      } catch (error) {
+        console.error('Error updating product:', error)
+      }
     }
   }
-};
 
   watch(
     () => editedProduct.value.colors,
