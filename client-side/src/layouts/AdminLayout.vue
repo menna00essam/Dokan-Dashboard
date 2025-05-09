@@ -17,7 +17,6 @@
         "
         class="custom-drawer"
       >
-        <!-- Drawer content -->
         <div class="pa-5">
           <h2>{{ t('appName') }}</h2>
         </div>
@@ -27,6 +26,7 @@
             :key="item.title"
             :to="item.to"
             link
+            :exact="item.exact"
           >
             <v-list-item-title>{{
               t('pages.' + item.title)
@@ -34,7 +34,6 @@
           </v-list-item>
         </v-list>
 
-        <!-- Logout Button -->
         <div
           style="
             position: fixed;
@@ -55,7 +54,6 @@
         </div>
       </v-navigation-drawer>
 
-      <!-- Main Content -->
       <v-main :style="mainContentStyles">
         <Header
           :drawer="drawer"
@@ -63,20 +61,31 @@
           :isMobile="isMobile"
           :isRTL="isRTL"
           @toggle-settings="settingsDrawer = !settingsDrawer"
-        />
-        <router-view :key="$route.name + JSON.stringify($route.params)" />
+        ></Header>
+
+        <Suspense>
+          <template #default>
+            <router-view :key="$route.name + JSON.stringify($route.params)" />
+          </template>
+          <template #fallback>
+            <v-progress-circular indeterminate />
+          </template>
+        </Suspense>
+
       </v-main>
     </v-layout>
   </v-app>
 </template>
 
 <script setup>
-  import { ref, computed, watch, watchEffect, onMounted } from 'vue'
+  import { ref, computed, watch, watchEffect, Suspense } from 'vue'
   import { useDisplay, useTheme } from 'vuetify'
   import { useI18n } from 'vue-i18n'
   import Header from '../components/Header.vue'
   import CustomizeDrawer from '../components/CustomizeDrawer.vue'
   import { useAuthStore } from '../store/auth'
+  import { useRoute } from 'vue-router'
+
   let store = useAuthStore()
 
   const { t, locale } = useI18n()
@@ -94,12 +103,14 @@
   }))
 
   const items = [
-    { title: 'dashboard', to: '/dashboard' },
-    { title: 'products', to: '/products' },
-    { title: 'orders', to: '/orders' },
-    { title: 'customers', to: '/customers' },
-    { title: 'requests', to: '/requests' },
-    { title: 'settings', to: '/settings' }
+    {
+      title: 'dashboard',
+      to: { name: 'admin-dashboard' },
+      exact: true
+    },
+    { title: 'products', to: { name: 'admin-products' } },
+    { title: 'orders', to: { name: 'admin-orders' } },
+    { title: 'customers', to: { name: 'admin-customers' } }
   ]
 
   const toggleDrawer = () => {
@@ -116,8 +127,6 @@
   })
 
   // Handle RTL/LTR changes
-
-  import { useRoute } from 'vue-router'
   const route = useRoute()
 
   watch(

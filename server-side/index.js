@@ -3,6 +3,8 @@ const app = express();
 const path = require('path');
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 const cors = require('cors');
+require('dotenv').config();
+const passport = require('passport');
 require("dotenv").config();
 const cloudinary = require("./src/config/cloudinary.config");
 
@@ -10,7 +12,6 @@ const cloudinary = require("./src/config/cloudinary.config");
 require("./src/middlewares/passport.middleware");
 require("./src/services/orderStatus.service");
 
-const passport = require("passport");
 
 /* * * * Utils * * * * */
 const httpStatusText = require("./src/utils/httpStatusText");
@@ -64,7 +65,7 @@ app.use("/api", galleryRouter);
 app.use("/contact", contactRouter);
 app.use("/orders", orderRouter);
 app.use("/payments", paymentRouter);
-app.use("/api/settings", settingsRouter);
+app.use("/settings", settingsRouter);
 app.use("/api/currencies", require("./src/routes/currencies"));
 app.use("/dashboard", statsRouter);
 

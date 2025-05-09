@@ -2,6 +2,14 @@
   "title": "Dashboard",
   "welcome": "Welcome to the Dashboard",
   "users": "Users",
+  "pages": {
+    "orders": "Orders",
+    "customers": "Customers",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "requests": "Requests",
+    "settings": "Settings"
+  },
   "settings": "Settings",
   "storeSettings": "Store Settings",
   "saveSettings": "Save Settings",
@@ -39,8 +47,6 @@
   "appName": "DUKAN",
   "dashboard": "Dashboard",
   "products": "Products",
-  "orders": "Orders",
-  "customers": "Customers",
   "requests": "Requests",
   "logout": "Logout",
   "orderHeaders": {
@@ -90,7 +96,6 @@
   "category": "Category",
   "price": "Price",
   "DateAdded": "Date Added",
-  "status": "Status",
   "Loading": "Loading",
   "Mon": "Mon",
   "Tue": "Tue",
@@ -109,7 +114,7 @@
   "password": "Password",
   "noAccount": "Don't have an account?",
   "signUp": "Sign Up",
-  "login": "Login",
+  "login": "Login"
   "Search Orders": "Search Orders",
   "Sort By": "Sort By",
   "Customer Name": "Customer Name",
