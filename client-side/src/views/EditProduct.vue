@@ -1,220 +1,709 @@
 <template>
-  <v-container>
-    <v-form @submit.prevent="updateProduct">
-      <div class="form-section">
-        <h3>General Information</h3>
-        <v-text-field
-          v-model="editedProduct.Product"
-          label="Product Name"
-          required
-        ></v-text-field>
-        <v-textarea
-          v-model="editedProduct.Description"
-          label="Description"
-        ></v-textarea>
-      </div>
+  <v-container  class="mb-8 pa-4 rounded-lg elevation-2">
+    <v-form ref="form" @submit.prevent="updateProduct">
+      <h3 class="text-h6 mb-2 ">General information</h3>
+      <v-text-field
+        v-model="editedProduct.Product"
+        :rules="[rules.required]"
+        label="Product Name"
+      ></v-text-field>
 
-      <div class="form-section">
-        <h3>Category</h3>
-        <v-select
-          v-model="editedProduct.category"
-          :items="categories"
-          label="Product Category"
-        ></v-select>
-        <v-row>
-          <v-col cols="12" sm="6">
-            <v-select
-              v-model="editedProduct.status"
-              :items="statuses"
-              label="Product Status"
-            ></v-select>
-          </v-col>
-          <v-col cols="12" sm="6">
-            <v-text-field
-              v-model="editedProduct.ProductTags"
-              label="Product Tags"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-      </div>
+      <v-textarea
+        v-model="editedProduct.Description"
+        label="Description"
+      ></v-textarea>
+      <h3 class="text-h6 mb-2  ">Dimensions</h3>
+      <v-row>
+      <!-- width -->
+       <v-col cols="4">
+      <v-text-field
+        v-model="editedProduct.dimensions.width"
+        label="Width"
+        type="number"
+      ></v-text-field>
+    </v-col>
+      <!-- Height -->
+      <v-col cols="4">
+      <v-text-field
+        v-model="editedProduct.dimensions.height"
+        label="Height"
+        type="number"
+      ></v-text-field>
+      </v-col>
+      <!-- Depth -->
+      <v-col cols="4">
+      <v-text-field
+        v-model="editedProduct.dimensions.depth"
+        label="Depth"
+        type="number"
+      ></v-text-field>
+    </v-col>
+    </v-row>
+    <h3 class="text-h6 mb-2 ">Categorey</h3>
+      <v-select
+        v-model="editedProduct.ProductCategory"
+        :items="categoriesList"
+        item-value="_id"
+        item-title="name"
+        :rules="[rules.required]"
+        label="Product Category"
+        multiple
+      ></v-select>
 
-      <div class="form-section">
-        <h3>Pricing</h3>
-        <v-text-field
-          v-model="editedProduct.price"
-          label="Base Price"
-          type="number"
-        ></v-text-field>
-        <v-row>
-          <v-col cols="12" sm="6">
-            <v-select
-              v-model="editedProduct.DiscountType"
-              :items="discountTypes"
-              label="Discount Type"
-            ></v-select>
-          </v-col>
-          <v-col cols="12" sm="6">
-            <v-text-field
-              v-model="editedProduct.DiscountValue"
-              label="Discount Value"
-              type="number"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-      </div>
+      <!-- <v-text-field
+        v-model="editedProduct.ProductTags"
+        label="Product Tags (comma-separated)"
+      ></v-text-field> -->
 
-      <div class="form-section">
-        <h3>Inventory</h3>
-        <v-row>
-          <v-col cols="12" sm="6">
-            <v-text-field
-              v-model="editedProduct.stock"
-              label="Quantity"
-              type="number"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6">
-            <v-text-field
-              v-model="editedProduct.sku"
-              label="SKU"
-              readonly
-            ></v-text-field>
-          </v-col>
-        </v-row>
-      </div>
-
-      <div class="form-section">
-        <h3>Product Image</h3>
-        <v-row>
-          <v-col cols="12">
-            <v-img
-              v-if="editedProduct.image"
-              :src="editedProduct.image"
-              max-height="120"
-              class="mb-2 rounded"
-            ></v-img>
-            <v-file-input
-              v-if="!editedProduct.image"
-              label="Choose Product Image"
-              accept="image/*"
-              @change="handleImageUpload"
-            ></v-file-input>
-          </v-col>
-        </v-row>
-        <v-btn
-          v-if="editedProduct.image"
-          size="small"
-          @click="removeImage"
-          color="red-lighten-1"
-          class="mb-2"
-          >Remove Image</v-btn
+  
+      <h3 class="text-h6 mb-2 ">Pricing</h3>
+      <v-row>
+        <v-col cols="4">
+      <v-text-field
+        v-model="editedProduct.BasePrice"
+        :rules="[rules.required]"
+        label=" Price"
+        type="number"
+      ></v-text-field>
+    </v-col>
+    <v-col cols="4">
+      <v-select
+        v-model="editedProduct.DiscountType"
+        :items="['Percentage', 'Fixed']"
+        label="Discount Type"
+      ></v-select>
+    </v-col>
+    <v-col cols="4">
+      <v-text-field
+        v-model="editedProduct.DiscountValue"
+        label="Discount Value"
+        type="number"
+      ></v-text-field>
+    </v-col>
+    </v-row>
+      <h3 class="text-h6 mb-2 ">Inventory</h3>
+      <v-row>
+        <v-col cols="4"> 
+      <v-text-field
+        v-model="editedProduct.SKU"
+        :rules="[rules.required]"
+        label="SKU"
+        readonly
+      ></v-text-field>
+    </v-col>
+    <v-col cols="4">
+      <v-text-field
+        v-model="editedProduct.Quantity"
+        :rules="[rules.required]"
+        label="Quantity"
+        type="number"
+      ></v-text-field>
+    </v-col>
+    <v-col cols="4">
+    <v-select
+        v-model="editedProduct.ProductStatus"
+        :items="['Draft', 'Published']"
+        label="Product Status"
+      ></v-select>
+    </v-col>
+    </v-row>
+ 
+      <div>
+        <div
+          v-for="(color, index) in editedProduct.colors"
+          :key="'color_' + index"
+         
         >
+          <h3 class="text-h6 mb-4">Color {{ index + 1 }}</h3>
+          <v-row>
+            <v-col cols="6">
+          <v-select
+            v-model="color.name"
+            :items="colorsList"
+            item-value="name"
+            item-title="name"
+            label="Select Color Name"
+            :rules="[rules.required]"
+            @change="updateColorHex(index)"
+            class="mb-4"
+          ></v-select>
+        </v-col>
+<v-col cols="6">
+          <v-text-field
+            v-model="color.hex"
+            label="Color Hex Value"
+            readonly
+            class="mb-4"
+          >
+            <template v-slot:append-inner>
+              <div
+                :style="{
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '4px',
+                  backgroundColor: color.hex,
+                  border: '1px solid #ccc',
+                  marginRight: '8px'
+                }"
+              ></div>
+            </template>
+            ></v-text-field>
+          </v-col>
+<v-col cols="6">
+          <v-text-field
+            v-model="color.quantity"
+            label="Color Quantity"
+            type="number"
+            :rules="[rules.required]"
+            class="mb-4"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="6">
+          <v-text-field
+            v-model="color.sku"
+            label="Color SKU"
+            :rules="[rules.required]"
+            class="mb-6"
+          ></v-text-field>
+        </v-col>
+        </v-row>
+
+          <h5 class="text-h6 mb-2">Images for Color {{ index + 1 }}</h5>
+          <v-row dense class="mb-4">
+            <v-col
+              v-for="(image, imgIndex) in color.uploadedImages"
+              :key="'img_' + index + '_' + imgIndex"
+              cols="12"
+              sm="6"
+              md="3"
+            >
+              <v-card
+                class="pa-2 d-flex flex-column align-center"
+                elevation="1"
+              >
+                <v-img
+                  :src="image.imageUrl"
+                  height="100"
+                  width="100"
+                  class="rounded mb-2"
+                  cover
+                ></v-img>
+
+                <span
+                  class="text-caption text-truncate text-center mb-2"
+                  style="max-width: 100px"
+                >
+                  {{ image.imageUrl.split('/').pop() }}
+                </span>
+
+                <div class="d-flex justify-center gap-2">
+                  <v-btn
+                    icon
+                    size="small"
+                    color="primary"
+                    @click="startImageChange(index, imgIndex)"
+                  >
+                    <v-icon>mdi-pencil</v-icon>
+                  </v-btn>
+
+                  <v-btn
+                    icon
+                    size="small"
+                    color="error"
+                    @click="removeColorImage(index, imgIndex)"
+                  >
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                </div>
+
+                <input
+                  v-if="color.changingImageIndex === imgIndex"
+                  type="file"
+                  accept="image/*"
+                  @change="
+                    handleImageChange(index, imgIndex, $event.target.files)
+                  "
+                  class="mt-2"
+                />
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-file-input
+            v-if="color.changingImageIndex === -1"
+            label="Upload New Images"
+            accept="image/*"
+            multiple
+            show-size
+            prepend-icon="mdi-upload"
+            @change="(files) => handleImageUpload(index, files)"
+            class="mb-4"
+          ></v-file-input>
+
+          <v-btn
+            v-if="editedProduct.colors.length > 1"
+            @click="removeColor(index)"
+            color="error"
+            variant="text"
+            class="mb-2"
+          >
+            Remove Color
+          </v-btn>
+
+          <v-divider class="my-6"></v-divider>
+        </div>
       </div>
 
-      <div class="d-flex flex-wrap mt-4">
-        <v-btn type="submit" color="primary">Update Product</v-btn>
-        <v-btn class="ml-2" @click="goBack" color="grey-lighten-1">Cancel</v-btn>
+      <v-btn @click="addColor" color="primary" variant="elevated" class="mb-6">
+        Add Color
+      </v-btn>
+
+      <div class="d-flex">
+        <v-btn class="mt-4" type="submit" color="primary">Update Product</v-btn>
+        <v-btn class="mt-4 ml-2" @click="goBack">Cancel</v-btn>
       </div>
     </v-form>
   </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useProductStore } from "../store/product";
+  import { ref, onMounted, watch } from 'vue'
+  import { useRouter, useRoute } from 'vue-router'
+  import { useProductStore } from '../store/product'
+  import axios from 'axios'
+  import { api } from '../store/product'
 
-const router = useRouter();
-const route = useRoute();
-const productStore = useProductStore();
+  const router = useRouter()
+  const route = useRoute()
+  const productStore = useProductStore()
+  const form = ref(null)
+  const categoriesList = ref([])
+  const colorsList = ref([
+    { name: 'Black', hex: '#000000' },
+    { name: 'Gray', hex: '#808080' },
+    { name: 'Green', hex: '#008000' },
+    { name: 'Cream', hex: '#FFFDD0' },
+    { name: 'Lavender', hex: '#E6E6FA' },
+    { name: 'walnut', hex: '#8B4513' },
+    { name: 'Olive', hex: '#808000' }
+  ])
 
-const productSku = ref(route.params.sku);
-const editedProduct = ref({});
-const categories = ref(['Electronics', 'Clothing', 'Books']);
-const statuses = ref(['Draft', 'Published', 'Out of Stock']);
-const discountTypes = ref(['Percentage', 'Fixed Amount']);
+  const productId = ref(route.params.id)
+  console.log('Product ID اللي بيتحاول يتجاب:', productId.value)
+  const editedProduct = ref({
+    Product: '',
+    Description: '',
+    ProductCategory: [],
+    ProductTags: '',
+    ProductStatus: 'Draft',
+    BasePrice: null,
+    DiscountType: null,
+    DiscountValue: null,
+    SKU: '',
+    Quantity: 0,
+    dimensions: {
+      width: null,
+      height: null,
+      depth: null
+    },
+    colors: [
+      {
+        name: '',
+        hex: '',
+        quantity: null,
+        sku: '',
+        images: [],
+        uploadedImages: [],
+        newlyUploadedImages: [], // هنا هنخزن معلومات الصور الجديدة اللي اترفت
+        localPreviewUrls: [],
+        changingImageIndex: -1
+      }
+    ]
+  })
 
-onMounted(() => {
-  loadProductDetails();
-});
+  const rules = ref({
+    required: (value) => !!value || 'Required.'
+  })
 
-const loadProductDetails = () => {
-  const product = productStore.products.find(p => p.sku === productSku.value);
-  if (product) {
-    editedProduct.value = { ...product };
-  } else {
-    console.error('Product not found with SKU:', productSku.value);
-    router.push('/products');
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/categories')
+      if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data.categories)
+      ) {
+        categoriesList.value = response.data.data.categories
+        console.log('Categories fetched:', categoriesList.value)
+      } else {
+        console.error(
+          'Error: Categories data is not in the expected format:',
+          response.data
+        )
+        categoriesList.value = []
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+      categoriesList.value = []
+    }
+  }
+  const loadProductDetails = async () => {
+    console.log('loadProductDetails تم استدعاؤها')
+  try {
+    console.log('القيمة الأولية لـ editedProduct.Quantity:', editedProduct.value.Quantity); // أو quantity
+    const response = await api.get(`/products/${productId.value}`)
+    console.log('Full Product Details Response:', JSON.stringify(response.data, null, 2));
+    if (response.data && response.data.data && response.data.data.product) {
+      const productData = response.data.data.product
+      console.log('قيمة productData.totalQuantity من الـ API:', productData.totalQuantity);
+
+      editedProduct.value = {
+        Product: productData.name || '',
+        Description: productData.subtitle || '',
+        ProductCategory: productData.categories || [],
+        ProductTags: productData.tags ? productData.tags.join(', ') : '',
+        ProductStatus: productData.status || 'Draft',
+        BasePrice: productData.price !== undefined ? productData.price : null,
+        DiscountType: editedProduct.value.DiscountType || null,
+        DiscountValue:
+          productData.sale !== undefined ? productData.sale : null,
+        SKU:
+          productData.colors && productData.colors[0]
+            ? productData.colors[0].sku
+            : '',
+            Quantity:
+            productData.totalQuantity !== undefined
+              ? productData.totalQuantity
+              : null,
+    
+          dimensions: {
+            
+            width: productData.additionalInformation?.dimensions?.width || null,
+            height: productData.additionalInformation?.dimensions?.height || null,
+            depth: productData.additionalInformation?.dimensions?.depth || null
+          },
+        colors: productData.colors
+          ? productData.colors.map((color) => {
+              return {
+                name: color.name || '',
+                hex: color.hex || '',
+                quantity:
+                  color.quantity !== undefined ? color.quantity : null,
+                sku: color.sku || '',
+                images: color.images
+                  ? color.images.map((img) => ({
+                      imageUrl: img.imageUrl,
+                      publicId: img.publicId,
+                      _id: img._id
+                    }))
+                  : [],
+                uploadedImages: color.images
+                  ? color.images.map((img) => ({
+                      imageUrl: img.imageUrl,
+                      publicId: img.publicId,
+                      _id: img._id
+                    }))
+                  : [],
+                localPreviewUrls: color.images
+                  ? color.images.map((img) => img.imageUrl)
+                  : [],
+                changingImageIndex: -1,
+                newlyUploadedImages: [] // **التأكيد على الإضافة هنا**
+              }
+            })
+          : [
+              {
+                name: '',
+                hex: '',
+                quantity: null,
+                sku: '',
+                images: [],
+                uploadedImages: [],
+                localPreviewUrls: [],
+                changingImageIndex: -1,
+                newlyUploadedImages: []
+              }
+            ] // وبرضه هنا للـ initial state
+      }
+      console.log(
+        'editedProduct.value.colors after load:',
+        editedProduct.value.colors
+      )
+      console.log('قيمة editedProduct.Quantity بعد التعيين:', editedProduct.value.Quantity); // <---- الـ console.log هنا بعد تعريف الـ editedProduct.value كله
+    } else {
+      console.error('Product not found with ID:', productId.value)
+      router.push('/products')
+    }
+  } catch (error) {
+    console.error('Error loading product details:', error)
+    router.push('/products')
+  }
+}
+
+  onMounted(async () => {
+    await fetchCategories()
+    await loadProductDetails()
+  })
+
+  const updateColorHex = (index) => {
+    const selectedColor = colorsList.value.find(
+      (c) => c.name === editedProduct.value.colors[index].name
+    )
+    if (selectedColor) {
+      editedProduct.value.colors[index].hex = selectedColor.hex
+    } else if (!editedProduct.value.colors[index].name) {
+      editedProduct.value.colors[index].hex = ''
+    }
+  }
+
+  const addColor = () => {
+    editedProduct.value.colors.push({
+      name: '',
+      hex: '',
+      quantity: null,
+      sku: '',
+      images: [],
+      uploadedImages: [],
+      localPreviewUrls: [],
+      changingImageIndex: -1
+    })
+  }
+
+  const removeColor = (index) => {
+    editedProduct.value.colors.splice(index, 1)
+  }
+
+  const startImageChange = (colorIndex, imageIndex) => {
+    editedProduct.value.colors[colorIndex].changingImageIndex = imageIndex
+  }
+
+  const handleImageChange = async (colorIndex, imageIndex, files) => {
+    console.log(files);
+    
+    if (files && files.length > 0) {
+      const file = files[0]
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const productNameForFolder = editedProduct.value.Product.replace(
+        /\s+/g,
+        '-'
+      ).toLowerCase()
+      const uploadUrl = `http://localhost:5000/api/${productNameForFolder}`
+
+      try {
+        const response = await axios.post(uploadUrl, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+
+        if (response.data.data && response.data.data.length > 0) {
+           const newImageData = response.data.data[0]
+          console.log('Response from image upload:', newImageData) // **تأكدي إن ده موجود**
+          if (newImageData.publicId && newImageData.imageUrl) {
+            // Store the old publicId temporarily
+            const oldPublicId =
+              editedProduct.value.colors[colorIndex].uploadedImages[imageIndex]
+                .publicId
+
+            // Update both uploadedImages and images arrays with the new image data
+            editedProduct.value.colors[colorIndex].uploadedImages[imageIndex] =
+              newImageData
+            editedProduct.value.colors[colorIndex].images[imageIndex] = {
+              public_id: newImageData.publicId,
+              url: newImageData.imageUrl,
+              _oldPublicId: oldPublicId // Add the old publicId
+            }
+            console.log(
+              'After updating images array:',
+              editedProduct.value.colors[colorIndex].images
+            ) // **وتأكدي إن ده كمان موجود**
+          }
+        }
+        editedProduct.value.colors[colorIndex].changingImageIndex = -1
+        console.log('form date after update',formData)
+      } catch (error) {
+        console.error('Error changing image:', error)
+      }
+    } else {
+      editedProduct.value.colors[colorIndex].changingImageIndex = -1
+    }
+  }
+  // handle image upload
+  const handleImageUpload = async (colorIndex, files) => {
+    if (files && files.length > 0) {
+      const formData = new FormData()
+      for (let i = 0; i < files.length; i++) {
+        formData.append('image', files[i])
+      }
+
+      const productNameForFolder = editedProduct.value.Product.replace(
+        /\s+/g,
+        '-'
+      ).toLowerCase()
+      const uploadUrl = `http://localhost:5000/api/${productNameForFolder}`
+
+      try {
+        const response = await axios.post(uploadUrl, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+
+        if (response.data.data && Array.isArray(response.data.data)) {
+          response.data.data.forEach((imageData) => {
+            if (imageData.publicId && imageData.imageUrl) {
+              // هنا بنخزن معلومات الصورة الجديدة
+              editedProduct.value.colors[colorIndex].newlyUploadedImages.push({
+                public_id: imageData.publicId,
+                url: imageData.imageUrl
+              })
+              // ممكن نضيفها للـ uploadedImages للعرض الفوري لو محتاجين
+              editedProduct.value.colors[colorIndex].uploadedImages.push(
+                imageData
+              )
+              console.log('تم رفع صورة جديدة:', imageData)
+            } else {
+              console.error(
+                'Error uploading image - no publicId in image data:',
+                imageData
+              )
+            }
+          })
+          console.log(
+            'newlyUploadedImages دلوقتي:',
+            editedProduct.value.colors[colorIndex].newlyUploadedImages
+          )
+        } else {
+          console.error(
+            'Error uploading image - unexpected response data:',
+            response.data
+          )
+        }
+      } catch (error) {
+        console.error('Error uploading image to gallery:', error)
+      }
+    }
+  }
+
+  const removeColorImage = (colorIndex, imageIndex) => {
+    editedProduct.value.colors[colorIndex].uploadedImages.splice(imageIndex, 1)
+    editedProduct.value.colors[colorIndex].images.splice(imageIndex, 1)
+  }
+  const updateProduct = async () => {
+  const { valid } = await form.value.validate();
+  if (valid) {
+    try {
+      const formData = new FormData();
+      formData.append('name', editedProduct.value.Product);
+      formData.append('subtitle', editedProduct.value.Description || '');
+      editedProduct.value.ProductCategory.filter(
+        (cat) => cat !== null && cat !== undefined
+      ).forEach((cat) => formData.append('categories', cat._id));
+      formData.append('price', editedProduct.value.BasePrice);
+
+      // تعديل هنا: إنشاء additionalInformation كـ Object مباشر
+      const additionalInfo = {
+        width: editedProduct.value.dimensions.width || null,
+        height: editedProduct.value.dimensions.height || null,
+        depth: editedProduct.value.dimensions.depth || null,
+        // لو عندك حقول تانية في additionalInformation، ضيفيها هنا بنفس الطريقة
+      };
+      formData.append('additionalInformation', JSON.stringify(additionalInfo));
+
+      // ... باقي الكود الخاص بإضافة الألوان والصور ...
+
+      console.log('Full FormData object before API call:', formData);
+      await productStore.updateProduct(route.params.id, formData);
+      router.push('/products');
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
   }
 };
 
-const updateProduct = () => {
-  productStore.updateProduct(editedProduct.value);
-  router.push('/products');
-};
+  watch(
+    () => editedProduct.value.colors,
+    (newColors) => {
+      newColors.forEach((color) => {
+        const selectedColor = colorsList.value.find(
+          (c) => c.name === color.name
+        )
+        if (selectedColor) {
+          color.hex = selectedColor.hex
+        } else if (!color.name) {
+          color.hex = ''
+        }
+      })
+    },
+    { deep: true }
+  )
 
-const goBack = () => {
-  router.go(-1);
-};
-
-const handleImageUpload = (file) => {
-  editedProduct.value.image = URL.createObjectURL(file);
-};
-
-const removeImage = () => {
-  editedProduct.value.image = null;
-};
+  const goBack = () => {
+    router.go(-1)
+  }
 </script>
 
 <style scoped>
-.form-section {
-  background-color: #f9f9f9;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 24px;
-  border: 1px solid #eee;
-}
+  .form-section {
+    background-color: #f9f9f9;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid #eee;
+  }
 
-h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 6px;
-  margin-bottom: 16px;
-}
-
-.v-text-field,
-.v-select,
-.v-textarea,
-.v-file-input {
-  margin-bottom: 16px;
-}
-
-.v-btn {
-  border-radius: 8px;
-  text-transform: none;
-  font-weight: 500;
-  padding: 10px 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.v-btn + .v-btn {
-  margin-left: 12px;
-}
-
-@media (max-width: 600px) {
   h3 {
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
+    margin-bottom: 16px;
+  }
+
+  .v-text-field,
+  .v-select,
+  .v-textarea,
+  .v-file-input {
+    margin-bottom: 16px;
   }
 
   .v-btn {
-    width: 100%;
-    margin-bottom: 8px;
+    border-radius: 8px;
+    text-transform: none;
+    font-weight: 500;
+    padding: 10px 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   }
 
   .v-btn + .v-btn {
-    margin-left: 0;
+    margin-left: 12px;
   }
-}
+
+  .image-preview {
+    position: relative;
+  }
+
+  .image-preview .v-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+  }
+
+  @media (max-width: 600px) {
+    h3 {
+      font-size: 16px;
+    }
+
+    .v-btn {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .v-btn + .v-btn {
+      margin-left: 0;
+    }
+  }
 </style>
