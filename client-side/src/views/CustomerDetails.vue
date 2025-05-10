@@ -12,7 +12,7 @@
     <!-- Main Content -->
     <template v-else>
       <!-- Customer Not Found -->
-      <v-alert v-if="!customer" type="error" class="mb-4">
+      <v-alert v-if="!customer.id" type="error" class="mb-4">
         {{ $t('customers.notFound') }}
       </v-alert>
 
@@ -30,7 +30,9 @@
               />
             </v-avatar>
             <div>
-              <h1 class="text-h5 text-white mb-1">{{ customer.firstName }} {{ customer.lastName }}</h1>
+              <h1 class="text-h5 mb-1">
+                {{ customer.firstName }} {{ customer.lastName }}
+              </h1>
               <div class="d-flex align-center">
                 <v-chip
                   :color="customer.isBlocked ? 'error' : 'success'"
@@ -39,7 +41,7 @@
                 >
                   {{ customer.isBlocked ? $t('customers.blocked') : $t('customers.active') }}
                 </v-chip>
-                <span class="text-caption text-white">{{
+                <span class="text-caption">{{
                   customer.email
                 }}</span>
               </div>
@@ -59,7 +61,7 @@
           </v-tab>
           <v-tab value="orders">
             <v-icon left>mdi-shopping</v-icon>
-            {{ $t('customers.orders') }} ({{ customer.ordersCount }})
+            {{ $t('customers.orders') }} ({{ customerStats.ordersCount }})
           </v-tab>
           <v-tab value="addresses">
             <v-icon left>mdi-map-marker</v-icon>
@@ -146,7 +148,7 @@
                 <v-card class="mb-4" elevation="2">
                   <v-card-title class="bg-primary-lighten-1">
                     <v-icon left>mdi-chart-bar</v-icon>
-                    {{ $t('customers.customerStats') }}
+                    {{ $t('customerStats.customerStats') }}
                   </v-card-title>
                   <v-card-text>
                     <v-row>
@@ -156,7 +158,7 @@
                           style="border-left: 4px solid #4caf50"
                         >
                           <div class="text-h5 font-weight-bold">
-                            {{ customer.ordersCount }}
+                            {{ customerStats.ordersCount }}
                           </div>
                           <div class="text-caption">{{ $t('customers.totalOrders') }}</div>
                         </div>
@@ -167,7 +169,7 @@
                           style="border-left: 4px solid #2196f3"
                         >
                           <div class="text-h5 font-weight-bold">
-                            {{ formatCurrency(customer.totalSpent) }}
+                            {{ formatCurrency(customerStats.totalSpent) }}
                           </div>
                           <div class="text-caption">{{ $t('customers.totalSpent') }}</div>
                         </div>
@@ -180,13 +182,15 @@
                           <div class="text-h5 font-weight-bold">
                             {{
                               formatCurrency(
-                                customer.ordersCount > 0
-                                  ? customer.totalSpent / customer.ordersCount
+                                customerStats.ordersCount > 0
+                                  ? customerStats.totalSpent / customerStats.ordersCount
                                   : 0
                               )
                             }}
                           </div>
-                          <div class="text-caption">{{ $t('customers.avgOrder') }}</div>
+                          <div class="text-caption">
+                            {{ $t('customerStats.avgOrder') }}
+                          </div>
                         </div>
                       </v-col>
                       <v-col cols="6" sm="3">
@@ -196,7 +200,7 @@
                         >
                           <div class="text-h5 font-weight-bold">
                             {{
-                              customer.lastOrderDate
+                              customerStats.lastOrderDate
                                 ? formatDate(customer.lastOrderDate)
                                 : '--'
                             }}
@@ -496,6 +500,9 @@
         @confirm="confirmToggleBlockStatus"
       />
     </template>
+    <template v-slot:no-data>
+  <v-alert type="info">{{ $t('orders.noOrders') }}</v-alert>
+</template>
   </v-container>
 </template>
 
@@ -531,42 +538,90 @@ const newAddress = ref({
   isDefault: false
 })
 
-// Table headers
-const orderHeaders = [
-  { title: t('customers.orderId'), key: 'id' },
-  { title: t('customers.date'), key: 'orderDate' },
-  { title: t('customers.total'), key: 'total' },
-  { title: t('customers.state'), key: 'state' },
-  { title: t('common.actions'), key: 'actions', sortable: false }
-]
+  // Table headers
+  const orderHeaders = [
+    { title: t('customers.orderId'), key: 'id' },
+    { title: t('customers.date'), key: 'orderDate' },
+    { title: t('customers.total'), key: 'total' },
+    { title: t('customers.status'), key: 'status' },
+    { title: t('common.actions'), key: 'actions', sortable: false }
+  ]
 
-// Computed
-const customer = computed(() => customerStore.currentCustomer)
-const customerOrders = computed(() =>
-  customerStore.getCustomerOrders(route.params.id)
-)
-const provinces = computed(() => customerStore.provinces)
-const filteredCities = computed(() => {
-  if (!newAddress.value.province) return []
-  return customerStore.cities.filter(
-    (c) => c.provinceId === newAddress.value.province
+  // Computed
+const customerOrders = computed(() => customerStore.getCustomerOrders)
+
+  const provinces = computed(() => customerStore.provinces)
+  const filteredCities = computed(() => {
+    if (!newAddress.value.province) return []
+    return customerStore.cities.filter(
+      (c) => c.provinceId === newAddress.value.province
+    )
+  })
+  
+  const customerStats = computed(() => {
+    const orders = customerOrders.value
+    const ordersCount = orders.length
+    const totalSpent = orders.reduce((sum, order) => sum + order.total, 0)
+    
+    const lastOrder = orders.length > 0 
+      ? new Date(Math.max(...orders.map(o => new Date(o.orderDate).getTime())))
+      : null
+
+    return {
+      ordersCount,
+      totalSpent,
+      avgOrder: ordersCount > 0 ? totalSpent / ordersCount : 0,
+      lastOrderDate: lastOrder
+    }
+  })
+
+  // Fetch customer data
+  onMounted(async () => {
+    try {
+      await customerStore.fetchCustomerById(route.params.id)
+      await loadOrders()
+    } catch (error) {
+      toast.error(t('customers.loadError'))
+      router.push('/customers')
+    } finally {
+      loading.value = false
+    }
+  })
+
+  // In component script (corrected computed property)
+  const customer = computed(() => {
+    if (!customerStore.currentCustomer || Object.keys(customerStore.currentCustomer).length === 0) {
+      return {
+        id: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        isBlocked: false,
+        state: 'active',            
+        isActive: true,
+        addresses: [],
+        activityLog: [],
+      }
+    }
+    return {
+      ...customerStore.currentCustomer,
+      isBlocked: customerStore.currentCustomer.state === 'blocked'
+    }
+  })
+
+  const customerActivity = computed(() =>
+    customerStore.getCustomerActivityLog(route.params.id)
   )
-})
-const customerActivity = computed(() =>
-  customerStore.getCustomerActivityLog(route.params.id)
-)
 
-// Lifecycle
-onMounted(async () => {
-  try {
-    await customerStore.fetchCustomerById(route.params.id)
-  } catch (error) {
-    toast.error(t('customers.loadError'))
-    router.push('/customers')
-  } finally {
-    loading.value = false
+  const handleBlockToggle = async () => {
+    await customerStore.toggleBlockStatus(customer.value.id)
   }
-})
+
+  const handleComponentError = (error) => {
+    toast.error(t('errors.componentError'))
+    console.error('Component error:', error)
+    router.push('/customers')
+  }
 
 const handleTabChange = async (newTab) => {
   if (newTab === 'orders' && customerOrders.value.length === 0) {
@@ -574,7 +629,7 @@ const handleTabChange = async (newTab) => {
   }
 }
 
-const loadOrders = async () => {
+ const loadOrders = async () => {
   ordersLoading.value = true
   try {
     await customerStore.fetchCustomerOrders(route.params.id)
@@ -675,17 +730,19 @@ const getOrderStatusColor = (status) => {
   return colors[status.toLowerCase()] || 'primary'
 }
 
-const formatOrderStatus = (status) => {
-  const statuses = {
-    pending: t('orders.statuses.pending'),
-    processing: t('orders.statuses.processing'),
-    shipped: t('orders.statuses.shipped'),
-    delivered: t('orders.statuses.delivered'),
-    cancelled: t('orders.statuses.cancelled'),
-    refunded: t('orders.statuses.refunded')
+  const formatOrderStatus = (status) => {
+    const statusLower = status.toLowerCase()
+
+    const statuses = {
+      pending: t('orders.statuses.pending'),
+      processing: t('orders.statuses.processing'),
+      shipped: t('orders.statuses.shipped'),
+      delivered: t('orders.statuses.delivered'),
+      cancelled: t('orders.statuses.cancelled'),
+      refunded: t('orders.statuses.refunded')
+    }
+    return statuses[statusLower] || status
   }
-  return statuses[status.toLowerCase()] || status
-}
 
 const getActivityColor = (type) => {
   const colors = {
@@ -732,16 +789,19 @@ const toggleBlockStatus = () => {
   blockStatusDialog.value.open()
 }
 
-const confirmToggleBlockStatus = async () => {
-  try {
-    await customerStore.toggleBlockStatus(customer.value.id)
-    toast.success(
-      customer.value.isBlocked ? t('customers.unblockSuccess') : t('customers.blockSuccess')
-    )
-  } catch (error) {
-    toast.error(t('customers.statusUpdateError'))
+  const confirmToggleBlockStatus = async () => {
+    try {
+      await customerStore.toggleBlockStatus(customer.value.id)
+      await customerStore.fetchCustomerById(route.params.id)
+      toast.success(
+        customer.value.isBlocked
+          ? t('customers.unblockSuccess')
+          : t('customers.blockSuccess')
+      )
+    } catch (error) {
+      toast.error(t('customers.statusUpdateError'))
+    }
   }
-}
 
 const viewOrderDetails = (order) => {
   router.push(`/orders/${order.id}`)
@@ -756,51 +816,36 @@ const confirmDeleteAddress = (address) => {
   deleteAddressDialog.value.open()
 }
 
-const deleteAddress = async () => {
-  try {
-    await customerStore.deleteAddress(
-      customer.value.id,
-      addressToDelete.value.id
-    )
-    toast.success(t('customers.addressDeleted'))
-  } catch (error) {
-    toast.error(t('customers.addressDeleteError'))
-  }
-}
-
-const setDefaultAddress = async (address) => {
-  try {
-    await customerStore.setDefaultAddress(customer.value.id, address.id)
-    toast.success(t('customers.defaultAddressSet'))
-  } catch (error) {
-    toast.error(t('customers.defaultAddressError'))
-  }
-}
-
-const saveAddress = async () => {
-  try {
-    const addressData = {
-      ...newAddress.value,
-      province: customerStore.provinces.find(
-        (p) => p.id === newAddress.value.province
-      ),
-      city: filteredCities.value.find((c) => c.id === newAddress.value.city)
+  const deleteAddress = async () => {
+    try {
+      await customerStore.deleteCustomerAddress(customer.value.id, addressToDelete.value.id)
+      toast.success(t('customers.addressDeleteSuccess'))
+      await customerStore.fetchCustomerById(route.params.id)
+    } catch (error) {
+      toast.error(t('customers.addressDeleteError'))
+    } finally {
+      deleteAddressDialog.value.close()
     }
-
-    await customerStore.addAddress(customer.value.id, addressData)
-    toast.success(t('customers.addressAdded'))
-    addAddressDialog.value = false
-    newAddress.value = {
-      province: null,
-      city: null,
-      street: '',
-      postalCode: '',
-      isDefault: false
-    }
-  } catch (error) {
-    toast.error(t('customers.addressAddError'))
   }
-}
+
+  const addNewAddress = async () => {
+    try {
+      await customerStore.addCustomerAddress(customer.value.id, newAddress.value)
+      toast.success(t('customers.addressAddSuccess'))
+      newAddress.value = {
+        province: null,
+        city: null,
+        street: '',
+        postalCode: '',
+        isDefault: false
+      }
+      addAddressDialog.value.close()
+      await customerStore.fetchCustomerById(route.params.id)
+    } catch (error) {
+      toast.error(t('customers.addressAddError'))
+    }
+  }
+
 </script>
 
 

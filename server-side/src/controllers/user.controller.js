@@ -1201,28 +1201,46 @@ const bulkDeleteUsers = asyncWrapper(async (req, res, next) => {
   });
 });
 
+// controllers/user.controller.js
 const bulkUpdateUserStatus = asyncWrapper(async (req, res, next) => {
-  const { ids, status } = req.body;
-  
-  if (!ids || !Array.isArray(ids) || !status) {
-    return next(new AppError('Invalid request data', 400, httpStatusText.FAIL));
+  const { ids, state } = req.body;
+
+  // Validation
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return next(new AppError("Please provide an array of user IDs", 400));
+  }
+  if (!['active', 'blocked'].includes(state)) {
+    return next(new AppError("Invalid status value", 400));
   }
 
-  const result = await User.updateMany(
-    { _id: { $in: ids } },
-    { status }
-  );
+  try {
+    // Update logic
+    const updateData = {
+      state,
+      isActive: state === 'active',
+      isBlocked: state === 'blocked'
+    };
 
-  res.status(200).json({
-    status: httpStatusText.SUCCESS,
-    data: { updatedCount: result.modifiedCount }
-  });
+    const result = await User.updateMany(
+      { _id: { $in: ids } },
+      { $set: updateData }
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: { modifiedCount: result.modifiedCount }
+    });
+  } catch (error) {
+    console.error('Status update error:', error);
+    next(new AppError("Failed to update user statuses", 500));
+  }
 });
 
 
-// داخل user.controller.js
+
+
 const bulkAssignTags = asyncWrapper(async (req, res, next) => {
-  const { ids, tags } = req.body;
+  const { ids, customerTier } = req.body;
 
   if (!ids || !Array.isArray(ids) || !tags || !Array.isArray(tags)) {
     return next(new AppError('Invalid data format', 400, httpStatusText.FAIL));
@@ -1238,6 +1256,40 @@ const bulkAssignTags = asyncWrapper(async (req, res, next) => {
     data: { updatedCount: result.modifiedCount }
   });
 });
+
+
+
+// routes/users.js
+
+const bulkAssignTier = asyncWrapper(async (req, res) => {
+  const { ids, tier } = req.body;
+  const allowedTiers = ['basic', 'silver', 'gold', 'platinum'];
+
+  // Validation
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Invalid user IDs array' });
+  }
+  if (!allowedTiers.includes(tier)) {
+    return res.status(400).json({ error: 'Invalid tier value' });
+  }
+
+  try {
+    const result = await User.updateMany(
+      { _id: { $in: ids } },
+      { $set: { customerTier: tier } }
+    );
+
+    res.json({
+      success: true,
+      message: `Updated ${result.modifiedCount} users`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Tier update error:', error);
+    res.status(500).json({ error: 'Failed to update tiers' });
+  }
+});
+
 
 
 // In user.controller.js
@@ -1307,5 +1359,6 @@ module.exports = {
   denyUser,
   handleAdminRequest,
   getAdminRequests,
+  bulkAssignTier
   // getUserOrders,
 };

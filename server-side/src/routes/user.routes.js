@@ -28,6 +28,14 @@ router.get("/denied", allowedTo("super_admin"), userController.getDeniedUsers);
 router.patch("/:id/approve", allowedTo("super_admin"), userController.approveUser);
 router.patch("/:id/deny", allowedTo("super_admin"), userController.denyUser);
 
+
+// ===== Bulk Actions =====
+// Accessible by: admin, super_admin
+router.post("/bulk-delete", allowedTo("admin", "super_admin"), userController.bulkDeleteUsers);
+router.post("/bulk-assign-tags", allowedTo("admin","super_admin"), userController.bulkAssignTags);
+router.patch('/bulk-update-tier', allowedTo('admin', 'super_admin'), userController.bulkAssignTier);
+router.patch('/bulk-update-status', allowedTo('admin', 'super_admin'),userController.bulkUpdateUserStatus);
+
 // Accessible by: admin, super_admin
 router.get("/:id", allowedTo("admin", "super_admin"), userController.getUserById);
 router.patch("/:id", allowedTo("admin", "super_admin"), userController.updateUser);
@@ -35,12 +43,6 @@ router.patch("/:id", allowedTo("admin", "super_admin"), userController.updateUse
 // Accessible by: super_admin only
 router.delete("/:id", allowedTo("admin","super_admin"), userController.deleteUser);
 router.post("/:id/restore", allowedTo("super_admin"), userController.restoreUser);
-
-// ===== Bulk Actions =====
-// Accessible by: admin, super_admin
-router.post("/bulk-delete", allowedTo("admin", "super_admin"), userController.bulkDeleteUsers);
-router.patch("/bulk-update-status", allowedTo("admin", "super_admin"), userController.bulkUpdateUserStatus);
-router.post("/bulk-assign-tags", allowedTo("admin","super_admin"), userController.bulkAssignTags);
 
 
 // ===== Activities =====

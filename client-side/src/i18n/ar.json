@@ -297,15 +297,22 @@
       "message": "هل أنت متأكد أنك تريد إلغاء حظر هذا العميل؟ سيتمكن من الوصول إلى حسابه مرة أخرى."
     }
   },
-  "searchCustomers": "ابحث عن العملاء",
-  "markAsActive": "تحديد كنشط",
-  "markAsBlocked": "تحديد كمحظور",
-  "customer": "العميل",
-  "confirmDeletion": "تأكيد الحذف",
-  "deleteMessage": "هل أنت متأكد أنك تريد حذف {{selected.length}} من العملاء المحددين؟ هذه العملية لا يمكن التراجع عنها.",
-  "applyTagsToSelected": "تطبيق الوسوم",
-  "addTagsDialogTitle": "إضافة وسوم للعملاء المحددين",
-  "deleteSingleCustomerMessage": "هل أنت متأكد أنك تريد حذف هذا العميل؟ هذه العملية لا يمكن التراجع عنها.",
-  "ordersCount": "الطلبات",
-  "tagsTooltip": "إضافة وسوم لهذا العميل"
-}
+  "userRoleUpdated": "تم تحديث دور {name} إلى {role}",
+  "noCurrenciesAvailable": "لا توجد عملات متاحة",
+  "retry": "إعادة المحاولة",
+  "noResultsFound": "لا توجد نتائج",
+  "tryDifferentSearch": "جرب مصطلح بحث مختلف",
+  "requestDate": "تاريخ",  
+    "cancelSuccess": "تم إلغاء الطلب بنجاح",
+    "cancelError": "فشل في إلغاء الطلب",
+    "noOrdersFound": "لا توجد طلبات لعرضها",
+    
+ 
+      "message": "هل أنت متأكد من رغبتك في إلغاء الطلب رقم {id}؟",
+    "statusChanged": "تم تغيير الحالة إلى {state}",
+  "tierUpdated": "تم تحديث المستوى إلى {tier}",
+  "statusChangeError": "حدث خطأ أثناء تغيير الحالة",
+  "tierUpdateError": "حدث خطأ أثناء تحديث المستوى"
+  }
+
+
