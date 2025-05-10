@@ -162,7 +162,7 @@ watch(locale, async () => {
         </v-row>
     </v-container>
     <v-container fluid v-if="!isLoading && !isError">
-        <v-row class="mb-6" justify="center">
+        <v-row class="mb-6 relative" justify="center">
             <v-col cols="12" sm="6" md="4">
                 <v-card elevation="2" class="pa-4 text-center">
                     <h3 class="mb-2 text-blue">{{ t('TotalRevenue') }}</h3>
@@ -176,11 +176,16 @@ watch(locale, async () => {
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="4">
-                <v-card elevation="2" class="pa-4 text-center">
+                <v-card elevation="2" class="pa-4 text-center card-with-img">
+                    <div class="img-wrapper">
+                        <img class="girlImg" src="/3d-female-character-waving-DBC38tAu.png" alt="">
+                    </div>
                     <h3 class="mb-2 text-green">{{ t('AverageOrderValue') }}</h3>
                     <div class="text-h4 font-weight-bold">${{ kpis.averageOrderValue }}</div>
                 </v-card>
+
             </v-col>
+
         </v-row>
 
         <v-row class="mb-6" justify-center>
@@ -359,4 +364,32 @@ watch(locale, async () => {
     }
 }
 
+.card-with-img {
+    position: relative;
+    overflow: visible;
+    padding-top: 100px;
+}
+
+.img-wrapper {
+    position: absolute;
+    top: -50px;
+    z-index: 2;
+    inset-inline-start: 10px;
+
+}
+
+:dir(rtl) .img-wrapper {
+    inset-inline-start: auto;
+    inset-inline-end: 40px;
+}
+
+.girlImg {
+    height: 200px;
+    width: auto;
+}
+
+:dir(rtl) .img-wrapper {
+    inset-inline-start: auto;
+    inset-inline-end: 40px;
+}
 </style>
