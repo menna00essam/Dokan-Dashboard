@@ -1,142 +1,173 @@
 <template>
-    <div>
-      <v-toolbar flat color="white">
-        <router-link to="/addproducts" class="ml-auto">
-  <v-btn class="mb-2 bg-blue text-white">
-    <v-icon start>mdi-plus</v-icon>
-    Add a product
-  </v-btn>
-</router-link>
-      </v-toolbar>
-      <v-data-table
-        :key="componentKey"
-        :headers="headers"
-        :items="products"
-        class="elevation-1"
-        hide-default-footer
-      >
-      <template v-slot:[`item.Product`]="{ item }">
-  <div class="d-flex align-center product-cell">
-    <div style="width: 40px; flex-shrink: 0; margin-right: 8px;">
-      <v-checkbox
-        v-model="item.selected"
-        hide-details
-      ></v-checkbox>
-    </div>
-    <v-avatar
-      v-if="item.image"
-      size="30"
-      class="image-container  mr-2"
-      rounded="0"
+  <v-container fluid>
+    <v-toolbar
+      flat
+      :color="$vuetify.theme.current.dark ? 'primary' : 'white'"
+      style="border: none"
     >
-      <v-img v-if="item.image" :src="`https://cdn.vuetifyjs.com/docs/images/graphics/gpus/${item.image}`" :alt="item.Product"></v-img>
-    </v-avatar>
-    <span class="product-name ml-1">{{ item.Product }}</span>
-  </div>
-</template>
-
-        <template v-slot:[`item.status`]="{ item }">
-          <v-chip
-            :color="statusColor(item.status)"
-            dark
+      <router-link to="/addproducts" class="ml-auto">
+        <v-btn
+          class="mb-2 bg-secondary text-white"
+          color="white"
+          style="text-transform: none"
+        >
+          <template v-if="$i18n.locale === 'ar'">
+            <v-icon start> mdi-plus </v-icon>
+            {{ t('add_a_product') }}
+          </template>
+          <template v-else>
+            {{ t('add_a_product') }}
+            <v-icon start> mdi-plus </v-icon>
+          </template>
+        </v-btn>
+      </router-link>
+    </v-toolbar>
+    <v-data-table
+      :key="componentKey"
+      :headers="translatedHeaders"
+      :items="products"
+      class="elevation-1"
+      hide-default-footer
+      :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+    >
+      <template v-slot:[`item.name`]="{ item }">
+        <div class="d-flex align-center product-cell">
+          <v-avatar
+            v-if="item.imageUrl"
+            size="30"
+            class="image-container"
+            rounded="0"
+            :class="$i18n.locale === 'ar' ? 'ml-2' : 'mr-2'"
           >
-            {{ item.status }}
-          </v-chip>
-        </template>
-        <template v-slot:[`item.action`]="{ item }">
-  <div class="d-flex align-center gap-2">
-    <v-icon
-      small
-      class="mr-2"
-      @click="editItem(item)"
-    >
-      mdi-pencil
-    </v-icon>
+            <v-img :src="item.imageUrl" :alt="item.name"></v-img>
+          </v-avatar>
+          <span
+            class="product-name ml-1"
+            :color="$vuetify.theme.current.dark ? 'text' : 'black'"
+            >{{ item.name }}</span
+          >
+        </div>
+      </template>
 
-    <v-icon
-      small
-      @click="deleteItemHandler(item)"
-    >
-      mdi-delete
-    </v-icon>
-  </div>
+      <template v-slot:[`item.sku`]="{ item }">
+        <span>{{
+          item.colors && item.colors[0] ? item.colors[0].sku : 'N/A'
+        }}</span>
+      </template>
+
+      <template v-slot:[`item.categories`]="{ item }">
+        <span>{{
+          item.categories && item.categories[0]
+            ? item.categories[0].name
+            : 'N/A'
+        }}</span>
+      </template>
+
+      <template v-slot:[`item.colors`]="{ item }">
+        <span>{{
+          item.colors
+            ? item.colors.reduce((sum, color) => sum + color.quantity, 0)
+            : 0
+        }}</span>
+      </template>
+
+      <template v-slot:[`item.price`]="{ item }">
+        <span>{{ item.price }}</span>
+      </template>
+
+      <template v-slot:[`item.date`]="{ item }">
+        <span>{{ new Date(item.date).toLocaleDateString() }}</span>
+      </template>
+
+      <template v-slot:[`item.action`]="{ item }">
+        <div class="d-flex align-center gap-2">
+          <v-icon
+            small
+            :class="$i18n.locale === 'ar' ? 'ml-2' : 'mr-2'"
+            @click="editItem(item)"
+          >
+            mdi-pencil
+          </v-icon>
+          <v-icon small @click="deleteItemHandler(item)" color="red">
+            mdi-delete
+          </v-icon>
+        </div>
+      </template>
+    </v-data-table>
+  </v-container>
 </template>
 
-      </v-data-table>
-    </div>
-  </template>
-  
-  <script setup>
-  import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useProductStore } from "../store/product.js";
-const router = useRouter();
-const productStore = useProductStore();
-const componentKey = ref(0);
+<script setup>
+  const { t, locale } = useI18n()
+
+  import { useI18n } from 'vue-i18n'
+
+  import { ref, computed, onMounted } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { useProductStore } from '../store/product.js'
+  const router = useRouter()
+  const productStore = useProductStore()
+  const componentKey = ref(0)
   const headers = ref([
-    { title: 'Product', key: 'Product' },
+    { title: 'Name', key: 'name' },
     { title: 'SKU', key: 'sku' },
-    { title: 'Category', key: 'category' },
-    { title: 'Stock', key: 'stock' },
+    { title: 'Category', key: 'categories' },
+    { title: 'Stock', key: 'colors' },
     { title: 'Price', key: 'price' },
-    { title: 'Status', key: 'status' },
-    { title: 'Added', key: 'added' },
-    { title: 'Action', key: 'action', sortable: false },
-  ]);
-  const products = computed(() => productStore.products);
+    { title: 'Added', key: 'date' },
+    { title: 'Action', key: 'action', sortable: false }
+  ])
+  const translatedHeaders = computed(() => {
+    return headers.value.map((header) => ({
+      ...header,
+      title: t(header.title.toLowerCase()) // هنستخدم الـ title الأصلي بعد تحويله لـ lowercase كمفتاح
+    }))
+  })
+  const products = computed(() => productStore.products)
+  onMounted(() => {
+    productStore.fetchAll()
+    console.log('بيانات المنتجات في صفحة Products:', products.value)
+  })
 
-  
   const editItem = (item) => {
-    router.push(`/editproducts/${item.sku}`);
-  };
-  
-//   const deleteItem = (item) => {
-//    const index=products.value.findIndex(product=>product.sku===item.sku) // find index byrga3 -1 lw ml2ash el product
-//    if(index!==-1){
-//     products.value.splice(index,1)
-//    }else{
-//     console.log("item not found")
-//    }
-//   };
-const deleteItemHandler = (item) => {
-  productStore.deleteProduct(item.sku);
-};
-  
+    router.push(`/editproducts/${item._id}`)
+  }
+
+  const deleteItemHandler = (item) => {
+    productStore.deleteProduct(item._id) // هنبعت الـ item._id هنا
+  }
+
   const statusColor = (status) => {
-    if (status === 'Published') return 'success';
-    if (status === 'Draft') return 'warning';
-    if (status === 'Low Stock') return 'error';
-    return 'info';
-  };
-  </script>
+    if (status === 'Published') return 'success'
+    if (status === 'Draft') return 'warning'
+    if (status === 'Low Stock') return 'error'
+    return 'info'
+  }
+</script>
 <style scoped>
+  .v-toolbar {
+    padding: 0 16px;
+    margin-bottom: 16px;
+  }
 
+  .v-btn {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
 
-.v-toolbar {
-  padding: 0 16px;
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 16px;
-}
+  .v-data-table .v-data-table__td {
+    vertical-align: middle;
+    padding: 12px;
+  }
 
-.v-btn {
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
+  .product-name {
+    font-weight: 500;
+  }
 
-.v-data-table .v-data-table__td {
-  vertical-align: middle;
-  padding: 12px;
-}
-
-.product-name {
-  font-weight: 500;
-  color: #333;
-}
-
-.v-data-table .v-data-table__tr:hover {
-  background-color: #f0f4ff;
-  transition: background-color 0.3s;
-}
+  .v-data-table .v-data-table__tr:hover {
+    background-color: #f0f4ff;
+    transition: background-color 0.3s;
+  }
 </style>

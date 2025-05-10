@@ -32,14 +32,14 @@ const getCategoryById = asyncWrapper(async (req, res, next) => {
 
 // 3- Create new category
 const createCategory = asyncWrapper(async (req, res, next) => {
-  const { catName, description } = req.body;  // Changed `name` to `catName`
+  const { name, description } = req.body;  // Changed `name` to `catName`
   console.log("Body:", req.body);
   console.log("File:", req.file);
 
   let imageUrl = '';
 
   // Check if the catName and description are provided
-  if (!catName || !description) {
+  if (!name || !description) {
     return next(new AppError('catName and description are required.', 400, httpStatusText.FAIL));
   }
 
@@ -56,13 +56,13 @@ const createCategory = asyncWrapper(async (req, res, next) => {
     }
   }
 
-  const exists = await Category.findOne({ catName });  // Changed `name` to `catName`
+  const exists = await Category.findOne({ name });  // Changed `name` to `catName`
   if (exists) {
     return next(new AppError('Category with the same name already exists.', 400, httpStatusText.FAIL));
   }
 
   // Create the new category
-  const category = await Category.create({ catName, description, image: imageUrl });  // Changed `name` to `catName`
+  const category = await Category.create({ name, description, image: imageUrl });  // Changed `name` to `catName`
 
   res.status(201).json({
     status: httpStatusText.SUCCESS,
