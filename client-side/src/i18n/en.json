@@ -8,7 +8,9 @@
     "dashboard": "Dashboard",
     "products": "Products",
     "requests": "Requests",
-    "settings": "Settings"
+    "settings": "Settings",
+    "editProduct": "Edit Product",
+    "addProduct": "Add Product"
   },
   "settings": "Settings",
   "storeSettings": "Store Settings",
@@ -26,6 +28,8 @@
   "methodAdded": "Shipping method added",
   "methodDeleted": "Shipping method deleted successfully",
   "confirmDelete": "Are you sure you want to delete this shipping method?",
+  "confirmDeleteImage": "Are you sure you want to delete ?",
+
   "cancel": "Cancel",
   "required": "is required",
   "delete": "delete",

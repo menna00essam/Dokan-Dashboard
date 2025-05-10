@@ -5,19 +5,41 @@
       :color="$vuetify.theme.current.dark ? 'primary' : 'white'"
       style="border: none"
     >
+      <v-text-field
+        v-model="searchQuery"
+        :label="t('search_products')"
+        :prepend-inner-icon="$i18n.locale === 'ar' ? undefined : 'mdi-magnify'"
+        :append-inner-icon="$i18n.locale === 'ar' ? 'mdi-magnify' : undefined"
+        clearable
+        variant="outlined"
+        density="comfortable"
+        single-line
+        hide-details
+        class="search-field"
+        :class="{
+          'mr-3': $i18n.locale === 'ltr',
+          'ml-3': $i18n.locale === 'ar'
+        }"
+        :style="{ 'max-width': isMobile ? '100%' : '300px' }"
+        :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+        @input="handleSearch"
+        @click:clear="clearSearch"
+      ></v-text-field>
+      <v-spacer></v-spacer>
       <router-link to="/addproducts" class="ml-auto">
         <v-btn
-          class="mb-2 bg-secondary text-white"
+          class="bg-secondary text-white"
           color="white"
           style="text-transform: none"
         >
           <template v-if="$i18n.locale === 'ar'">
-            <v-icon start> mdi-plus </v-icon>
             {{ t('add_a_product') }}
+            <v-icon end> mdi-plus </v-icon>
           </template>
           <template v-else>
-            {{ t('add_a_product') }}
             <v-icon start> mdi-plus </v-icon>
+
+            {{ t('add_a_product') }}
           </template>
         </v-btn>
       </router-link>
@@ -29,6 +51,7 @@
       class="elevation-1"
       hide-default-footer
       :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+      :loading="productStore.isLoading"
     >
       <template v-slot:[`item.name`]="{ item }">
         <div class="d-flex align-center product-cell">
@@ -94,6 +117,26 @@
         </div>
       </template>
     </v-data-table>
+    <PaginationControls
+      v-if="productStore.totalProducts > 0"
+      v-model:page="productStore.currentPage"
+      v-model:itemsPerPage="productStore.itemsPerPage"
+      :total-items="productStore.totalProducts"
+      :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+      @update:page="productStore.fetchAll"
+      @update:itemsPerPage="productStore.fetchAll"
+    />
+    <ConfirmDialog
+      ref="confirmDialog"
+      type="error"
+      :title="t('delete_product')"
+      :message="t('confirm_delete_product')"
+      :confirm-text="t('delete')"
+      :cancel-text="t('cancel')"
+      confirm-color="error"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
   </v-container>
 </template>
 
@@ -105,6 +148,15 @@
   import { ref, computed, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { useProductStore } from '../store/product.js'
+
+  // Add search query ref
+  const searchQuery = ref('')
+  const confirmDialog = ref(null)
+  const productToDelete = ref(null)
+  const debounceTimeout = ref(null)
+
+  import PaginationControls from '../components/Shared/PaginationControls.vue'
+  import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
   const router = useRouter()
   const productStore = useProductStore()
   const componentKey = ref(0)
@@ -124,6 +176,41 @@
     }))
   })
   const products = computed(() => productStore.products)
+  const deleteItemHandler = (item) => {
+    productToDelete.value = item._id
+    confirmDialog.value.open()
+  }
+
+  const confirmDelete = async () => {
+    if (productToDelete.value) {
+      await productStore.deleteProduct(productToDelete.value)
+      productToDelete.value = null
+      // Optionally refresh the product list
+      await productStore.fetchAll(
+        productStore.currentPage,
+        productStore.itemsPerPage
+      )
+    }
+  }
+  const handleSearch = () => {
+  clearTimeout(debounceTimeout.value);
+  debounceTimeout.value = setTimeout(() => {
+    const searchTerm = searchQuery.value.trim();
+    console.log('Triggering search with:', searchTerm); // Debug log
+    productStore.currentPage = 1;
+    productStore.fetchAll(1, productStore.itemsPerPage, searchTerm);
+  }, 500);
+};
+
+  const clearSearch = () => {
+    console.log('Clearing search')
+    searchQuery.value = ''
+    productStore.currentPage = 1
+    productStore.fetchAll(1, productStore.itemsPerPage)
+  }
+  const cancelDelete = () => {
+    productToDelete.value = null
+  }
   onMounted(() => {
     productStore.fetchAll()
     console.log('بيانات المنتجات في صفحة Products:', products.value)
@@ -131,10 +218,6 @@
 
   const editItem = (item) => {
     router.push(`/editproducts/${item._id}`)
-  }
-
-  const deleteItemHandler = (item) => {
-    productStore.deleteProduct(item._id) // هنبعت الـ item._id هنا
   }
 
   const statusColor = (status) => {
@@ -169,5 +252,27 @@
   .v-data-table .v-data-table__tr:hover {
     background-color: #f0f4ff;
     transition: background-color 0.3s;
+  }
+  .search-field {
+    max-width: 300px;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 600px) {
+    .search-field {
+      max-width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .v-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ml-auto {
+      margin-left: 0 !important;
+      margin-top: 16px;
+      width: 100%;
+    }
   }
 </style>

@@ -92,7 +92,7 @@ const routes = [
         meta: { breadcrumb: 'Add Product' }
       },
       {
-        path: 'editproducts/:sku',
+        path: 'editproducts/:id',
         name: 'super-admin-edit-products',
         component: EditProduct,
         meta: { breadcrumb: 'Edit Product' }

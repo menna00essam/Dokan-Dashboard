@@ -1,19 +1,21 @@
 <template>
   <v-container class="mb-8 pa-4 rounded-lg elevation-2">
     <v-form ref="form" @submit.prevent="addProduct">
-      <h3 class="text-h6 mb-2">{{ t('general_information') }}</h3>
+      <h3 class="text-h6 mb-2" color="secondary">
+        {{ t('general_information') }}
+      </h3>
       <v-text-field
         v-model="newProduct.Product"
         :rules="[rules.required]"
-       :label="t('product_name')"
+        :label="t('product_name')"
       ></v-text-field>
       <!-- Description -->
       <v-textarea
         :rules="[rules.required]"
         v-model="newProduct.Description"
-       :label="t('description')"
+        :label="t('description')"
       ></v-textarea>
-     <h3 class="text-h6 mb-2">{{ t('dimensions') }}</h3>
+      <h3 class="text-h6 mb-2">{{ t('dimensions') }}</h3>
       <!-- width -->
       <v-row>
         <v-col cols="4">
@@ -29,7 +31,7 @@
           <v-text-field
             :rules="[rules.required]"
             v-model="newProduct.dimensions.height"
-           :label="t('height')"
+            :label="t('height')"
             type="number"
           ></v-text-field>
         </v-col>
@@ -38,7 +40,7 @@
           <v-text-field
             :rules="[rules.required]"
             v-model="newProduct.dimensions.depth"
-          :label="t('depth')"
+            :label="t('depth')"
             type="number"
           ></v-text-field>
         </v-col>
@@ -61,7 +63,6 @@
       ></v-text-field> -->
       <h3 class="text-h6 mb-2">{{ t('pricing') }}</h3>
 
-
       <v-row>
         <v-col cols="4">
           <v-text-field
@@ -75,18 +76,18 @@
           <v-select
             v-model="newProduct.DiscountType"
             :items="['Percentage', 'Fixed']"
-          :label="t('discount_type')"
+            :label="t('discount_type')"
           ></v-select>
         </v-col>
         <v-col cols="4">
           <v-text-field
             v-model="newProduct.DiscountValue"
-           :label="t('discount_value')"
+            :label="t('discount_value')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
-  <h3 class="text-h6 mb-2">{{ t('inventory') }}</h3>
+      <h3 class="text-h6 mb-2">{{ t('inventory') }}</h3>
       <v-row>
         <v-col cols="12">
           <v-text-field
@@ -107,12 +108,16 @@
               :items="colorsList"
               item-value="name"
               item-title="name"
-            :label="t('select_color_name')"
+              :label="t('select_color_name')"
               :rules="[rules.required]"
             ></v-select>
           </v-col>
           <v-col cols="6">
-            <v-text-field v-model="color.hex" :label="t('color_hex_value')" readonly>
+            <v-text-field
+              v-model="color.hex"
+              :label="t('color_hex_value')"
+              readonly
+            >
               <template v-slot:append-inner>
                 <div
                   :style="{
@@ -130,7 +135,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="color.quantity"
-             :label="t('color_quantity')"
+              :label="t('color_quantity')"
               type="number"
               :rules="[rules.required]"
             ></v-text-field>
@@ -138,7 +143,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="color.sku"
-               :label="t('color_sku')"
+              :label="t('color_sku')"
               :rules="[rules.required]"
             ></v-text-field>
           </v-col>
@@ -148,8 +153,8 @@
               @click="removeColor(index)"
               color="primary"
               class="my-2 text-error"
-
-              > {{ t('remove_color') }}
+            >
+              {{ t('remove_color') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -185,9 +190,9 @@
             <v-card-text class="pa-3">
               <div class="d-flex justify-space-between align-center mb-1">
                 <span class="text-caption font-weight-medium">
-                {{ t('uploading_images_for_color_n', { n: index + 1 }) }}
+                  {{ t('uploading_images_for_color_n', { n: index + 1 }) }}
                 </span>
-                <span class="text-caption text-primary">
+                <span class="text-caption text-primary font-weight-bold my-2">
                   {{ uploadProgress[index] }}%
                 </span>
               </div>
@@ -218,7 +223,7 @@
             type="submit"
             color="secondary"
             :loading="isLoading"
-            :disabled="isLoading"
+            :disabled="isLoading || isUploading"
           >
             <template v-slot:loader>
               <v-progress-circular
@@ -228,9 +233,11 @@
               ></v-progress-circular>
               <span class="ml-2">{{ t('processing') }}</span>
             </template>
-           {{ t('add_product') }}
+            {{ t('add_product') }}
           </v-btn>
-          <v-btn class="mt-2" @click="goBack" color="primary">{{ t('cancel') }}</v-btn>
+          <v-btn class="mt-2" @click="goBack" color="primary">{{
+            t('cancel')
+          }}</v-btn>
         </v-col>
         <v-col cols="6" class="d-flex justify-end items-end">
           <v-btn @click="addColor" class="mt-2" color="secondary">
@@ -243,7 +250,7 @@
 </template>
 
 <script setup>
- const { t, locale } = useI18n()
+  const { t, locale } = useI18n()
   import { useI18n } from 'vue-i18n'
   import { ref, onMounted, watch } from 'vue'
   import { useRouter } from 'vue-router'
@@ -256,7 +263,6 @@
   const form = ref(null)
   const categoriesList = ref([])
   const colorsList = ref([
-    //
     { name: 'Black', hex: '#000000' },
     { name: 'Gray', hex: '#808080' },
     { name: 'Green', hex: '#008000' },
@@ -372,6 +378,8 @@
   const isLoading = ref(false)
   const uploadError = ref(null)
   const uploadProgress = ref({}) // Track progress per color index
+  const isUploading = ref(false)
+
   const removeFile = (colorIndex, file) => {
     const color = newProduct.value.colors[colorIndex]
     // Remove from the component's internal state (UI)
@@ -397,6 +405,7 @@
     console.log('--- Start handleImageUpload ---')
     uploadError.value = null
     uploadProgress.value[colorIndex] = 0
+    isUploading.value = true
 
     const formData = new FormData()
     for (let i = 0; i < files.length; i++) {
@@ -418,9 +427,10 @@
           },
           onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
-              uploadProgress.value[colorIndex] = Math.round(
+              const progress = Math.round(
                 (progressEvent.loaded * 100) / progressEvent.total
               )
+              uploadProgress.value[colorIndex] = progress
             }
           }
         }
@@ -437,33 +447,54 @@
           }
         })
       }
+      // Set to 100% when complete
+      uploadProgress.value[colorIndex] = 100
+
+      // Small delay to show completion before hiding
+      setTimeout(() => {
+        delete uploadProgress.value[colorIndex]
+        checkAllUploadsComplete()
+      }, 1000)
     } catch (error) {
       console.error('Error uploading image to gallery:', error)
       uploadError.value = `Failed to upload images for color ${colorIndex + 1}: ${error.message}`
-      throw error // Re-throw to handle in addProduct
+      throw error
     } finally {
-      delete uploadProgress.value[colorIndex]
+      // Check if all uploads are complete
+      const allUploadsComplete = Object.values(uploadProgress.value).every(
+        (p) => p === 100 || p === undefined
+      )
+
+      if (allUploadsComplete) {
+        isUploading.value = false
+      }
+    }
+  }
+  // Add this helper function
+  const checkAllUploadsComplete = () => {
+    const allUploadsComplete = Object.keys(uploadProgress.value).length === 0
+    if (allUploadsComplete) {
+      isUploading.value = false
     }
   }
   const addProduct = async () => {
     const { valid } = await form.value.validate()
     if (!valid) return
 
+    // Check if there are any ongoing uploads
+    const hasPendingUploads = Object.values(uploadProgress.value).some(
+      (p) => p !== undefined && p < 100
+    )
+
+    if (hasPendingUploads) {
+      uploadError.value = 'Please wait for all images to finish uploading'
+      return
+    }
+
     isLoading.value = true
     uploadError.value = null
 
     try {
-      // First upload all images
-      const uploadPromises = []
-      newProduct.value.colors.forEach((color, index) => {
-        if (color.files) {
-          // Assuming you store files in color.files
-          uploadPromises.push(handleImageUpload(index, color.files))
-        }
-      })
-
-      await Promise.all(uploadPromises)
-
       // Then submit the product data
       const productToAdd = {
         name: newProduct.value.Product,
@@ -495,15 +526,16 @@
         uploadError.value || 'Failed to add product. Please try again.'
     } finally {
       isLoading.value = false
+      isUploading.value = false
     }
   }
   const removeColor = (index) => {
-   console.log('Index to remove:', index);
-   if (newProduct.value.colors.length > 1) {
-     newProduct.value.colors.splice(index, 1);
-     console.log('Colors array after removal:', newProduct.value.colors);
-   }
- };
+    console.log('Index to remove:', index)
+    if (newProduct.value.colors.length > 1) {
+      newProduct.value.colors.splice(index, 1)
+      console.log('Colors array after removal:', newProduct.value.colors)
+    }
+  }
 
   watch(
     () => newProduct.value.colors,
@@ -538,7 +570,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   .gradient-progress .v-progress-linear__bar {
-    background: linear-gradient(to right, #2196f3, #21cbf3);
+    background: linear-gradient(to right, primary, #eee);
   }
 
   /* Keep all your existing styles */
@@ -556,8 +588,6 @@
   h3 {
     font-size: 18px;
     font-weight: 600;
-    color: #333;
-    border-bottom: 1px solid #e0e0e0;
     padding-bottom: 6px;
     margin-bottom: 16px;
   }
@@ -593,6 +623,58 @@
 
     .v-btn + .v-btn {
       margin-left: 0;
+    }
+  }
+  .gradient-progress :deep(.v-progress-linear__determinate) {
+    background: linear-gradient(
+      90deg,
+      rgba(var(--v-theme-secondary), 0.8) 0%,
+      rgba(var(--v-theme-primary), 1) 50%,
+      rgba(var(--v-theme-primary), 0.8) 100%
+    );
+    background-size: 200% 100%;
+    animation: gradientAnimation 2s ease infinite;
+    border-radius: 4px;
+    height: 8px;
+  }
+
+  @keyframes gradientAnimation {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .upload-progress-card {
+    border-left: 4px solid rgb(var(--v-theme-primary));
+    transition: all 0.3s ease;
+    background: rgba(var(--v-theme-primary), 0.05);
+  }
+
+  .upload-progress-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Pulse animation for the progress percentage */
+  .text-primary {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 1;
     }
   }
 </style>

@@ -1,28 +1,34 @@
 <template>
   <v-container class="mb-8 pa-4 rounded-lg elevation-2">
     <v-form ref="form" @submit.prevent="updateProduct">
-      <h3 class="text-h6 mb-2">{{ t('general_information') }}</h3>
+      <h3 class="text-h6 mb-2" color="secondary">
+        {{ t('general_information') }}
+      </h3>
       <v-text-field
         v-model="editedProduct.Product"
         :rules="[rules.required]"
-    :label="t('product_name')"
+        :label="t('product_name')"
       ></v-text-field>
 
       <v-textarea
+        :rules="[rules.required]"
         v-model="editedProduct.Description"
-       :label="t('description')"
+        :label="t('description')"
       ></v-textarea>
-     <h3 class="text-h6 mb-2">{{ t('dimensions') }}</h3>
+
+      <h3 class="text-h6 mb-2">{{ t('dimensions') }}</h3>
       <v-row>
         <v-col cols="4">
           <v-text-field
+            :rules="[rules.required]"
             v-model="editedProduct.dimensions.width"
-          :label="t('width')"
             type="number"
+            :label="t('width')"
           ></v-text-field>
         </v-col>
         <v-col cols="4">
           <v-text-field
+            :rules="[rules.required]"
             v-model="editedProduct.dimensions.height"
             :label="t('height')"
             type="number"
@@ -30,13 +36,15 @@
         </v-col>
         <v-col cols="4">
           <v-text-field
+            :rules="[rules.required]"
             v-model="editedProduct.dimensions.depth"
-          :label="t('depth')"
+            :label="t('depth')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
-    <h3 class="text-h6 mb-2">{{ t('category') }}</h3>
+
+      <h3 class="text-h6 mb-2">{{ t('category') }}</h3>
       <v-select
         v-model="editedProduct.ProductCategory"
         :items="categoriesList"
@@ -46,8 +54,7 @@
         :label="t('product_category')"
       ></v-select>
 
-     <h3 class="text-h6 mb-2">{{ t('pricing') }}</h3>
-
+      <h3 class="text-h6 mb-2">{{ t('pricing') }}</h3>
       <v-row>
         <v-col cols="4">
           <v-text-field
@@ -67,186 +74,242 @@
         <v-col cols="4">
           <v-text-field
             v-model="editedProduct.DiscountValue"
-           :label="t('discount_value')"
+            :label="t('discount_value')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
-       <h3 class="text-h6 mb-2">{{ t('inventory') }}</h3>
+
+      <h3 class="text-h6 mb-2">{{ t('inventory') }}</h3>
       <v-row>
         <v-col cols="12">
           <v-text-field
             v-model="editedProduct.Quantity"
             :rules="[rules.required]"
-    :label="t('quantity')"
+            :label="t('quantity')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
 
-      <div>
-        <div
-          v-for="(color, index) in editedProduct.colors"
-          :key="'color_' + index"
-        >
-          <h3 class="text-h6 mb-4">{{ t('color_n', { n: index + 1 }) }}</h3>
-          <v-row>
-            <v-col cols="6">
-              <v-select
-                v-model="color.name"
-                :items="colorsList"
-                item-value="name"
-                item-title="name"
-                 :label="t('select_color_name')"
-                :rules="[rules.required]"
-                @change="updateColorHex(index)"
-                class="mb-4"
-              ></v-select>
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="color.hex"
-                 :label="t('color_hex_value')"
-                readonly
-                class="mb-4"
-              >
-                <template v-slot:append-inner>
-                  <div
-                    :style="{
-                      width: '30px',
-                      height: '30px',
-                      borderRadius: '4px',
-                      backgroundColor: color.hex,
-                      border: '1px solid #ccc',
-                      marginRight: '8px'
-                    }"
-                  ></div>
-                </template>
-              </v-text-field>
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="color.quantity"
-               :label="t('color_quantity')"
-                type="number"
-                :rules="[rules.required]"
-                class="mb-4"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="color.sku"
-                :label="t('color_sku')"
-                :rules="[rules.required]"
-                class="mb-6"
-              ></v-text-field>
-            </v-col>
-            <v-col class="d-flex justify-end">
-              <v-btn
-                v-if="editedProduct.colors.length > 1"
-                @click="removeColor(index)"
-                color="primary"
-                class="my-2 text-error"
-              >
-                 {{ t('remove_color') }}
-              </v-btn>
-            </v-col>
-          </v-row>
-
-          <h5 class="text-h6 mb-2">{{ t('images_for_color_n', { n: index + 1 }) }}</h5>
-          <v-row dense class="mb-4">
-            <v-col
-              v-for="(image, imgIndex) in color.uploadedImages"
-              :key="'img_' + index + '_' + imgIndex"
-              cols="12"
-              sm="6"
-              md="3"
+      <div v-for="(color, index) in editedProduct.colors" :key="index">
+        <h3>{{ t('color_n', { n: index + 1 }) }}</h3>
+        <v-row>
+          <v-col cols="6">
+            <v-select
+              v-model="color.name"
+              :items="colorsList"
+              item-value="name"
+              item-title="name"
+              :label="t('select_color_name')"
+              :rules="[rules.required]"
+            ></v-select>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="color.hex"
+              :label="t('color_hex_value')"
+              readonly
             >
-              <v-card
-                class="pa-2 d-flex flex-column align-center"
-                elevation="1"
+              <template v-slot:append-inner>
+                <div
+                  :style="{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '4px',
+                    backgroundColor: color.hex,
+                    border: '1px solid #ccc',
+                    marginRight: '8px'
+                  }"
+                ></div>
+              </template>
+            </v-text-field>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="color.quantity"
+              :label="t('color_quantity')"
+              type="number"
+              :rules="[rules.required]"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="color.sku"
+              :label="t('color_sku')"
+              :rules="[rules.required]"
+            ></v-text-field>
+          </v-col>
+          <v-col class="d-flex justify-end">
+            <v-btn
+              v-if="editedProduct.colors.length > 1"
+              @click="removeColor(index)"
+              color="primary"
+              class="my-2 text-error"
+            >
+              {{ t('remove_color') }}
+            </v-btn>
+          </v-col>
+        </v-row>
+
+        <!-- Existing Images Display -->
+        <v-row fluid class="">
+          <v-col
+            v-for="(image, imgIndex) in color.uploadedImages"
+            :key="'img_' + index + '_' + imgIndex"
+            cols="12"
+            sm="6"
+            md="3"
+          >
+            <v-card
+              class="pa-2 d-flex flex-column align-center"
+              elevation="1"
+              :class="{ 'marked-for-deletion': image._markedForDeletion }"
+            >
+              <v-img
+                :src="image.imageUrl"
+                height="100"
+                width="100"
+                class="rounded mb-2"
+                cover
+                :style="{ opacity: image._markedForDeletion ? 0.5 : 1 }"
+              ></v-img>
+              <span
+                class="text-caption text-truncate text-center mb-2"
+                style="max-width: 100px"
               >
-                <v-img
-                  :src="image.imageUrl"
-                  height="100"
-                  width="100"
-                  class="rounded mb-2"
-                  cover
-                ></v-img>
-
-                <span
-                  class="text-caption text-truncate text-center mb-2"
-                  style="max-width: 100px"
+                {{ image.imageUrl.split('/').pop() }}
+                <span v-if="image._markedForDeletion" class="text-error"
+                  >(Will be deleted)</span
                 >
-                  {{ image.imageUrl.split('/').pop() }}
-                </span>
-
-                <div class="d-flex justify-center gap-2">
-                  <v-btn
-                    icon
-                    size="small"
-                    color="primary"
-                    @click="startImageChange(index, imgIndex)"
-                  >
-                    <v-icon>mdi-pencil</v-icon>
-                  </v-btn>
-                </div>
-
-                <input
-                  v-if="color.changingImageIndex === imgIndex"
-                  type="file"
-                  accept="image/*"
-                  @change="
-                    handleImageChange(index, imgIndex, $event.target.files)
-                  "
-                  class="mt-2"
-                />
-                <!-- input image  -->
-              </v-card>
-            </v-col>
-          </v-row>
-
-          <v-divider class="my-6"></v-divider>
-          <!-- image upload -->
-
-          <!--  -->
-        </div>
-      </div>
-      <v-row>
-        <v-col>
-          <v-btn class="mt-4" type="submit" color="secondary"
-            >{{ t('update_product') }}</v-btn
+              </span>
+              <v-btn
+                icon
+                size="small"
+                color=""
+                class="deleteIcon"
+                @click="removeColorImage(index, imgIndex)"
+              >
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </v-card>
+          </v-col>
+        </v-row>
+        <!-- New Image Upload -->
+        <v-col cols="12" class="pa-0 my-3">
+          <v-file-upload
+            type="file"
+            density="comfortable"
+            variant="comfortable"
+            multiple
+            clearable
+            class="bg-backgound"
+            @change="handleImageUpload(index, $event.target.files)"
           >
-          <v-btn class="mt-4 ml-2" @click="goBack" color="primary"
-            >{{ t('cancel') }}</v-btn
-          >
+            <template #default="{ files }">
+              <v-chip
+                v-for="file in files"
+                :key="file.name"
+                class="ma-1"
+                closable
+                @click:close="removeFile(index, file)"
+              >
+                {{ file.name }}
+              </v-chip>
+            </template>
+          </v-file-upload>
         </v-col>
-        <v-col class="d-flex justify-end">
+
+        <!-- Upload Progress -->
+        <v-alert v-if="uploadError" type="error" class="mt-4">
+          {{ uploadError }}
+        </v-alert>
+
+        <v-col cols="12" v-if="uploadProgress[index] !== undefined">
+          <v-card class="upload-progress-card" elevation="2">
+            <v-card-text class="pa-3">
+              <div class="d-flex justify-space-between align-center mb-1">
+                <span class="text-caption font-weight-bold my-2">
+                  {{ t('uploading_images_for_color_n', { n: index + 1 }) }}
+                </span>
+                <span class="text-caption text-primary">
+                  {{ uploadProgress[index] }}%
+                </span>
+              </div>
+              <v-progress-linear
+                :model-value="uploadProgress[index]"
+                height="8"
+                rounded
+                class="gradient-progress"
+              ></v-progress-linear>
+              <div class="d-flex justify-end mt-1">
+                <v-chip
+                  small
+                  color="primary"
+                  variant="outlined"
+                  class="text-caption"
+                >
+                  {{ getUploadStatus(index) }}
+                </v-chip>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </div>
+
+      <v-row>
+        <v-col cols="6">
           <v-btn
-            @click="addColor"
+            class="mt-2 mr-2"
+            type="submit"
             color="secondary"
-            variant="elevated"
-            class="mb-6"
+            :loading="isLoading"
+            :disabled="isLoading || isUploading"
           >
-           {{ t('add_color') }}
+            <template v-slot:loader>
+              <v-progress-circular
+                indeterminate
+                size="20"
+                width="2"
+              ></v-progress-circular>
+              <span class="ml-2">{{ t('processing') }}</span>
+            </template>
+            {{ t('update_product') }}
+          </v-btn>
+          <v-btn class="mt-2" @click="goBack" color="primary">{{
+            t('cancel')
+          }}</v-btn>
+        </v-col>
+        <v-col cols="6" class="d-flex justify-end items-end">
+          <v-btn @click="addColor" class="mt-2" color="secondary">
+            <v-icon start>mdi-plus</v-icon> {{ t('add_color') }}
           </v-btn>
         </v-col>
       </v-row>
+      <ConfirmDialog
+        ref="confirmDialog"
+        type="warning"
+        :title="t('confirmDeleteImage')"
+        :confirm-text="t('delete')"
+        :cancel-text="t('cancel')"
+        confirm-color="error"
+        @confirm="processImageDeletion"
+      />
     </v-form>
   </v-container>
 </template>
 
 <script setup>
- const { t, locale } = useI18n()
+  const { t, locale } = useI18n()
   import { useI18n } from 'vue-i18n'
   import { ref, onMounted, watch } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { useProductStore } from '../store/product'
   import axios from 'axios'
   import { api } from '../store/product'
-  const productImages = ref([])
-  const productImagePreviews = ref([])
-
+  import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+  const confirmDialog = ref(null)
+  const pendingDeletion = ref({ colorIndex: null, imageIndex: null })
   const router = useRouter()
   const route = useRoute()
   const productStore = useProductStore()
@@ -293,19 +356,21 @@
     { name: 'Oak', hex: '#8B4513' }
   ])
 
+  // Add these refs for upload tracking
+  const isLoading = ref(false)
+  const uploadError = ref(null)
+  const uploadProgress = ref({})
+  const isUploading = ref(false)
+
   const productId = ref(route.params.id)
-  console.log('Product ID اللي بيتحاول يتجاب:', productId.value)
   const editedProduct = ref({
     Product: '',
     Description: '',
     ProductCategory: [],
-    ProductTags: '',
-    ProductStatus: 'Draft',
     BasePrice: null,
     DiscountType: null,
     DiscountValue: null,
-    SKU: '',
-    Quantity: 0,
+    Quantity: null,
     dimensions: {
       width: null,
       height: null,
@@ -319,9 +384,7 @@
         sku: '',
         images: [],
         uploadedImages: [],
-        newlyUploadedImages: [], // هنا هنخزن معلومات الصور الجديدة اللي اترفت
-        localPreviewUrls: [],
-        changingImageIndex: -1
+        newlyUploadedImages: []
       }
     ]
   })
@@ -330,137 +393,76 @@
     required: (value) => !!value || 'Required.'
   })
 
+  const getUploadStatus = (index) => {
+    const progress = uploadProgress[index]
+    if (progress === 100) return t('processing')
+    if (progress > 75) return t('almost_done')
+    if (progress > 50) return t('uploading')
+    if (progress > 25) return t('starting')
+    return t('preparing')
+  }
+
   const fetchCategories = async () => {
     try {
       const response = await api.get('/categories')
-      if (
-        response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data.categories)
-      ) {
+      if (response.data?.data?.categories) {
         categoriesList.value = response.data.data.categories
-        console.log('Categories fetched:', categoriesList.value)
-      } else {
-        console.error(
-          'Error: Categories data is not in the expected format:',
-          response.data
-        )
-        categoriesList.value = []
       }
     } catch (error) {
       console.error('Error fetching categories:', error)
-      categoriesList.value = []
     }
   }
+
   const loadProductDetails = async () => {
-    console.log('loadProductDetails تم استدعاؤها')
     try {
-      console.log(
-        'القيمة الأولية لـ editedProduct.Quantity:',
-        editedProduct.value.Quantity
-      ) // أو quantity
       const response = await api.get(`/products/${productId.value}`)
-      console.log(
-        'Full Product Details Response:',
-        JSON.stringify(response.data, null, 2)
-      )
-      if (response.data && response.data.data && response.data.data.product) {
+      if (response.data?.data?.product) {
         const productData = response.data.data.product
-        console.log(
-          'قيمة productData.totalQuantity من الـ API:',
-          productData.totalQuantity
-        )
 
         editedProduct.value = {
           Product: productData.name || '',
           Description: productData.subtitle || '',
           ProductCategory: productData.categories || [],
-          ProductTags: productData.tags ? productData.tags.join(', ') : '',
-          ProductStatus: productData.status || 'Draft',
-          BasePrice: productData.price !== undefined ? productData.price : null,
-          DiscountType: editedProduct.value.DiscountType || null,
-          DiscountValue:
-            productData.sale !== undefined ? productData.sale : null,
-          SKU:
-            productData.colors && productData.colors[0]
-              ? productData.colors[0].sku
-              : '',
-          Quantity:
-            productData.totalQuantity !== undefined
-              ? productData.totalQuantity
-              : null,
-
+          BasePrice: productData.price || null,
+          DiscountValue: productData.sale || null,
+          Quantity: productData.totalQuantity || null,
           dimensions: {
             width: productData.additionalInformation?.dimensions?.width || null,
             height:
               productData.additionalInformation?.dimensions?.height || null,
             depth: productData.additionalInformation?.dimensions?.depth || null
           },
-          colors: productData.colors
-            ? productData.colors.map((color) => {
-                return {
-                  name: color.name || '',
-                  hex: color.hex || '',
-                  quantity:
-                    color.quantity !== undefined ? color.quantity : null,
-                  sku: color.sku || '',
-                  images: color.images
-                    ? color.images.map((img) => ({
-                        imageUrl: img.imageUrl,
-                        publicId: img.publicId,
-                        _id: img._id
-                      }))
-                    : [],
-                  uploadedImages: color.images
-                    ? color.images.map((img) => ({
-                        imageUrl: img.imageUrl,
-                        publicId: img.publicId,
-                        _id: img._id
-                      }))
-                    : [],
-                  localPreviewUrls: color.images
-                    ? color.images.map((img) => img.imageUrl)
-                    : [],
-                  changingImageIndex: -1,
-                  newlyUploadedImages: [] // **التأكيد على الإضافة هنا**
-                }
-              })
-            : [
-                {
-                  name: '',
-                  hex: '',
-                  quantity: null,
-                  sku: '',
-                  images: [],
-                  uploadedImages: [],
-                  localPreviewUrls: [],
-                  changingImageIndex: -1,
-                  newlyUploadedImages: []
-                }
-              ] // وبرضه هنا للـ initial state
+          colors: productData.colors?.map((color) => ({
+            name: color.name || '',
+            hex: color.hex || '',
+            quantity: color.quantity || null,
+            sku: color.sku || '',
+            images: color.images || [],
+            uploadedImages:
+              color.images?.map((img) => ({
+                imageUrl: img.imageUrl,
+                publicId: img.publicId,
+                _id: img._id
+              })) || [],
+            newlyUploadedImages: []
+          })) || [
+            {
+              name: '',
+              hex: '',
+              quantity: null,
+              sku: '',
+              images: [],
+              uploadedImages: [],
+              newlyUploadedImages: []
+            }
+          ]
         }
-        console.log(
-          'editedProduct.value.colors after load:',
-          editedProduct.value.colors
-        )
-        console.log(
-          'قيمة editedProduct.Quantity بعد التعيين:',
-          editedProduct.value.Quantity
-        ) // <---- الـ console.log هنا بعد تعريف الـ editedProduct.value كله
-      } else {
-        console.error('Product not found with ID:', productId.value)
-        router.push('/products')
       }
     } catch (error) {
-      console.error('Error loading product details:', error)
+      console.error('Error loading product:', error)
       router.push('/products')
     }
   }
-
-  onMounted(async () => {
-    await fetchCategories()
-    await loadProductDetails()
-  })
 
   const updateColorHex = (index) => {
     const selectedColor = colorsList.value.find(
@@ -468,8 +470,6 @@
     )
     if (selectedColor) {
       editedProduct.value.colors[index].hex = selectedColor.hex
-    } else if (!editedProduct.value.colors[index].name) {
-      editedProduct.value.colors[index].hex = ''
     }
   }
 
@@ -481,188 +481,236 @@
       sku: '',
       images: [],
       uploadedImages: [],
-      localPreviewUrls: [],
-      changingImageIndex: -1
+      newlyUploadedImages: []
     })
   }
 
   const removeColor = (index) => {
-    editedProduct.value.colors.splice(index, 1)
-  }
-
-  const startImageChange = (colorIndex, imageIndex) => {
-    editedProduct.value.colors[colorIndex].changingImageIndex = imageIndex
-  }
-
-  const handleImageChange = async (colorIndex, imageIndex, files) => {
-    if (!files || files.length === 0) {
-      editedProduct.value.colors[colorIndex].changingImageIndex = -1
-      return
-    }
-
-    const file = files[0]
-    const formData = new FormData()
-    formData.append('image', file)
-
-    try {
-      const response = await axios.post(
-        `http://localhost:5000/api/${editedProduct.value.Product.replace(/\s+/g, '-').toLowerCase()}`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      )
-
-      if (response.data.data?.length > 0) {
-        const newImage = response.data.data[0]
-        const oldImage =
-          editedProduct.value.colors[colorIndex].uploadedImages[imageIndex]
-
-        // Update the image data with proper structure
-        editedProduct.value.colors[colorIndex].uploadedImages[imageIndex] = {
-          ...newImage,
-          _id: oldImage._id, // Keep original ID
-          _oldPublicId: oldImage.publicId // Mark old publicId for deletion
-        }
-
-        // Also update the images array that will be sent to backend
-        editedProduct.value.colors[colorIndex].images[imageIndex] = {
-          _id: oldImage._id,
-          public_id: newImage.publicId,
-          url: newImage.imageUrl,
-          _oldPublicId: oldImage.publicId
-        }
-      }
-    } catch (error) {
-      console.error('Image upload failed:', error)
-    } finally {
-      editedProduct.value.colors[colorIndex].changingImageIndex = -1
-    }
-  }
-  // handle image upload
-  const handleImageUpload = async (colorIndex, files) => {
-    if (files && files.length > 0) {
-      const formData = new FormData()
-      for (let i = 0; i < files.length; i++) {
-        formData.append('image', files[i])
-      }
-
-      const productNameForFolder = editedProduct.value.Product.replace(
-        /\s+/g,
-        '-'
-      ).toLowerCase()
-      const uploadUrl = `http://localhost:5000/api/${productNameForFolder}`
-
-      try {
-        const response = await axios.post(uploadUrl, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-
-        if (response.data.data && Array.isArray(response.data.data)) {
-          response.data.data.forEach((imageData) => {
-            if (imageData.publicId && imageData.imageUrl) {
-              // هنا بنخزن معلومات الصورة الجديدة
-              editedProduct.value.colors[colorIndex].newlyUploadedImages.push({
-                public_id: imageData.publicId,
-                url: imageData.imageUrl
-              })
-              // ممكن نضيفها للـ uploadedImages للعرض الفوري لو محتاجين
-              editedProduct.value.colors[colorIndex].uploadedImages.push(
-                imageData
-              )
-              console.log('تم رفع صورة جديدة:', imageData)
-            } else {
-              console.error(
-                'Error uploading image - no publicId in image data:',
-                imageData
-              )
-            }
-          })
-          console.log(
-            'newlyUploadedImages دلوقتي:',
-            editedProduct.value.colors[colorIndex].newlyUploadedImages
-          )
-        } else {
-          console.error(
-            'Error uploading image - unexpected response data:',
-            response.data
-          )
-        }
-      } catch (error) {
-        console.error('Error uploading image to gallery:', error)
-      }
+    if (editedProduct.value.colors.length > 1) {
+      editedProduct.value.colors.splice(index, 1)
     }
   }
 
   const removeColorImage = (colorIndex, imageIndex) => {
-    editedProduct.value.colors[colorIndex].uploadedImages.splice(imageIndex, 1)
-    editedProduct.value.colors[colorIndex].images.splice(imageIndex, 1)
+    // Store the indices of the image to be deleted
+    pendingDeletion.value = { colorIndex, imageIndex }
+
+    // Show confirmation dialog
+    confirmDialog.value.open({
+      message: t('delete_image_warning')
+    })
   }
-  const updateProduct = async () => {
-    const { valid } = await form.value.validate()
-    if (valid) {
-      try {
-        const formData = new FormData()
 
-        // Add basic product info
-        formData.append('name', editedProduct.value.Product)
-        formData.append('subtitle', editedProduct.value.Description || '')
-        formData.append('price', editedProduct.value.BasePrice)
+  const processImageDeletion = async () => {
+    const { colorIndex, imageIndex } = pendingDeletion.value
+    const color = editedProduct.value.colors[colorIndex]
+    const image = color.uploadedImages[imageIndex]
 
-        // Add categories
-        editedProduct.value.ProductCategory.forEach((cat) => {
-          formData.append('categories', cat._id || cat)
-        })
+    try {
+      // If it's a newly uploaded image (not saved to DB yet)
+      if (!image._id && image.publicId) {
+        // Remove from display immediately
+        color.uploadedImages.splice(imageIndex, 1)
 
-        // Prepare colors data
-        const colorsData = editedProduct.value.colors.map((color) => {
-          const colorObj = {
-            name: color.name,
-            hex: color.hex,
-            quantity: color.quantity,
-            sku: color.sku,
-            images: color.uploadedImages.map((img) => ({
-              _id: img._id, // Keep existing ID
-              public_id: img.publicId, // Current publicId
-              url: img.imageUrl, // Current URL
-              ...(img._oldPublicId ? { _oldPublicId: img._oldPublicId } : {}) // Only include if exists
-            }))
-          }
-
-          // Add newly uploaded images
-          if (
-            color.newlyUploadedImages &&
-            color.newlyUploadedImages.length > 0
-          ) {
-            color.newlyUploadedImages.forEach((newImg) => {
-              colorObj.images.push({
-                public_id: newImg.public_id,
-                url: newImg.url
-              })
-            })
-          }
-
-          return colorObj
-        })
-
-        // Stringify colors data and append to formData
-        formData.append('colors', JSON.stringify(colorsData))
-
-        // Add dimensions
-        formData.append(
-          'dimensions',
-          JSON.stringify(editedProduct.value.dimensions)
+        // Remove from newlyUploadedImages if present
+        color.newlyUploadedImages = color.newlyUploadedImages.filter(
+          (img) => img.public_id !== image.publicId
         )
 
-        console.log('Sending update with:', Array.from(formData.entries()))
-
-        await productStore.updateProduct(route.params.id, formData)
-        router.push('/products')
-      } catch (error) {
-        console.error('Error updating product:', error)
+        // Delete from Cloudinary
+        await axios.delete(`http://localhost:5000/api/images/${image.publicId}`)
+        return
       }
+
+      // For existing images (saved in DB)
+      if (image._id) {
+        // Mark for deletion (will be handled in update)
+        color.uploadedImages[imageIndex]._delete = true
+
+        // Show visual feedback that image is marked for deletion
+        color.uploadedImages[imageIndex]._markedForDeletion = true
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error)
+
+      // Show error notification (you might have your own notification system)
+      showErrorNotification(t('delete_image_failed'))
+    } finally {
+      // Reset pending deletion
+      pendingDeletion.value = { colorIndex: null, imageIndex: null }
     }
   }
+
+  const removeFile = (colorIndex, file) => {
+    const color = editedProduct.value.colors[colorIndex]
+    color.newlyUploadedImages = color.newlyUploadedImages.filter(
+      (img) => img.fileName !== file.name
+    )
+  }
+
+  const handleImageUpload = async (colorIndex, files) => {
+    if (!files || files.length === 0) return
+
+    uploadError.value = null
+    uploadProgress.value[colorIndex] = 0
+    isUploading.value = true
+
+    const formData = new FormData()
+    for (let i = 0; i < files.length; i++) {
+      formData.append('image', files[i])
+    }
+
+    const productNameForFolder = editedProduct.value.Product.replace(
+      /\s+/g,
+      '-'
+    ).toLowerCase()
+
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/${productNameForFolder}`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              uploadProgress.value[colorIndex] = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              )
+            }
+          }
+        }
+      )
+
+      if (response.data.data && Array.isArray(response.data.data)) {
+        response.data.data.forEach((imageData) => {
+          if (imageData.publicId && imageData.imageUrl) {
+            // Create the image object in the format you need
+            const newImage = {
+              public_id: imageData.publicId,
+              url: imageData.imageUrl
+            }
+
+            // Add to newlyUploadedImages array
+            editedProduct.value.colors[colorIndex].newlyUploadedImages.push(
+              newImage
+            )
+
+            // Add to uploadedImages array for display
+            editedProduct.value.colors[colorIndex].uploadedImages.push(
+              imageData
+            )
+
+            // Add to images array for form submission
+            editedProduct.value.colors[colorIndex].images.push({
+              public_id: imageData.publicId,
+              url: imageData.imageUrl
+            })
+          }
+        })
+      }
+      console.log('handle upload image', editedProduct.value)
+    } catch (error) {
+      console.error('Error uploading images:', error)
+      uploadError.value = t('upload_failed', { error: error.message })
+    } finally {
+      uploadProgress.value[colorIndex] = 100
+      setTimeout(() => {
+        delete uploadProgress.value[colorIndex]
+        isUploading.value = Object.keys(uploadProgress.value).length > 0
+      }, 1000)
+    }
+  }
+
+  const updateProduct = async () => {
+    const { valid } = await form.value.validate()
+    if (!valid) return
+
+    // Check for ongoing uploads
+    if (Object.keys(uploadProgress.value).length > 0) {
+      uploadError.value = t('please_wait_uploads')
+      return
+    }
+
+    isLoading.value = true
+    uploadError.value = null
+
+    try {
+      // Prepare FormData for submission
+      const formData = new FormData()
+
+      // Add basic product info
+      formData.append('name', editedProduct.value.Product)
+      formData.append('subtitle', editedProduct.value.Description || '')
+      formData.append('price', editedProduct.value.BasePrice)
+      formData.append('discountType', editedProduct.value.DiscountType || '')
+      formData.append('discountValue', editedProduct.value.DiscountValue || '')
+      formData.append('quantity', editedProduct.value.Quantity)
+
+      // Add categories
+      editedProduct.value.ProductCategory.forEach((cat) => {
+        formData.append('categories', cat._id || cat)
+      })
+
+      // Add dimensions
+      formData.append(
+        'dimensions',
+        JSON.stringify(editedProduct.value.dimensions)
+      )
+
+      // Prepare colors data
+      const colorsData = editedProduct.value.colors.map((color) => {
+        const colorObj = {
+          name: color.name,
+          hex: color.hex,
+          quantity: color.quantity,
+          sku: color.sku,
+          images: []
+        }
+
+        // Add existing images (filter out deleted ones)
+        color.uploadedImages
+          .filter((img) => !img._delete)
+          .forEach((img) => {
+            colorObj.images.push({
+              _id: img._id,
+              public_id: img.publicId,
+              url: img.imageUrl
+            })
+          })
+
+        // Add newly uploaded images
+        color.newlyUploadedImages.forEach((img) => {
+          colorObj.images.push({
+            public_id: img.public_id,
+            url: img.url
+          })
+        })
+
+        return colorObj
+      })
+
+      // Add colors to formData
+      formData.append('colors', JSON.stringify(colorsData))
+
+      console.log('Submitting product data:', Object.fromEntries(formData))
+
+      // Send the update request
+      await productStore.updateProduct(productId.value, formData)
+      router.push('/products')
+    } catch (error) {
+      console.error('Error updating product:', error)
+      uploadError.value =
+        t('update_failed') +
+        ': ' +
+        (error.response?.data?.message || error.message)
+    } finally {
+      isLoading.value = false
+    }
+  }
+  onMounted(async () => {
+    await fetchCategories()
+    await loadProductDetails()
+  })
 
   watch(
     () => editedProduct.value.colors,
@@ -687,6 +735,62 @@
 </script>
 
 <style scoped>
+  /* Use the same styles as your add page */
+  .upload-progress-card {
+    border-left: 4px solid rgb(var(--v-theme-primary));
+    transition: all 0.3s ease;
+    background: rgba(var(--v-theme-primary), 0.05);
+  }
+
+  .upload-progress-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  .gradient-progress :deep(.v-progress-linear__determinate) {
+    background: rgb(var(--v-theme-primary));
+    background: linear-gradient(
+      90deg,
+      rgba(var(--v-theme-secondary), 0.8) 0%,
+      rgba(var(--v-theme-primary), 1) 50%,
+      rgba(var(--v-theme-primary), 0.8) 100%
+    );
+    background-size: 200% 100%;
+    animation: gradientAnimation 2s ease infinite;
+    border-radius: 4px;
+    height: 8px;
+  }
+
+  @keyframes gradientAnimation {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .text-primary {
+    color: rgb(var(--v-theme-primary)) !important;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  /* Keep your existing form styles */
   .form-section {
     background-color: #f9f9f9;
     padding: 16px;
@@ -698,8 +802,6 @@
   h3 {
     font-size: 18px;
     font-weight: 600;
-    color: #333;
-    border-bottom: 1px solid #e0e0e0;
     padding-bottom: 6px;
     margin-bottom: 16px;
   }
@@ -719,20 +821,6 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   }
 
-  .v-btn + .v-btn {
-    margin-left: 12px;
-  }
-
-  .image-preview {
-    position: relative;
-  }
-
-  .image-preview .v-btn {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-  }
-
   @media (max-width: 600px) {
     h3 {
       font-size: 16px;
@@ -742,9 +830,16 @@
       width: 100%;
       margin-bottom: 8px;
     }
-
-    .v-btn + .v-btn {
-      margin-left: 0;
-    }
+  }
+  .marked-for-deletion {
+    border: 2px dashed #ff5252;
+    background-color: rgba(255, 82, 82, 0.1);
+  }
+  .deleteIcon {
+    position: absolute;
+    top: 0;
+    right: 0 !important;
+    color: red;
+    box-shadow: none;
   }
 </style>
