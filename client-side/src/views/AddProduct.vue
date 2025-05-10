@@ -87,27 +87,13 @@
       </v-row>
       <h3 class="text-h6 mb-2">Inventory</h3>
       <v-row>
-        <v-col cols="4">
-          <v-text-field
-            v-model="newProduct.SKU"
-            :rules="[rules.required]"
-            label="SKU"
-          ></v-text-field>
-        </v-col>
-        <v-col cols="4">
+        <v-col cols="12">
           <v-text-field
             v-model="newProduct.Quantity"
             :rules="[rules.required]"
             label="Quantity"
             type="number"
           ></v-text-field>
-        </v-col>
-        <v-col cols="4">
-          <v-select
-            v-model="newProduct.ProductStatus"
-            :items="['Draft', 'Published']"
-            label="Product Status"
-          ></v-select>
         </v-col>
       </v-row>
 
@@ -212,11 +198,9 @@
     Description: '',
     ProductCategory: [],
     ProductTags: '',
-    ProductStatus: 'Draft',
     BasePrice: null,
     DiscountType: null,
     DiscountValue: null,
-    SKU: '',
     Quantity: null,
     dimensions: {
       width: null,
