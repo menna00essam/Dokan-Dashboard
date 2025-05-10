@@ -148,6 +148,16 @@
                 class="mb-6"
               ></v-text-field>
             </v-col>
+            <v-col class="d-flex justify-end">
+              <v-btn
+                v-if="editedProduct.colors.length > 1"
+                @click="removeColor(index)"
+                color="primary"
+                class="my-2 text-error"
+              >
+                Remove Color
+              </v-btn>
+            </v-col>
           </v-row>
 
           <h5 class="text-h6 mb-2">Images for Color {{ index + 1 }}</h5>
@@ -187,15 +197,6 @@
                   >
                     <v-icon>mdi-pencil</v-icon>
                   </v-btn>
-
-                  <v-btn
-                    icon
-                    size="small"
-                    color="error"
-                    @click="removeColorImage(index, imgIndex)"
-                  >
-                    <v-icon>mdi-delete</v-icon>
-                  </v-btn>
                 </div>
 
                 <input
@@ -211,7 +212,7 @@
             </v-col>
           </v-row>
 
-          <v-file-input
+          <!-- <v-file-input
             v-if="color.changingImageIndex === -1"
             label="Upload New Images"
             accept="image/*"
@@ -220,30 +221,31 @@
             prepend-icon="mdi-upload"
             @change="(files) => handleImageUpload(index, files)"
             class="mb-4"
-          ></v-file-input>
-
-          <v-btn
-            v-if="editedProduct.colors.length > 1"
-            @click="removeColor(index)"
-            color="error"
-            variant="text"
-            class="mb-2"
-          >
-            Remove Color
-          </v-btn>
+          ></v-file-input> -->
 
           <v-divider class="my-6"></v-divider>
         </div>
       </div>
-
-      <v-btn @click="addColor" color="primary" variant="elevated" class="mb-6">
-        Add Color
-      </v-btn>
-
-      <div class="d-flex">
-        <v-btn class="mt-4" type="submit" color="primary">Update Product</v-btn>
-        <v-btn class="mt-4 ml-2" @click="goBack">Cancel</v-btn>
-      </div>
+      <v-row>
+        <v-col>
+          <v-btn class="mt-4" type="submit" color="secondary"
+            >Update Product</v-btn
+          >
+          <v-btn class="mt-4 ml-2" @click="goBack" color="primary"
+            >Cancel</v-btn
+          >
+        </v-col>
+        <v-col class="d-flex justify-end">
+          <v-btn
+            @click="addColor"
+            color="secondary"
+            variant="elevated"
+            class="mb-6"
+          >
+            Add Color
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-form>
   </v-container>
 </template>
