@@ -29,6 +29,8 @@ export const useCustomerStore = defineStore('customer', () => {
   const selectedCustomers = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const selected = ref([])
+
 
   const searchQuery = ref('')
   const statusFilter = ref('all')
@@ -101,7 +103,7 @@ export const useCustomerStore = defineStore('customer', () => {
     totalSpent: customers.value.reduce((sum, c) => sum + c.totalSpent, 0)
   }))
 
-  const getCustomerOrders = computed(() => currentCustomerOrders.value)
+const getCustomerOrders = computed(() => currentCustomerOrders.value)
   const getCustomerActivityLog = computed(() => currentCustomerActivity.value)
 
   // ------------------ Actions ------------------
@@ -214,12 +216,33 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
+
+// في الـ Pinia store
+async function bulkUpdateTier(ids, tier) {
+  try {
+    loading.value = true;
+    const response = await apiClient.patch('/bulk-update-tier', { ids, tier });
+    
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    
+    selected.value = [];
+    toast.success(t('bulkTierUpdated', { tier: t(tier) }));
+    return response.data.modifiedCount;
+  } catch (err) {
+    toast.error(t('bulkUpdateError'));
+    throw err;
+  } finally {
+    loading.value = false;
+  }
+}
+
+
   async function updateCustomer(id, customerData) {
     try {
       loading.value = true
       const response = await apiClient.patch(`/${id}`, customerData)
       const updated = response.data.data.user
-      const index = customers.value.findIndex((c) => c.id === id)
+const index = customers.value.findIndex((c) => c._id === id);
       if (index !== -1) customers.value[index] = updated
       currentCustomer.value = updated
       return updated
@@ -245,6 +268,8 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
+ 
+
   async function bulkDeleteCustomers(ids) {
     try {
       loading.value = true
@@ -260,37 +285,76 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
-  async function bulkUpdateStatus(ids, state) {
-    try {
-      loading.value = true
-      await apiClient.patch('/bulk-update-status', { ids, state })
-      customers.value = customers.value.map((c) =>
-        ids.includes(c.id) ? { ...c, state } : c
-      )
-      toast.success(`${ids.length} customers updated`)
-    } catch (err) {
-      error.value = err.message
-      toast.error('Failed to update status')
-    } finally {
-      loading.value = false
-    }
-  }
+// Pinia store
+const bulkUpdateUserStatus = async (state) => {
+  console.log('bulkUpdateUserStatus called'); // إضافة هذا السطر للتحقق من الاستدعاء
+  try {
+    loading.value = true;
 
-  async function addTagsToCustomers(ids, tags) {
-    try {
-      loading.value = true
-      await apiClient.post('/bulk-assign-tags', { ids, tags })
-      customers.value = customers.value.map((c) =>
-        ids.includes(c.id) ? { ...c, tags: [...(c.tags || []), ...tags] } : c
-      )
-      toast.success('Tags added successfully')
-    } catch (err) {
-      error.value = err.message
-      toast.error('Failed to add tags')
-    } finally {
-      loading.value = false
+    if (!selected.value || selected.value.length === 0) {
+      toast.error("No users selected");
+      return;
     }
+
+    const response = await apiClient.patch('/bulk-update-status', { ids: selected.value, state });
+    console.log('Response:', response);
+
+    customers.value = customers.value.map((c) =>
+      selected.value.includes(c._id) ? { ...c, state } : c
+    );
+
+    const updatedCount = response.data.modifiedCount;
+    if (updatedCount > 0) {
+      toast.success(`Updated ${updatedCount} users`);
+    } else {
+      toast.info('No users were updated');
+    }
+
+    return updatedCount;
+  } catch (err) {
+    console.error('Error while updating:', err);
+    toast.error('Status update failed');
+    throw err;
+  } finally {
+    loading.value = false;
+    selected.value = [];
   }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ async function addTagsToCustomers(ids, tags) {
+  try {
+    loading.value = true
+    await apiClient.post('/bulk-assign-tags', { ids, tags })
+
+    customers.value = customers.value.map((c) =>
+      ids.includes(c._id) ? { ...c, tags: [...(c.tags || []), ...tags] } : c
+    )
+
+    toast.success('Tags added successfully')
+  } catch (err) {
+    error.value = err.message
+    toast.error('Failed to add tags')
+  } finally {
+    loading.value = false
+  }
+}
+
 
 
 async function toggleBlockStatus(customerId) {
@@ -318,24 +382,71 @@ async function toggleBlockStatus(customerId) {
 }
   
 
-  async function fetchCustomerOrders(id) {
-    try {
-      loading.value = true
-      const response = await apiClient.get(`/${id}/orders`)
-      currentCustomerOrders.value =
-        response.data?.orders?.map((order) => ({
-          id: order._id,
-          orderDate: order.createdAt,
-          total: order.totalAmount,
-          status: order.status
-        })) || []
-    } catch (error) {
-      toast.error('Failed to fetch orders')
-      throw error
-    } finally {
-      loading.value = false
+async function fetchCustomerOrders(id) {
+  try {
+    loading.value = true
+    const response = await apiClient.get(`http://localhost:5000/orders/user/${id}`)
+    
+    console.log('Response from API:', response.data);
+
+    currentCustomerOrders.value = response.data?.orders?.map(order => ({
+      id: order._id,
+      orderDate: order.createdAt,
+      total: order.totalAmount,
+      status: order.status,
+      orderItems: order.orderItems,
+      shippingAddress: order.shippingAddress, 
+      shippingMethod: order.shippingMethod, 
+      transactionId: order.transactionId,
+      previousStatus: order.previousStatus, 
+      isDeleted: order.isDeleted, 
+      orderNumber: order.orderNumber, 
+    })) || []
+
+    // طباعة currentCustomerOrders في الـ console
+    console.log('Current Customer Orders:', currentCustomerOrders.value);
+
+    // تحديث بيانات العميل
+    const customer = customers.value.find(c => c._id === id)
+    if (customer) {
+      customer.ordersCount = currentCustomerOrders.value.length
+      customer.totalSpent = currentCustomerOrders.value.reduce((sum, o) => sum + o.total, 0)
+      customer.lastOrderDate = currentCustomerOrders.value.length > 0 
+        ? new Date(Math.max(...currentCustomerOrders.value.map(o => new Date(o.orderDate).getTime())))
+        : null
+
+      // طباعة تفاصيل العميل بعد التحديث
+      console.log('Updated Customer Info:', customer);
     }
+  } catch (error) {
+    toast.error('Failed to fetch orders')
+    console.error('Error fetching orders:', error); // عرض الخطأ في الـ console
+    throw error
+  } finally {
+    loading.value = false
   }
+}
+
+
+
+const avgOrder = computed(() => {
+  if (customerStats.value.ordersCount === 0) return 0
+  return (customerStats.value.totalSpent / customerStats.value.ordersCount).toFixed(2)
+})
+
+
+const formatDate = (date) => {
+  if (!date) return '--'
+  try {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  } catch {
+    return '--'
+  }
+}
 
   function changePage(newPage) {
     if (newPage >= 1 && newPage <= totalPages.value) {
@@ -353,6 +464,16 @@ watch(
   },
   { deep: true }
 )
+
+
+
+// watch(currentCustomerOrders, (newOrders) => {
+//   if (newOrders.length > 0 && customer.value) {
+//     customer.value.ordersCount = newOrders.length
+//     customer.value.totalSpent = newOrders.reduce((sum, o) => sum + o.total, 0)
+//     customer.value.lastOrderDate = newOrders[newOrders.length - 1].orderDate
+//   }
+// })
   // ------------------ Return ------------------
   return {
     // State
@@ -374,6 +495,7 @@ watch(
     totalPages,
     selectedCustomers,
     total,
+    avgOrder,
     // Getters
     filteredCustomers,
     paginatedCustomers,
@@ -381,6 +503,7 @@ watch(
     getCustomerOrders,
     getCustomerActivityLog,
     toggleBlockStatus,
+    formatDate,
 
     // Actions
     fetchCustomers,
@@ -389,10 +512,11 @@ watch(
     updateCustomer,
     deleteCustomer,
     bulkDeleteCustomers,
-    bulkUpdateStatus,
     addTagsToCustomers,
     fetchCustomerOrders,
     changePage,
-    resetFilters
+    resetFilters,
+    bulkUpdateTier,
+    bulkUpdateUserStatus
   }
 })

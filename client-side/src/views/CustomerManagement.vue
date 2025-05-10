@@ -80,34 +80,58 @@
         {{ t('selected', { count: selected.length }) }}
       </v-btn>
 
-      <v-menu :disabled="!selected.length">
-        <template v-slot:activator="{ props }">
-          <v-btn
-            color="secondary"
-            variant="tonal"
-            v-bind="props"
-            prepend-icon="mdi-tune"
-            class="mr-2"
-            :disabled="!selected.length"
-          >
-            {{ t('bulkActions') }}
-          </v-btn>
-        </template>
-        <v-list density="compact">
-          <v-list-item
-            @click="bulkUpdateStatus('active')"
-            prepend-icon="mdi-account-check"
-          >
-            <v-list-item-title>{{ t('markAsActive') }}</v-list-item-title>
-          </v-list-item>
-          <v-list-item
-            @click="bulkUpdateStatus('blocked')"
-            prepend-icon="mdi-account-cancel"
-          >
-            <v-list-item-title>{{ t('markAsBlocked') }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+     <v-menu :disabled="!selected.length">
+    <template v-slot:activator="{ props }">
+      <v-btn
+        color="secondary"
+        variant="tonal"
+        v-bind="props"
+        prepend-icon="mdi-tune"
+        class="mr-2"
+        :disabled="!selected.length"
+      >
+        {{ t('bulkActions') }}
+      </v-btn>
+    </template>
+    
+    <v-list density="compact">
+      <v-list-item
+        @click="bulkUpdateUserStatus('active')"
+        prepend-icon="mdi-account-check"
+      >
+        <v-list-item-title>{{ t('markAsActive') }}</v-list-item-title>
+      </v-list-item>
+      
+      <v-list-item
+        @click="bulkUpdateUserStatus('blocked')"
+        prepend-icon="mdi-account-cancel"
+      >
+        <v-list-item-title>{{ t('markAsBlocked') }}</v-list-item-title>
+      </v-list-item>
+
+      <v-list-item>
+        <v-menu location="start">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              :title="t('changeTier')"
+              prepend-icon="mdi-account-star"
+            />
+          </template>
+          
+          <v-list>
+            <v-list-item
+              v-for="tier in tierOptions.filter(t => t.value !== 'all')"
+              :key="tier.value"
+              @click="handleBulkTierUpdate(tier.value)"
+            >
+              <v-list-item-title>{{ tier.title }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </v-list-item>
+    </v-list>
+  </v-menu>
 
       <v-btn
         color="error"
@@ -128,7 +152,7 @@
       :items-per-page="customerStore.itemsPerPage"
       v-model="selected"
       show-select
-      item-value="id"
+      item-value="_id"
       class="elevation-1"
       :loading="customerStore.loading"
       hide-default-footer
@@ -275,6 +299,17 @@
     }
   }
 
+  const bulkUpdateTier = async (tier) => {
+  try {
+    await customerStore.bulkUpdateTier(selected.value, tier)
+    await customerStore.fetchCustomers(customerStore.currentPage)
+    selected.value = []
+    toast.success(t('bulkTierUpdated', { tier: t(tier) }))
+  } catch (error) {
+    toast.error(t('bulkUpdateError'))
+  }
+}
+
   const handleItemsPerPageChange = async (newSize) => {
     console.log('Changing items per page to:', newSize)
     customerStore.itemsPerPage = newSize
@@ -307,6 +342,26 @@
     { title: t('state'), key: 'state' },
     { title: t('actions'), key: 'actions', sortable: false }
   ])
+
+
+
+  const tiers = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'silver', label: 'Silver' },
+  { value: 'gold', label: 'Gold' },
+  { value: 'platinum', label: 'Platinum' }
+];
+
+const handleBulkTierUpdate = async (tier) => {
+  if (!selected.value.length) return;
+  
+  try {
+    const count = await customerStore.bulkUpdateTier(selected.value, tier);
+    selected.value = [];
+  } catch (error) {
+    console.error('Update failed:', error);
+  }
+};
 
   const deleteMessage = computed(() =>
     t('deleteCustomerConfirm', { count: selected.value.length })
@@ -358,6 +413,31 @@
       isDeleting.value = false
     }
   }
+
+
+  const toggleCustomerStatus = async (customer) => {
+  try {
+    const newState = customer.state === 'active' ? 'blocked' : 'active';
+    await customerStore.toggleBlockStatus(customer.id);
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    toast.success(t('statusChanged', { state: t(newState) }));
+  } catch (error) {
+    toast.error(t('statusChangeError'));
+  }
+};
+
+const updateCustomerTier = async (customer, newTier) => {
+  try {
+    await customerStore.updateCustomer(customer.id, {
+      customerTier: newTier
+    });
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    toast.success(t('tierUpdated', { tier: t(newTier) }));
+  } catch (error) {
+    toast.error(t('tierUpdateError'));
+  }
+};
+
 
   const bulkUpdateStatus = async (state) => {
     try {

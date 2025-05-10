@@ -16,7 +16,7 @@
     <!-- Main Content -->
     <template v-else>
       <!-- Customer Not Found -->
-      <v-alert v-if="!customer" type="error" class="mb-4">
+      <v-alert v-if="!customer.id" type="error" class="mb-4">
         {{ $t('customers.notFound') }}
       </v-alert>
 
@@ -34,7 +34,7 @@
               />
             </v-avatar>
             <div>
-              <h1 class="text-h5 text-white mb-1">
+              <h1 class="text-h5 mb-1">
                 {{ customer.firstName }} {{ customer.lastName }}
               </h1>
               <div class="d-flex align-center">
@@ -49,7 +49,7 @@
                       : $t('customers.active')
                   }}
                 </v-chip>
-                <span class="text-caption text-white">{{
+                <span class="text-caption">{{
                   customer.email
                 }}</span>
               </div>
@@ -169,7 +169,7 @@
                           style="border-left: 4px solid #4caf50"
                         >
                           <div class="text-h5 font-weight-bold">
-                            {{ customer.ordersCount }}
+                            {{ customerStats.ordersCount }}
                           </div>
                           <div class="text-caption">
                             {{ $t('customers.totalOrders') }}
@@ -182,7 +182,7 @@
                           style="border-left: 4px solid #2196f3"
                         >
                           <div class="text-h5 font-weight-bold">
-                            {{ formatCurrency(customer.totalSpent) }}
+                            {{ formatCurrency(customerStats.totalSpent) }}
                           </div>
                           <div class="text-caption">
                             {{ $t('customers.totalSpent') }}
@@ -547,6 +547,9 @@
         @confirm="confirmToggleBlockStatus"
       />
     </template>
+    <template v-slot:no-data>
+  <v-alert type="info">{{ $t('orders.noOrders') }}</v-alert>
+</template>
   </v-container>
 </error-boundary>
 </template>
@@ -588,12 +591,11 @@
     { title: t('customers.orderId'), key: 'id' },
     { title: t('customers.date'), key: 'orderDate' },
     { title: t('customers.total'), key: 'total' },
-    { title: t('customers.state'), key: 'state' },
+    { title: t('customers.status'), key: 'status' },
     { title: t('common.actions'), key: 'actions', sortable: false }
   ]
 
   // Computed
-  // const customer = computed(() => customerStore.currentCustomer)
   const customerOrders = computed(() =>
     customerStore.getCustomerOrders(route.params.id)
   )
@@ -604,51 +606,29 @@
       (c) => c.provinceId === newAddress.value.province
     )
   })
+  
+  const customerStats = computed(() => {
+    const orders = customerOrders.value
+    const ordersCount = orders.length
+    const totalSpent = orders.reduce((sum, order) => sum + order.total, 0)
+    
+    const lastOrder = orders.length > 0 
+      ? new Date(Math.max(...orders.map(o => new Date(o.orderDate).getTime())))
+      : null
 
-// In component script (corrected computed property)
-// في الـ component script
-const customer = computed(() => {
-  if (!customerStore.currentCustomer || Object.keys(customerStore.currentCustomer).length === 0) {
     return {
-      id: '',
-      firstName: '',
-      lastName: '',
-      email: '',
-      isBlocked: false,
-      state: 'active',            
-      isActive: true,
-      addresses: [],
-      activityLog:[],
+      ordersCount,
+      totalSpent,
+      avgOrder: ordersCount > 0 ? totalSpent / ordersCount : 0,
+      lastOrderDate: lastOrder
+    }
+  })
 
-
-
-    };
-  }
-  return {
-    ...customerStore.currentCustomer,
-    isBlocked: customerStore.currentCustomer.state === 'blocked'
-  };
-});
-
-
-  const customerActivity = computed(() =>
-    customerStore.getCustomerActivityLog(route.params.id)
-  )
-
-  const handleBlockToggle = async () => {
-    await customerStore.toggleBlockStatus(currentCustomer.value.id)
-  }
-
-  const handleComponentError = (error) => {
-  toast.error(t('errors.componentError'));
-  console.error('Component error:', error);
-  router.push('/customers');
-};
-
-  // Lifecycle
+  // Fetch customer data
   onMounted(async () => {
     try {
       await customerStore.fetchCustomerById(route.params.id)
+      await loadOrders()
     } catch (error) {
       toast.error(t('customers.loadError'))
       router.push('/customers')
@@ -656,6 +636,41 @@ const customer = computed(() => {
       loading.value = false
     }
   })
+
+  // In component script (corrected computed property)
+  const customer = computed(() => {
+    if (!customerStore.currentCustomer || Object.keys(customerStore.currentCustomer).length === 0) {
+      return {
+        id: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        isBlocked: false,
+        state: 'active',            
+        isActive: true,
+        addresses: [],
+        activityLog: [],
+      }
+    }
+    return {
+      ...customerStore.currentCustomer,
+      isBlocked: customerStore.currentCustomer.state === 'blocked'
+    }
+  })
+
+  const customerActivity = computed(() =>
+    customerStore.getCustomerActivityLog(route.params.id)
+  )
+
+  const handleBlockToggle = async () => {
+    await customerStore.toggleBlockStatus(customer.value.id)
+  }
+
+  const handleComponentError = (error) => {
+    toast.error(t('errors.componentError'))
+    console.error('Component error:', error)
+    router.push('/customers')
+  }
 
   const handleTabChange = async (newTab) => {
     if (newTab === 'orders' && customerOrders.value.length === 0) {
@@ -765,6 +780,8 @@ const customer = computed(() => {
   }
 
   const formatOrderStatus = (status) => {
+    const statusLower = status.toLowerCase()
+
     const statuses = {
       pending: t('orders.statuses.pending'),
       processing: t('orders.statuses.processing'),
@@ -773,7 +790,7 @@ const customer = computed(() => {
       cancelled: t('orders.statuses.cancelled'),
       refunded: t('orders.statuses.refunded')
     }
-    return statuses[status.toLowerCase()] || status
+    return statuses[statusLower] || status
   }
 
   const getActivityColor = (type) => {
@@ -821,23 +838,19 @@ const customer = computed(() => {
     blockStatusDialog.value.open()
   }
 
-  // In component script (corrected confirm toggle)
-const confirmToggleBlockStatus = async () => {
-  try {
-    await customerStore.toggleBlockStatus(customer.value.id);
-    
-    // Force refresh of current customer data
-    await customerStore.fetchCustomerById(route.params.id);
-    
-    toast.success(
-      customer.value.isBlocked 
-        ? t('customers.unblockSuccess') 
-        : t('customers.blockSuccess')
-    );
-  } catch (error) {
-    toast.error(t('customers.statusUpdateError'));
+  const confirmToggleBlockStatus = async () => {
+    try {
+      await customerStore.toggleBlockStatus(customer.value.id)
+      await customerStore.fetchCustomerById(route.params.id)
+      toast.success(
+        customer.value.isBlocked
+          ? t('customers.unblockSuccess')
+          : t('customers.blockSuccess')
+      )
+    } catch (error) {
+      toast.error(t('customers.statusUpdateError'))
+    }
   }
-};
 
   const viewOrderDetails = (order) => {
     router.push(`/orders/${order.id}`)
@@ -854,38 +867,20 @@ const confirmToggleBlockStatus = async () => {
 
   const deleteAddress = async () => {
     try {
-      await customerStore.deleteAddress(
-        customer.value.id,
-        addressToDelete.value.id
-      )
-      toast.success(t('customers.addressDeleted'))
+      await customerStore.deleteCustomerAddress(customer.value.id, addressToDelete.value.id)
+      toast.success(t('customers.addressDeleteSuccess'))
+      await customerStore.fetchCustomerById(route.params.id)
     } catch (error) {
       toast.error(t('customers.addressDeleteError'))
+    } finally {
+      deleteAddressDialog.value.close()
     }
   }
 
-  const setDefaultAddress = async (address) => {
+  const addNewAddress = async () => {
     try {
-      await customerStore.setDefaultAddress(customer.value.id, address.id)
-      toast.success(t('customers.defaultAddressSet'))
-    } catch (error) {
-      toast.error(t('customers.defaultAddressError'))
-    }
-  }
-
-  const saveAddress = async () => {
-    try {
-      const addressData = {
-        ...newAddress.value,
-        province: customerStore.provinces.find(
-          (p) => p.id === newAddress.value.province
-        ),
-        city: filteredCities.value.find((c) => c.id === newAddress.value.city)
-      }
-
-      await customerStore.addAddress(customer.value.id, addressData)
-      toast.success(t('customers.addressAdded'))
-      addAddressDialog.value = false
+      await customerStore.addCustomerAddress(customer.value.id, newAddress.value)
+      toast.success(t('customers.addressAddSuccess'))
       newAddress.value = {
         province: null,
         city: null,
@@ -893,11 +888,15 @@ const confirmToggleBlockStatus = async () => {
         postalCode: '',
         isDefault: false
       }
+      addAddressDialog.value.close()
+      await customerStore.fetchCustomerById(route.params.id)
     } catch (error) {
       toast.error(t('customers.addressAddError'))
     }
   }
+
 </script>
+
 
 <style scoped>
   .border-primary {

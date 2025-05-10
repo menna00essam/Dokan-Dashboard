@@ -337,5 +337,24 @@
   "retry": "إعادة المحاولة",
   "noResultsFound": "لا توجد نتائج",
   "tryDifferentSearch": "جرب مصطلح بحث مختلف",
+  "requestDate": "تاريخ",  
+    "cancelSuccess": "تم إلغاء الطلب بنجاح",
+    "cancelError": "فشل في إلغاء الطلب",
+    "noOrdersFound": "لا توجد طلبات لعرضها",
+    
+ 
+      "message": "هل أنت متأكد من رغبتك في إلغاء الطلب رقم {id}؟",
+    "statusChanged": "تم تغيير الحالة إلى {state}",
+  "tierUpdated": "تم تحديث المستوى إلى {tier}",
+  "statusChangeError": "حدث خطأ أثناء تغيير الحالة",
+  "tierUpdateError": "حدث خطأ أثناء تحديث المستوى"
+  }
+
+
+  "userRoleUpdated": "تم تحديث دور {name} إلى {role}",
+  "noCurrenciesAvailable": "لا توجد عملات متاحة",
+  "retry": "إعادة المحاولة",
+  "noResultsFound": "لا توجد نتائج",
+  "tryDifferentSearch": "جرب مصطلح بحث مختلف",
   "requestDate": "تاريخ"
 }
