@@ -1,9 +1,5 @@
 <template>
-  <error-boundary @catch="handleComponentError">
   <v-container>
-    <template v-if="!customer.id">
-      <v-skeleton-loader type="card, actions"></v-skeleton-loader>
-    </template>
     <!-- Back Button -->
     <v-btn color="primary" class="mb-4" @click="$router.push('/customers')">
       <v-icon left>mdi-arrow-left</v-icon>
@@ -43,11 +39,7 @@
                   small
                   class="mr-2"
                 >
-                  {{
-                    customer.isBlocked
-                      ? $t('customers.blocked')
-                      : $t('customers.active')
-                  }}
+                  {{ customer.isBlocked ? $t('customers.blocked') : $t('customers.active') }}
                 </v-chip>
                 <span class="text-caption">{{
                   customer.email
@@ -69,7 +61,7 @@
           </v-tab>
           <v-tab value="orders">
             <v-icon left>mdi-shopping</v-icon>
-            {{ $t('customers.orders') }} ({{ customer.ordersCount }})
+            {{ $t('customers.orders') }} ({{ customerStats.ordersCount }})
           </v-tab>
           <v-tab value="addresses">
             <v-icon left>mdi-map-marker</v-icon>
@@ -134,8 +126,7 @@
                         <v-icon>mdi-calendar</v-icon>
                       </template>
                       <v-list-item-title>
-                        {{ $t('customers.joinDate') }}:
-                        {{ formatDate(customer.joinDate) }}
+                        {{ $t('customers.joinDate') }}: {{ formatDate(customer.joinDate) }}
                       </v-list-item-title>
                     </v-list-item>
 
@@ -144,10 +135,8 @@
                         <v-icon>mdi-cake</v-icon>
                       </template>
                       <v-list-item-title>
-                        {{ $t('customers.birthDate') }}:
-                        {{ formatDate(customer.birthDate) }} ({{
-                          $t('customers.age')
-                        }}: {{ calculateAge(customer.birthDate) }})
+                        {{ $t('customers.birthDate') }}: {{ formatDate(customer.birthDate) }} ({{ $t('customers.age') }}:
+                        {{ calculateAge(customer.birthDate) }})
                       </v-list-item-title>
                     </v-list-item>
                   </v-list>
@@ -159,7 +148,7 @@
                 <v-card class="mb-4" elevation="2">
                   <v-card-title class="bg-primary-lighten-1">
                     <v-icon left>mdi-chart-bar</v-icon>
-                    {{ $t('customers.customerStats') }}
+                    {{ $t('customerStats.customerStats') }}
                   </v-card-title>
                   <v-card-text>
                     <v-row>
@@ -171,9 +160,7 @@
                           <div class="text-h5 font-weight-bold">
                             {{ customerStats.ordersCount }}
                           </div>
-                          <div class="text-caption">
-                            {{ $t('customers.totalOrders') }}
-                          </div>
+                          <div class="text-caption">{{ $t('customers.totalOrders') }}</div>
                         </div>
                       </v-col>
                       <v-col cols="6" sm="3">
@@ -184,9 +171,7 @@
                           <div class="text-h5 font-weight-bold">
                             {{ formatCurrency(customerStats.totalSpent) }}
                           </div>
-                          <div class="text-caption">
-                            {{ $t('customers.totalSpent') }}
-                          </div>
+                          <div class="text-caption">{{ $t('customers.totalSpent') }}</div>
                         </div>
                       </v-col>
                       <v-col cols="6" sm="3">
@@ -197,14 +182,14 @@
                           <div class="text-h5 font-weight-bold">
                             {{
                               formatCurrency(
-                                customer.ordersCount > 0
-                                  ? customer.totalSpent / customer.ordersCount
+                                customerStats.ordersCount > 0
+                                  ? customerStats.totalSpent / customerStats.ordersCount
                                   : 0
                               )
                             }}
                           </div>
                           <div class="text-caption">
-                            {{ $t('customers.avgOrder') }}
+                            {{ $t('customerStats.avgOrder') }}
                           </div>
                         </div>
                       </v-col>
@@ -215,18 +200,16 @@
                         >
                           <div class="text-h5 font-weight-bold">
                             {{
-                              customer.lastOrderDate
+                              customerStats.lastOrderDate
                                 ? formatDate(customer.lastOrderDate)
                                 : '--'
                             }}
                           </div>
-                          <div class="text-caption">
-                            {{ $t('customers.lastOrder') }}
-                          </div>
+                          <div class="text-caption">{{ $t('customers.lastOrder') }}</div>
                         </div>
                       </v-col>
                     </v-row>
-                  </v-card-text>
+                  </v-card-text> 
                 </v-card>
 
                 <!-- Communication Preferences -->
@@ -238,9 +221,7 @@
                   <v-card-text>
                     <v-chip-group>
                       <v-chip
-                        v-for="(
-                          enabled, method
-                        ) in customer.communicationPreferences"
+                        v-for="(enabled, method) in customer.communicationPreferences"
                         :key="method"
                         :color="enabled ? 'primary' : 'grey'"
                         :variant="enabled ? 'elevated' : 'outlined'"
@@ -262,9 +243,7 @@
                     <div v-if="customer.notes" class="text-body-1">
                       {{ customer.notes }}
                     </div>
-                    <div v-else class="text-grey">
-                      {{ $t('customers.noNotes') }}
-                    </div>
+                    <div v-else class="text-grey">{{ $t('customers.noNotes') }}</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -335,37 +314,25 @@
                       <v-card-text>
                         <v-list density="compact">
                           <v-list-item>
-                            <v-list-item-title
-                              >{{ $t('customers.street') }}:</v-list-item-title
-                            >
+                            <v-list-item-title>{{ $t('customers.street') }}:</v-list-item-title>
                             <v-list-item-subtitle>{{
                               address.street
                             }}</v-list-item-subtitle>
                           </v-list-item>
                           <v-list-item>
-                            <v-list-item-title
-                              >{{ $t('customers.city') }}:</v-list-item-title
-                            >
+                            <v-list-item-title>{{ $t('customers.city') }}:</v-list-item-title>
                             <v-list-item-subtitle>{{
                               address.city.name
                             }}</v-list-item-subtitle>
                           </v-list-item>
                           <v-list-item>
-                            <v-list-item-title
-                              >{{
-                                $t('customers.province')
-                              }}:</v-list-item-title
-                            >
+                            <v-list-item-title>{{ $t('customers.province') }}:</v-list-item-title>
                             <v-list-item-subtitle>{{
                               address.province.name
                             }}</v-list-item-subtitle>
                           </v-list-item>
                           <v-list-item>
-                            <v-list-item-title
-                              >{{
-                                $t('customers.postalCode')
-                              }}:</v-list-item-title
-                            >
+                            <v-list-item-title>{{ $t('customers.postalCode') }}:</v-list-item-title>
                             <v-list-item-subtitle>{{
                               address.postalCode
                             }}</v-list-item-subtitle>
@@ -415,18 +382,11 @@
                     <v-card>
                       <v-card-text>
                         <div class="d-flex justify-space-between">
-                          <strong>{{
-                            formatActivityType(activity.activityType)
-                          }}</strong>
-                          <span class="text-caption">{{
-                            formatDateTime(activity.createdAt)
-                          }}</span>
+                          <strong>{{ formatActivityType(activity.activityType) }}</strong>
+                          <span class="text-caption">{{ formatDateTime(activity.createdAt) }}</span>
                         </div>
                         <div>{{ activity.description }}</div>
-                        <div
-                          v-if="activity.ipAddress"
-                          class="text-caption mt-1"
-                        >
+                        <div v-if="activity.ipAddress" class="text-caption mt-1">
                           <v-icon small>mdi-ip</v-icon> {{ activity.ipAddress }}
                         </div>
                       </v-card-text>
@@ -450,14 +410,17 @@
             variant="tonal"
             @click="toggleBlockStatus"
           >
-            <v-icon left>
-              {{ customer.isBlocked ? 'mdi-lock-open' : 'mdi-lock' }}
-            </v-icon>
-            {{
-              customer.isBlocked
-                ? $t('customers.unblock')
-                : $t('customers.block')
-            }}
+            <v-tooltip activator="parent" location="top">
+              {{
+                customer.isBlocked
+                  ? $t('customers.unblockTooltip')
+                  : $t('customers.blockTooltip')
+              }}
+            </v-tooltip>
+            <v-icon left>{{
+              customer.isBlocked ? 'mdi-lock-open' : 'mdi-lock'
+            }}</v-icon>
+            {{ customer.isBlocked ? $t('customers.unblock') : $t('customers.block') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -509,12 +472,10 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="secondary" @click="addAddressDialog = false">{{
-              $t('common.cancel')
-            }}</v-btn>
-            <v-btn color="primary" @click="saveAddress">{{
-              $t('common.save')
-            }}</v-btn>
+            <v-btn color="secondary" @click="addAddressDialog = false"
+              >{{ $t('common.cancel') }}</v-btn
+            >
+            <v-btn color="primary" @click="saveAddress">{{ $t('common.save') }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -531,16 +492,8 @@
       />
       <ConfirmDialog
         ref="blockStatusDialog"
-        :title="
-          customer?.isBlocked
-            ? $t('dialogs.unblockCustomer.title')
-            : $t('dialogs.blockCustomer.title')
-        "
-        :message="
-          customer?.isBlocked
-            ? $t('dialogs.unblockCustomer.message')
-            : $t('dialogs.blockCustomer.message')
-        "
+        :title="customer?.isBlocked ? $t('dialogs.unblockCustomer.title') : $t('dialogs.blockCustomer.title')"
+        :message="customer?.isBlocked ? $t('dialogs.unblockCustomer.message') : $t('dialogs.blockCustomer.message')"
         :confirm-text="$t('common.confirm')"
         confirm-color="error"
         :type="customer?.isBlocked ? 'warning' : 'error'"
@@ -551,40 +504,39 @@
   <v-alert type="info">{{ $t('orders.noOrders') }}</v-alert>
 </template>
   </v-container>
-</error-boundary>
 </template>
 
 <script setup>
-  import { ref, computed, onMounted, watch } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
-  import { useCustomerStore } from '../store/customers'
-  import { useToast } from 'vue-toastification'
-  import { useI18n } from 'vue-i18n'
-  import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useCustomerStore } from '../store/customers'
+import { useToast } from 'vue-toastification'
+import { useI18n } from 'vue-i18n'
+import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
 
-  const { t } = useI18n()
-  const route = useRoute()
-  const router = useRouter()
-  const customerStore = useCustomerStore()
-  const toast = useToast()
+const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+const customerStore = useCustomerStore()
+const toast = useToast()
 
-  // State
-  const loading = ref(true)
-  const tab = ref('overview')
-  const addAddressDialog = ref(false)
-  const addressToDelete = ref(null)
-  const ordersLoading = ref(false)
-  const deleteAddressDialog = ref(null)
-  const blockStatusDialog = ref(null)
+// State
+const loading = ref(true)
+const tab = ref('overview')
+const addAddressDialog = ref(false)
+const addressToDelete = ref(null)
+const ordersLoading = ref(false)
+const deleteAddressDialog = ref(null)
+const blockStatusDialog = ref(null)
 
-  // New address data
-  const newAddress = ref({
-    province: null,
-    city: null,
-    street: '',
-    postalCode: '',
-    isDefault: false
-  })
+// New address data
+const newAddress = ref({
+  province: null,
+  city: null,
+  street: '',
+  postalCode: '',
+  isDefault: false
+})
 
   // Table headers
   const orderHeaders = [
@@ -596,7 +548,7 @@
   ]
 
   // Computed
- const customerOrders = computed(() => customerStore.getCustomerOrders)
+const customerOrders = computed(() => customerStore.getCustomerOrders)
 
   const provinces = computed(() => customerStore.provinces)
   const filteredCities = computed(() => {
@@ -671,112 +623,112 @@
     router.push('/customers')
   }
 
-  const handleTabChange = async (newTab) => {
-    if (newTab === 'orders' && customerOrders.value.length === 0) {
-      await loadOrders()
-    }
+const handleTabChange = async (newTab) => {
+  if (newTab === 'orders' && customerOrders.value.length === 0) {
+    await loadOrders()
   }
+}
 
-  const loadOrders = async () => {
-    ordersLoading.value = true
-    try {
-      await customerStore.fetchCustomerOrders(route.params.id)
-    } catch (error) {
-      toast.error(t('customers.ordersLoadError'))
-    } finally {
-      ordersLoading.value = false
-    }
+ const loadOrders = async () => {
+  ordersLoading.value = true
+  try {
+    await customerStore.fetchCustomerOrders(route.params.id)
+  } catch (error) {
+    toast.error(t('customers.ordersLoadError'))
+  } finally {
+    ordersLoading.value = false
   }
+}
 
-  // Formatting functions
-  const formatDate = (date) => {
-    if (!date) return '--'
-    return new Date(date).toLocaleDateString()
-  }
+// Formatting functions
+const formatDate = (date) => {
+  if (!date) return '--'
+  return new Date(date).toLocaleDateString()
+}
 
-  const formatDateTime = (date) => {
-    if (!date) return '--'
-    return new Date(date).toLocaleString()
-  }
+const formatDateTime = (date) => {
+  if (!date) return '--'
+  return new Date(date).toLocaleString()
+}
 
-  const formatCurrency = (amount) => {
-    return parseFloat(amount || 0).toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    })
-  }
+const formatCurrency = (amount) => {
+  return parseFloat(amount || 0).toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  })
+}
 
-  const calculateAge = (birthDate) => {
-    if (!birthDate) return '--'
-    const today = new Date()
-    const birth = new Date(birthDate)
-    let age = today.getFullYear() - birth.getFullYear()
-    const m = today.getMonth() - birth.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-      age--
-    }
-    return age
+const calculateAge = (birthDate) => {
+  if (!birthDate) return '--'
+  const today = new Date()
+  const birth = new Date(birthDate)
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--
   }
+  return age
+}
 
-  const formatCommunicationMethod = (method) => {
-    const methods = {
-      email: t('customers.communicationMethods.email'),
-      sms: t('customers.communicationMethods.sms'),
-      whatsapp: t('customers.communicationMethods.whatsapp')
-    }
-    return methods[method] || method
+const formatCommunicationMethod = (method) => {
+  const methods = {
+    email: t('customers.communicationMethods.email'),
+    sms: t('customers.communicationMethods.sms'),
+    whatsapp: t('customers.communicationMethods.whatsapp')
   }
+  return methods[method] || method
+}
 
-  const getCommunicationIcon = (method) => {
-    const icons = {
-      email: 'mdi-email',
-      sms: 'mdi-message-text',
-      whatsapp: 'mdi-whatsapp'
-    }
-    return icons[method] || 'mdi-bell'
+const getCommunicationIcon = (method) => {
+  const icons = {
+    email: 'mdi-email',
+    sms: 'mdi-message-text',
+    whatsapp: 'mdi-whatsapp'
   }
+  return icons[method] || 'mdi-bell'
+}
 
-  const getTierColor = (tier) => {
-    const colors = {
-      basic: 'grey',
-      silver: 'blue-grey',
-      gold: 'amber',
-      platinum: 'blue'
-    }
-    return colors[tier] || 'primary'
+const getTierColor = (tier) => {
+  const colors = {
+    basic: 'grey',
+    silver: 'blue-grey',
+    gold: 'amber',
+    platinum: 'blue'
   }
+  return colors[tier] || 'primary'
+}
 
-  const getTierIcon = (tier) => {
-    const icons = {
-      basic: 'mdi-account',
-      silver: 'mdi-account-star',
-      gold: 'mdi-account-supervisor',
-      platinum: 'mdi-account-tie'
-    }
-    return icons[tier] || 'mdi-account'
+const getTierIcon = (tier) => {
+  const icons = {
+    basic: 'mdi-account',
+    silver: 'mdi-account-star',
+    gold: 'mdi-account-supervisor',
+    platinum: 'mdi-account-tie'
   }
+  return icons[tier] || 'mdi-account'
+}
 
-  const formatTier = (tier) => {
-    const tiers = {
-      basic: t('customers.tiers.basic'),
-      silver: t('customers.tiers.silver'),
-      gold: t('customers.tiers.gold'),
-      platinum: t('customers.tiers.platinum')
-    }
-    return tiers[tier] || tier
+const formatTier = (tier) => {
+  const tiers = {
+    basic: t('customers.tiers.basic'),
+    silver: t('customers.tiers.silver'),
+    gold: t('customers.tiers.gold'),
+    platinum: t('customers.tiers.platinum')
   }
+  return tiers[tier] || tier
+}
 
-  const getOrderStatusColor = (status) => {
-    const colors = {
-      pending: 'orange',
-      processing: 'blue',
-      shipped: 'teal',
-      delivered: 'green',
-      cancelled: 'red',
-      refunded: 'purple'
-    }
-    return colors[status.toLowerCase()] || 'primary'
+const getOrderStatusColor = (status) => {
+  const colors = {
+    pending: 'orange',
+    processing: 'blue',
+    shipped: 'teal',
+    delivered: 'green',
+    cancelled: 'red',
+    refunded: 'purple'
   }
+  return colors[status.toLowerCase()] || 'primary'
+}
 
   const formatOrderStatus = (status) => {
     const statusLower = status.toLowerCase()
@@ -792,50 +744,50 @@
     return statuses[statusLower] || status
   }
 
-  const getActivityColor = (type) => {
-    const colors = {
-      login: 'blue',
-      purchase: 'green',
-      contact: 'teal',
-      review: 'amber',
-      complaint: 'orange',
-      refund: 'red'
-    }
-    return colors[type] || 'primary'
+const getActivityColor = (type) => {
+  const colors = {
+    login: 'blue',
+    purchase: 'green',
+    contact: 'teal',
+    review: 'amber',
+    complaint: 'orange',
+    refund: 'red'
   }
+  return colors[type] || 'primary'
+}
 
-  const getActivityIcon = (type) => {
-    const icons = {
-      login: 'mdi-login',
-      purchase: 'mdi-cart',
-      contact: 'mdi-email',
-      review: 'mdi-star',
-      complaint: 'mdi-alert',
-      refund: 'mdi-cash-refund'
-    }
-    return icons[type] || 'mdi-help'
+const getActivityIcon = (type) => {
+  const icons = {
+    login: 'mdi-login',
+    purchase: 'mdi-cart',
+    contact: 'mdi-email',
+    review: 'mdi-star',
+    complaint: 'mdi-alert',
+    refund: 'mdi-cash-refund'
   }
+  return icons[type] || 'mdi-help'
+}
 
-  const formatActivityType = (type) => {
-    const types = {
-      login: t('activity.types.login'),
-      purchase: t('activity.types.purchase'),
-      contact: t('activity.types.contact'),
-      review: t('activity.types.review'),
-      complaint: t('activity.types.complaint'),
-      refund: t('activity.types.refund')
-    }
-    return types[type] || type
+const formatActivityType = (type) => {
+  const types = {
+    login: t('activity.types.login'),
+    purchase: t('activity.types.purchase'),
+    contact: t('activity.types.contact'),
+    review: t('activity.types.review'),
+    complaint: t('activity.types.complaint'),
+    refund: t('activity.types.refund')
   }
+  return types[type] || type
+}
 
-  // Methods
-  const editCustomer = () => {
-    router.push(`/customers/edit/${customer.value.id}`)
-  }
+// Methods
+const editCustomer = () => {
+  router.push(`/customers/edit/${customer.value.id}`)
+}
 
-  const toggleBlockStatus = () => {
-    blockStatusDialog.value.open()
-  }
+const toggleBlockStatus = () => {
+  blockStatusDialog.value.open()
+}
 
   const confirmToggleBlockStatus = async () => {
     try {
@@ -851,18 +803,18 @@
     }
   }
 
-  const viewOrderDetails = (order) => {
-    router.push(`/orders/${order.id}`)
-  }
+const viewOrderDetails = (order) => {
+  router.push(`/orders/${order.id}`)
+}
 
-  const editAddress = (address) => {
-    toast.info(t('customers.addressEditComingSoon'))
-  }
+const editAddress = (address) => {
+  toast.info(t('customers.addressEditComingSoon'))
+}
 
-  const confirmDeleteAddress = (address) => {
-    addressToDelete.value = address
-    deleteAddressDialog.value.open()
-  }
+const confirmDeleteAddress = (address) => {
+  addressToDelete.value = address
+  deleteAddressDialog.value.open()
+}
 
   const deleteAddress = async () => {
     try {
@@ -960,23 +912,23 @@
     opacity: 0.3;
     font-size: 2.5rem;
   }
-  [dir='rtl'] .v-input__control {
-    direction: rtl;
-    text-align: right;
-  }
+  [dir="rtl"] .v-input__control {
+  direction: rtl;
+  text-align: right;
+}
 
-  [dir='rtl'] .v-label {
-    right: 0;
-    left: auto;
-  }
+[dir="rtl"] .v-label {
+  right: 0;
+  left: auto;
+}
 
-  .v-switch--reversed :deep(.v-selection-control) {
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-  }
+.v-switch--reversed :deep(.v-selection-control) {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
 
-  .v-switch--reversed :deep(.v-label) {
-    padding-left: 0;
-    padding-right: 12px;
-  }
+.v-switch--reversed :deep(.v-label) {
+  padding-left: 0;
+  padding-right: 12px;
+}
 </style>
