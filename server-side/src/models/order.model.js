@@ -9,46 +9,59 @@ const OrderSchema = new mongoose.Schema(
     },
     orderItems: [
       {
-        id: {
+        productId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
           required: true,
         },
-        name: { type: String, required: true },
-        price: { type: Number, required: true },
-        quantity: { type: Number, required: true },
+        selectedColors: [
+          {
+            colorName: {
+              type: String,
+              required: true
+            },
+            quantity: {
+              type: Number,
+              required: true
+            }
+          }
+        ],
       },
     ],
     shippingAddress: {
-      firstName: { type: String, required: true },
-      lastName: { type: String, required: true },
       companyName: { type: String },
       additionalInfo: { type: String },
-      phone: { type: String, required: true },
-      email: { type: String, required: true },
-      address: { type: String, required: true },
-      city: { type: String, required: true },
-      // province: {type: String, required: true},
-      zipCode: { type: String, required: true },
-      country: { type: String, required: true },
     },
     shippingMethod: {
-      name: { type: String, required: true },
-      cost: { type: Number, required: true },
+      name: {
+        type: String,
+        enum: ["cod", "bank", "Direct Bank Transfer", "Cash on Delivery"],
+        required: true
+      },
+      cost: {
+        type: Number,
+        required: true
+      },
     },
-    totalAmount: { type: Number, required: true },
+    totalAmount: {
+      type: Number,
+      default: 0
+      //  required: true
+    },
     status: {
       type: String,
-      enum: ["Pending", "Processing", "Shipped", "Delivered"],
+      enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
       default: "Pending",
     },
-    paymentMethod: {
+    previousStatus: {
       type: String,
-      enum: ["cod", "bank", "Direct Bank Transfer", "Cash on Delivery"],
-      required: true,
+      enum: ["", "Pending", "Processing", "Shipped", "Delivered"]
     },
     orderNumber: { type: String, unique: true },
-
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
     transactionId: { type: String },
   },
   { timestamps: true }

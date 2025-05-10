@@ -66,9 +66,13 @@ const createUser = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users
 // @access  Public
 const getAllUsers = asyncWrapper(async (req, res, next) => {
-  const { page = 1, limit = 10, search, isActive, role } = req.query;
+  const { page = 1, limit = 10, search, isActive } = req.query;
 
-  const query = {};
+  const query = {
+    role: "user",
+    isActive: true,
+  };
+
   if (search) {
     query.$or = [
       { firstName: { $regex: search, $options: "i" } },
@@ -79,7 +83,6 @@ const getAllUsers = asyncWrapper(async (req, res, next) => {
 
   if (isActive === "true") query.isActive = true;
   if (isActive === "false") query.isActive = false;
-  if (role) query.role = role;
 
   const {
     data: users,
@@ -801,7 +804,9 @@ const assignUserTags = asyncWrapper(async (req, res, next) => {
   const { tags } = req.body;
 
   if (!tags || !Array.isArray(tags)) {
-    return next(new AppError('Please provide an array of tags', 400, httpStatusText.FAIL));
+    return next(
+      new AppError("Please provide an array of tags", 400, httpStatusText.FAIL)
+    );
   }
 
   const user = await User.findByIdAndUpdate(
@@ -811,12 +816,12 @@ const assignUserTags = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { tags: user.tags }
+    data: { tags: user.tags },
   });
 });
 
@@ -827,7 +832,13 @@ const removeUserTags = asyncWrapper(async (req, res, next) => {
   const { tags } = req.body;
 
   if (!tags || !Array.isArray(tags)) {
-    return next(new AppError('Please provide an array of tags to remove', 400, httpStatusText.FAIL));
+    return next(
+      new AppError(
+        "Please provide an array of tags to remove",
+        400,
+        httpStatusText.FAIL
+      )
+    );
   }
 
   const user = await User.findByIdAndUpdate(
@@ -837,12 +848,12 @@ const removeUserTags = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { tags: user.tags }
+    data: { tags: user.tags },
   });
 });
 
@@ -853,12 +864,14 @@ const assignSegment = asyncWrapper(async (req, res, next) => {
   const { segmentName, expiresAt } = req.body;
 
   if (!segmentName) {
-    return next(new AppError('Segment name is required', 400, httpStatusText.FAIL));
+    return next(
+      new AppError("Segment name is required", 400, httpStatusText.FAIL)
+    );
   }
 
   const segmentData = {
     name: segmentName,
-    assignedBy: req.user.id
+    assignedBy: req.user.id,
   };
 
   if (expiresAt) {
@@ -872,12 +885,12 @@ const assignSegment = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { segments: user.segments }
+    data: { segments: user.segments },
   });
 });
 
@@ -892,12 +905,12 @@ const removeSegment = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { segments: user.segments }
+    data: { segments: user.segments },
   });
 });
 
@@ -920,7 +933,7 @@ const getUsersByTag = asyncWrapper(async (req, res, next) => {
     total,
     currentPage,
     totalPages,
-    data: { users }
+    data: { users },
   });
 });
 
@@ -935,7 +948,11 @@ const getUsersBySegment = asyncWrapper(async (req, res, next) => {
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { 'segments.name': req.params.segment }, { page, limit });
+  } = await paginate(
+    User,
+    { "segments.name": req.params.segment },
+    { page, limit }
+  );
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -943,7 +960,7 @@ const getUsersBySegment = asyncWrapper(async (req, res, next) => {
     total,
     currentPage,
     totalPages,
-    data: { users }
+    data: { users },
   });
 });
 
@@ -953,8 +970,8 @@ const getUsersBySegment = asyncWrapper(async (req, res, next) => {
 const updateCustomerTier = asyncWrapper(async (req, res, next) => {
   const { tier } = req.body;
 
-  if (!['basic', 'silver', 'gold', 'platinum'].includes(tier)) {
-    return next(new AppError('Invalid tier value', 400, httpStatusText.FAIL));
+  if (!["basic", "silver", "gold", "platinum"].includes(tier)) {
+    return next(new AppError("Invalid tier value", 400, httpStatusText.FAIL));
   }
 
   const user = await User.findByIdAndUpdate(
@@ -964,15 +981,14 @@ const updateCustomerTier = asyncWrapper(async (req, res, next) => {
   );
 
   if (!user) {
-    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { customerTier: user.customerTier }
+    data: { customerTier: user.customerTier },
   });
 });
-
 
 // Add these methods to your user.controller.js
 
@@ -987,7 +1003,7 @@ const getPendingUsers = asyncWrapper(async (req, res, next) => {
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { status: 'pending' }, { page, limit });
+  } = await paginate(User, { status: "pending" }, { page, limit });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1010,7 +1026,7 @@ const getApprovedUsers = asyncWrapper(async (req, res, next) => {
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { status: 'approved' }, { page, limit });
+  } = await paginate(User, { status: "approved" }, { page, limit });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1033,7 +1049,7 @@ const getDeniedUsers = asyncWrapper(async (req, res, next) => {
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { status: 'denied' }, { page, limit });
+  } = await paginate(User, { status: "denied" }, { page, limit });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1051,23 +1067,23 @@ const getDeniedUsers = asyncWrapper(async (req, res, next) => {
 const approveUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    { 
-      status: 'approved',
-      adminRequest: false 
+    {
+      status: "approved",
+      adminRequest: false,
     },
     { new: true, runValidators: true }
-  ).select('-password -__v');
+  ).select("-password -__v");
 
   if (!user) {
-    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
 
   // Send approval email
   await sendEmail({
     email: user.email,
-    subject: 'Your Account Has Been Approved',
-    template: 'account-approved',
-    context: { name: user.firstName }
+    subject: "Your Account Has Been Approved",
+    template: "account-approved",
+    context: { name: user.firstName },
   });
 
   res.status(200).json({
@@ -1081,34 +1097,36 @@ const approveUser = asyncWrapper(async (req, res, next) => {
 // @access  Private (Admin/SuperAdmin)
 const denyUser = asyncWrapper(async (req, res, next) => {
   const { reason } = req.body;
-  
+
   if (!reason) {
-    return next(new AppError('Denial reason is required', 400, httpStatusText.FAIL));
+    return next(
+      new AppError("Denial reason is required", 400, httpStatusText.FAIL)
+    );
   }
 
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    { 
-      status: 'denied',
+    {
+      status: "denied",
       adminRequest: false,
-      denialReason: reason 
+      denialReason: reason,
     },
     { new: true }
-  ).select('-password -__v');
+  ).select("-password -__v");
 
   if (!user) {
-    return next(new AppError('User not found', 404, httpStatusText.NOT_FOUND));
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
 
   // Send denial email
   await sendEmail({
     email: user.email,
-    subject: 'Your Account Request Has Been Denied',
-    template: 'account-denied',
-    context: { 
+    subject: "Your Account Request Has Been Denied",
+    template: "account-denied",
+    context: {
       name: user.firstName,
-      reason 
-    }
+      reason,
+    },
   });
 
   res.status(200).json({
@@ -1125,27 +1143,33 @@ const handleAdminRequest = asyncWrapper(async (req, res, next) => {
   const user = await User.findById(req.params.id);
 
   if (!user || !user.adminRequest) {
-    return next(new AppError('No admin request found for this user', 404, httpStatusText.NOT_FOUND));
+    return next(
+      new AppError(
+        "No admin request found for this user",
+        404,
+        httpStatusText.NOT_FOUND
+      )
+    );
   }
 
-  if (action === 'approve') {
-    user.role = 'admin';
+  if (action === "approve") {
+    user.role = "admin";
     user.adminRequest = false;
     await user.save();
-    
+
     await sendEmail({
       email: user.email,
-      subject: 'Your Admin Request Has Been Approved',
-      template: 'admin-approved'
+      subject: "Your Admin Request Has Been Approved",
+      template: "admin-approved",
     });
   } else {
     user.adminRequest = false;
     await user.save();
-    
+
     await sendEmail({
       email: user.email,
-      subject: 'Your Admin Request Has Been Denied',
-      template: 'admin-denied'
+      subject: "Your Admin Request Has Been Denied",
+      template: "admin-denied",
     });
   }
 
@@ -1178,9 +1202,154 @@ const getAdminRequests = asyncWrapper(async (req, res, next) => {
   });
 });
 
+// في ملف controllers/user.controller.js
+const bulkDeleteUsers = asyncWrapper(async (req, res, next) => {
+  const { ids } = req.body;
 
+  if (!ids || !Array.isArray(ids)) {
+    return next(
+      new AppError(
+        "Please provide an array of user IDs",
+        400,
+        httpStatusText.FAIL
+      )
+    );
+  }
+
+  const result = await User.updateMany(
+    { _id: { $in: ids } },
+    { isActive: false, deletedAt: Date.now() }
+  );
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: { deletedCount: result.modifiedCount },
+  });
+});
+
+// controllers/user.controller.js
+const bulkUpdateUserStatus = asyncWrapper(async (req, res, next) => {
+  const { ids, state } = req.body;
+
+  // Validation
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return next(new AppError("Please provide an array of user IDs", 400));
+  }
+  if (!['active', 'blocked'].includes(state)) {
+    return next(new AppError("Invalid status value", 400));
+  }
+
+  try {
+    // Update logic
+    const updateData = {
+      state,
+      isActive: state === 'active',
+      isBlocked: state === 'blocked'
+    };
+
+    const result = await User.updateMany(
+      { _id: { $in: ids } },
+      { $set: updateData }
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: { modifiedCount: result.modifiedCount }
+    });
+  } catch (error) {
+    console.error('Status update error:', error);
+    next(new AppError("Failed to update user statuses", 500));
+  }
+});
+
+
+
+
+
+ 
+const bulkAssignTags = asyncWrapper(async (req, res, next) => {
+  const { ids, customerTier } = req.body;
+
+  if (!ids || !Array.isArray(ids) || !tags || !Array.isArray(tags)) {
+    return next(new AppError("Invalid data format", 400, httpStatusText.FAIL));
+  }
+
+  const result = await User.updateMany(
+    { _id: { $in: ids } },
+    { $addToSet: { tags: { $each: tags } } }
+  );
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: { updatedCount: result.modifiedCount },
+  });
+});
+
+
+
+// routes/users.js
+
+const bulkAssignTier = asyncWrapper(async (req, res) => {
+  const { ids, tier } = req.body;
+  const allowedTiers = ['basic', 'silver', 'gold', 'platinum'];
+
+  // Validation
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Invalid user IDs array' });
+  }
+  if (!allowedTiers.includes(tier)) {
+    return res.status(400).json({ error: 'Invalid tier value' });
+  }
+
+  try {
+    const result = await User.updateMany(
+      { _id: { $in: ids } },
+      { $set: { customerTier: tier } }
+    );
+
+    res.json({
+      success: true,
+      message: `Updated ${result.modifiedCount} users`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Tier update error:', error);
+    res.status(500).json({ error: 'Failed to update tiers' });
+  }
+});
+
+
+
+
+// In user.controller.js
+// @desc    Get user orders
+// @route   GET /api/users/:id/orders
+// @access  Private
+// const getUserOrders = asyncWrapper(async (req, res, next) => {
+//   const userId = req.params.id;
+
+//   const orders = await Order.find({ userId })
+//     .populate('products.productId')
+//     .sort({ createdAt: -1 });
+
+//   res.status(200).json({
+//     status: httpStatusText.SUCCESS,
+//     data: {
+//       orders: orders.map(order => ({
+//         id: order._id,
+//         date: order.createdAt,
+//         total: order.totalAmount,
+//         status: order.status,
+//         products: order.products
+//       }))
+//     }
+//   });
+// });
 
 module.exports = {
+  bulkAssignTags,
+  bulkDeleteUsers,
+  bulkUpdateUserStatus,
   getIncentives,
   addIncentive,
   getReviews,
@@ -1218,4 +1387,6 @@ module.exports = {
   denyUser,
   handleAdminRequest,
   getAdminRequests,
+  bulkAssignTier
+  // getUserOrders,
 };

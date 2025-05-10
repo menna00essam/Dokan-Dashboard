@@ -12,6 +12,9 @@ const userSchema = new mongoose.Schema(
       required: [true, "Last name is required"],
       trim: true,
     },
+    username: {
+      type: String,
+    },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -20,8 +23,13 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
         },
-        message: (props) => `${props.value} is not a valid email!`,
+        message: (props) => `${props.value} is not a valid email!`, 
       },
+    },
+    password: {
+      type: String,
+      required: [true, "Please add a password"],
+      minLength: 8,
     },
     mobile: {
       type: String,
@@ -106,6 +114,11 @@ const userSchema = new mongoose.Schema(
       enum: ["basic", "silver", "gold", "platinum"],
       default: "basic",
     },
+    state: {
+      type: String,
+      enum: ["active", "blocked"],
+      default: "active",
+    },
     ordersCount: { type: Number, default: 0 },
     totalSpent: { type: Number, default: 0 },
     lastOrderDate: Date,
@@ -151,13 +164,19 @@ const userSchema = new mongoose.Schema(
     supportTickets: [
       {
         ticketId: { type: String, unique: true },
-        title: { type: String, required: true },
+        title: {
+          type: String,
+          required: true
+        },
         issueType: {
           type: String,
           enum: ["technical", "billing", "shipping", "product", "other"],
           required: true,
         },
-        description: { type: String, required: true },
+        description: {
+          type: String,
+          required: true
+        },
         status: {
           type: String,
           enum: ["open", "in-progress", "resolved", "closed"],
@@ -178,9 +197,18 @@ const userSchema = new mongoose.Schema(
     ],
     creditHistory: [
       {
-        transactionId: { type: String, required: true },
-        amount: { type: Number, required: true },
-        type: { type: String, enum: ["credit", "debit"], required: true },
+        transactionId: {
+          type: String,
+          required: true
+        },
+        amount: {
+          type: Number,
+          required: true
+        },
+        type: {
+          type: String, enum: ["credit", "debit"],
+          required: true
+        },
         description: String,
         reference: String,
         processedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -191,7 +219,10 @@ const userSchema = new mongoose.Schema(
     currentCredit: { type: Number, default: 0 },
     specialCases: [
       {
-        caseType: { type: String, required: true },
+        caseType: {
+          type: String,
+          required: true
+        },
         description: String,
         severity: {
           type: String,
@@ -202,45 +233,13 @@ const userSchema = new mongoose.Schema(
         addedAt: { type: Date, default: Date.now },
         resolvedAt: Date,
         isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false },
       },
     ],
-    reviews: [
-      {
-        reviewId: { type: String, unique: true },
-        productId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
-        title: { type: String, required: true },
-        rating: {
-          type: Number,
-          required: true,
-          min: 1,
-          max: 5,
-        },
-        reviewText: String,
-        photos: [String],
-        isVerifiedPurchase: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
-    incentives: [
-      {
-        incentiveId: { type: String, unique: true },
-        incentiveType: {
-          type: String,
-          enum: ["discount", "coupon", "cashback", "gift", "points", "other"],
-          required: true,
-        },
-        amount: { type: Number, required: true },
-        description: String,
-        expiryDate: Date,
-        isUsed: { type: Boolean, default: false },
-        addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
+    tierLock: {
+      type: Boolean,
+      default: false, // Flag to lock the tier update
+    },
     deletedAt: Date,
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     isActive: { type: Boolean, default: true },
@@ -270,6 +269,10 @@ userSchema.virtual("age").get(function () {
 });
 
 userSchema.pre("save", function (next) {
+  // Skip automatic tier update if tierLock is true
+  if (this.tierLock) return next();
+
+  // Existing tier calculation logic
   if (this.isModified("ordersCount") || this.isModified("totalSpent")) {
     const newTags = [];
 
@@ -281,15 +284,12 @@ userSchema.pre("save", function (next) {
     if (this.ordersCount === 0) newTags.push("new");
 
     this.tags = [
-      ...new Set(
-        [
-          ...this.tags.filter(
-            (t) =>
-              !["premium", "frequent", "new", "vip", "loyal"].includes(t)
-          ),
-          ...newTags,
-        ]
-      ),
+      ...new Set([
+        ...this.tags.filter(
+          (t) => !["premium", "frequent", "new", "vip", "loyal"].includes(t)
+        ),
+        ...newTags,
+      ]),
     ];
 
     if (this.totalSpent >= 5000) this.customerTier = "platinum";
@@ -297,6 +297,7 @@ userSchema.pre("save", function (next) {
     else if (this.totalSpent >= 500) this.customerTier = "silver";
     else this.customerTier = "basic";
   }
+
   next();
 });
 

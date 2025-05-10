@@ -540,127 +540,447 @@
 //   }
 // };
 
+// require("dotenv").config();
+// const mongoose = require("mongoose");
+// const connectDB = require("./src/config/db");
+// const User = require("./src/models/user.model");
+// const { faker } = require('@faker-js/faker');
+// const { ObjectId } = mongoose.Types;
+
+// // Country-specific data generators
+// const countryData = {
+//   SA: {
+//     country: "Saudi Arabia",
+//     mobilePrefix: "05",
+//     provinces: ["Riyadh", "Makkah", "Madinah", "Eastern Province", "Qassim", "Asir", "Tabuk", "Hail", "Northern Borders", "Jazan", "Najran", "Bahah", "Jawf"],
+//     cities: ["Riyadh", "Jeddah", "Mecca", "Medina", "Dammam", "Khobar", "Taif", "Tabuk", "Abha"]
+//   },
+//   AE: {
+//     country: "United Arab Emirates",
+//     mobilePrefix: "05",
+//     provinces: ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Umm Al-Quwain", "Ras Al Khaimah", "Fujairah"],
+//     cities: ["Dubai", "Abu Dhabi", "Sharjah", "Al Ain", "Ajman", "Ras Al Khaimah", "Fujairah"]
+//   },
+//   EG: {
+//     country: "Egypt",
+//     mobilePrefix: "01",
+//     provinces: ["Cairo", "Alexandria", "Giza", "Sharqia", "Dakahlia", "Beheira", "Monufia", "Qalyubia", "Gharbia"],
+//     cities: ["Cairo", "Alexandria", "Giza", "Shubra El-Kheima", "Port Said", "Suez", "Luxor", "Mansoura", "Tanta"]
+//   }
+// };
+
+// // Generate realistic customers from GCC countries
+// const generateGCCCustomers = (count = 30) => {
+//   const customers = [];
+  
+//   for (let i = 0; i < count; i++) {
+//     const countryCode = faker.helpers.arrayElement(["SA", "AE", "EG"]);
+//     const countryInfo = countryData[countryCode];
+//     const firstName = faker.person.firstName();
+//     const lastName = faker.person.lastName();
+//     const email = faker.internet.email({ firstName, lastName }).toLowerCase();
+//     const mobile = `${countryInfo.mobilePrefix}${faker.number.int({ min: 10000000, max: 99999999 })}`;
+    
+//     customers.push({
+//       firstName,
+//       lastName,
+//       email,
+//       mobile,
+//       password: `Customer${i+1}@123`, // Strong password
+//       role: "user",
+//       status: "approved",
+//       joinDate: faker.date.past({ years: 2 }),
+//       isBlocked: false,
+//       verification: {
+//         emailVerified: faker.datatype.boolean(),
+//         phoneVerified: faker.datatype.boolean(),
+//         identityVerified: false
+//       },
+//       communicationPreferences: {
+//         email: true,
+//         sms: faker.datatype.boolean(),
+//         whatsapp: faker.datatype.boolean(),
+//         pushNotifications: true
+//       },
+//       addresses: [{
+//         country: countryInfo.country,
+//         province: { 
+//           id: faker.number.int({ min: 1, max: 20 }).toString(),
+//           name: faker.helpers.arrayElement(countryInfo.provinces)
+//         },
+//         city: {
+//           id: faker.number.int({ min: 1, max: 50 }).toString(),
+//           provinceId: faker.number.int({ min: 1, max: 20 }).toString(),
+//           name: faker.helpers.arrayElement(countryInfo.cities)
+//         },
+//         street: faker.location.streetAddress(),
+//         postalCode: faker.location.zipCode(),
+//         isDefault: true
+//       }],
+//       ordersCount: faker.number.int({ min: 0, max: 50 }),
+//       totalSpent: faker.number.int({ min: 0, max: 10000 }),
+//       lastOrderDate: faker.date.recent(),
+//       lastSiteVisit: faker.date.recent(),
+//       isSubscribedToNewsletter: faker.datatype.boolean(),
+//       customerTier: calculateCustomerTier(faker.number.int({ min: 0, max: 10000 }))
+//     });
+//   }
+  
+//   return customers;
+// };
+
+// // Calculate customer tier based on total spending
+// const calculateCustomerTier = (totalSpent) => {
+//   if (totalSpent >= 5000) return "platinum";
+//   if (totalSpent >= 2000) return "gold";
+//   if (totalSpent >= 500) return "silver";
+//   return "basic";
+// };
+
+// // Main seeding function
+// const seedCustomers = async () => {
+//   try {
+//     await connectDB();
+//     console.log("🚀 Generating fake customers...");
+
+//     await User.deleteMany({ role: "user" });
+//     console.log("🧹 Cleared existing customers");
+
+//     const customers = generateGCCCustomers(50);
+//     await User.insertMany(customers);
+
+//     console.log(`✅ Successfully created ${customers.length} customers`);
+//     console.log("Sample customer:", customers[0]);
+
+//     await mongoose.connection.close();
+//     console.log("🔌 MongoDB connection closed");
+//     process.exit(0);
+//   } catch (error) {
+//     console.error("❌ Seeding failed:", error);
+//     await mongoose.connection.close();
+//     process.exit(1);
+//   }
+// };
+
+// // Run the script
+// seedCustomers();
+
+
+
+// const mongoose = require("mongoose");
+// const { faker } = require('@faker-js/faker');
+// require("dotenv").config();
+
+// const User = require("./src/models/user.model");
+
+// const generateFakeUsers = (count = 100) => {
+//   const users = [];
+//   for (let i = 0; i < count; i++) {
+//     const isDeleted = i < 10;
+//     const isAdmin = i < 5;
+//     const status = i % 2 === 0 ? "approved" : "pending";
+//     const state = i % 3 === 0 ? "blocked" : "active";
+
+//     const firstName = faker.person.firstName();
+// const lastName = faker.person.lastName();
+// const email = faker.internet.email({ firstName, lastName }).toLowerCase();
+    
+//     const mobile = faker.phone.number();
+//     const password = faker.internet.password(12, true);
+//     const role = isAdmin ? "admin" : "user";
+//     const joinDate = faker.date.past({ years: 2 });
+//     const isBlocked = faker.datatype.boolean();
+
+//     const tags = [];
+//     if (i % 2 === 0) tags.push("premium");
+//     if (i % 3 === 0) tags.push("frequent");
+
+//     const activityLog = [{
+//       activityType: "login",
+//       description: "User logged in",
+//       referenceId: new mongoose.Types.ObjectId(),
+//       createdBy: new mongoose.Types.ObjectId(),
+//       ipAddress: faker.internet.ip(),
+//       deviceInfo: "Chrome browser",
+//       date: faker.date.recent(),
+//     }];
+
+//     const segments = [{
+//       name: "Test Segment",
+//       assignedAt: new Date(),
+//       assignedBy: new mongoose.Types.ObjectId(),
+//       expiresAt: faker.date.future(),
+//     }];
+
+//     let customerTier = "basic";
+//     if (i % 5 === 0) {
+//       customerTier = "gold";
+//     } else if (i % 4 === 0) {
+//       customerTier = "silver";
+//     }
+
+//     const user = {
+//       firstName,
+//       lastName,
+//       email,
+//       mobile,
+//       password,
+//       role,
+//       status,
+//       state,
+//       isDeleted,
+//       joinDate,
+//       isBlocked,
+//       tags,
+//       segments,
+//       activityLog,
+//       customerTier,
+//       ordersCount: faker.number.int({ min: 0, max: 50 }),
+//       totalSpent: faker.number.int({ min: 0, max: 10000 }),
+//       lastOrderDate: faker.date.recent(),
+//       lastSiteVisit: faker.date.recent(),
+//       isSubscribedToNewsletter: faker.datatype.boolean(),
+//       communicationPreferences: {
+//         email: true,
+//         sms: faker.datatype.boolean(),
+//         whatsapp: faker.datatype.boolean(),
+//         pushNotifications: true,
+//       },
+//       verification: {
+//         emailVerified: faker.datatype.boolean(),
+//         phoneVerified: faker.datatype.boolean(),
+//         identityVerified: false,
+//       },
+//     };
+
+//     users.push(user);
+//   }
+//   return users;
+// };
+
+// const seedUsers = async () => {
+//   try {
+//     console.log("🚀 Seeding users...");
+
+//     await mongoose.connect(process.env.MONGO_URI);
+
+//     await User.deleteMany({});
+//     console.log("🧹 Cleared existing users");
+
+//     const users = generateFakeUsers(100);
+//     await User.insertMany(users);
+//     console.log(`✅ Successfully added ${users.length} users`);
+
+//     await mongoose.connection.close();
+//     console.log("🔌 MongoDB connection closed");
+
+//     process.exit(0);
+//   } catch (error) {
+//     console.error("❌ Seeding failed:", error);
+//     await mongoose.connection.close();
+//     process.exit(1);
+//   }
+// };
+
+// seedUsers();
+
+
+// const mongoose = require("mongoose");
+// const faker = require('@faker-js/faker').faker;
+// require("dotenv").config();
+
+// const User = require("./src/models/user.model");
+
+// const generateFakeUsers = (count = 100) => {
+//   const users = [];
+//   for (let i = 0; i < count; i++) {
+//     const isDeleted = i < 10; // 10 users have isDeleted = true
+//     const isAdmin = i < 5; // First 5 users are admins
+//     const status = i % 2 === 0 ? "approved" : "pending"; // Randomize status
+//     const state = i % 3 === 0 ? "blocked" : "active"; // Randomize state (blocked or active)
+
+//     const firstName = faker.name.firstName(); // Updated to use faker.name
+//     const lastName = faker.name.lastName(); // Updated to use faker.name
+//     const email = faker.internet.email(firstName, lastName).toLowerCase();
+//     const mobile = faker.phone.number('###########');
+//         const password = faker.internet.password(12, true); // More randomized password
+//     const role = isAdmin ? "admin" : "user";
+//     const joinDate = faker.date.past(2); // Users join in the past 2 years
+//     const isBlocked = faker.datatype.boolean(); // Randomly assign blocked status
+
+//     const tags = [];
+//     if (i % 2 === 0) tags.push("premium");
+//     if (i % 3 === 0) tags.push("frequent");
+
+//     // Create random activityLog
+//     const activityLog = [{
+//       activityType: "login",
+//       description: "User logged in",
+//       referenceId: new mongoose.Types.ObjectId(),
+//       createdBy: new mongoose.Types.ObjectId(),
+//       ipAddress: faker.internet.ip(),
+//       deviceInfo: "Chrome browser",
+//       date: faker.date.recent(),
+//     }];
+
+//     // Create random segments
+//     const segments = [{
+//       name: "Test Segment",
+//       assignedAt: new Date(),
+//       assignedBy: new mongoose.Types.ObjectId(),
+//       expiresAt: faker.date.future(),
+//     }];
+
+//     // Determine customerTier based on spending
+//     let customerTier = "basic";
+//     if (i % 5 === 0) {
+//       customerTier = "gold";
+//     } else if (i % 4 === 0) {
+//       customerTier = "silver";
+//     }
+
+//     // Create user object
+//     const user = {
+//       firstName,
+//       lastName,
+//       email,
+//       mobile,
+//       password,
+//       role,
+//       status,
+//       state,
+//       isDeleted,
+//       joinDate,
+//       isBlocked,
+//       tags,
+//       segments,
+//       activityLog,
+//       customerTier,
+//       ordersCount: faker.datatype.number({ min: 0, max: 50 }),
+//       totalSpent: faker.datatype.number({ min: 0, max: 10000 }),
+//       lastOrderDate: faker.date.recent(),
+//       lastSiteVisit: faker.date.recent(),
+//       isSubscribedToNewsletter: faker.datatype.boolean(),
+//       communicationPreferences: {
+//         email: true,
+//         sms: faker.datatype.boolean(),
+//         whatsapp: faker.datatype.boolean(),
+//         pushNotifications: true,
+//       },
+//       verification: {
+//         emailVerified: faker.datatype.boolean(),
+//         phoneVerified: faker.datatype.boolean(),
+//         identityVerified: false,
+//       },
+//     };
+
+//     users.push(user);
+//   }
+//   return users;
+// };
+
+// Main function to seed the database
+// const seedUsers = async () => {
+//   try {
+//     console.log("🚀 Seeding users...");
+
+//     // التأكد من الاتصال بقاعدة البيانات
+//     await mongoose.connect(process.env.MONGO_URI);
+
+//     // حذف جميع المستخدمين الحاليين لتجنب التكرار
+//     await User.deleteMany({});
+//     console.log("🧹 Cleared existing users");
+
+//     // إنشاء 100 مستخدم
+//     const users = generateFakeUsers(100);
+
+//     // إدخال المستخدمين في قاعدة البيانات
+//     await User.insertMany(users);
+//     console.log(`✅ Successfully added ${users.length} users`);
+
+//     // إغلاق الاتصال بقاعدة البيانات بعد الإضافة
+//     await mongoose.connection.close();
+//     console.log("🔌 MongoDB connection closed");
+
+//     process.exit(0);
+//   } catch (error) {
+//     console.error("❌ Seeding failed:", error);
+//     await mongoose.connection.close();
+//     process.exit(1);
+//   }
+// };
+
+// // Run the script
+// seedUsers();
+
+
 require("dotenv").config();
 const mongoose = require("mongoose");
-const connectDB = require("./src/config/db");
 const User = require("./src/models/user.model");
-const { faker } = require('@faker-js/faker');
-const { ObjectId } = mongoose.Types;
 
-// Country-specific data generators
-const countryData = {
-  SA: {
-    country: "Saudi Arabia",
-    mobilePrefix: "05",
-    provinces: ["Riyadh", "Makkah", "Madinah", "Eastern Province", "Qassim", "Asir", "Tabuk", "Hail", "Northern Borders", "Jazan", "Najran", "Bahah", "Jawf"],
-    cities: ["Riyadh", "Jeddah", "Mecca", "Medina", "Dammam", "Khobar", "Taif", "Tabuk", "Abha"]
-  },
-  AE: {
-    country: "United Arab Emirates",
-    mobilePrefix: "05",
-    provinces: ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Umm Al-Quwain", "Ras Al Khaimah", "Fujairah"],
-    cities: ["Dubai", "Abu Dhabi", "Sharjah", "Al Ain", "Ajman", "Ras Al Khaimah", "Fujairah"]
-  },
-  EG: {
-    country: "Egypt",
-    mobilePrefix: "01",
-    provinces: ["Cairo", "Alexandria", "Giza", "Sharqia", "Dakahlia", "Beheira", "Monufia", "Qalyubia", "Gharbia"],
-    cities: ["Cairo", "Alexandria", "Giza", "Shubra El-Kheima", "Port Said", "Suez", "Luxor", "Mansoura", "Tanta"]
-  }
-};
-
-// Generate realistic customers from GCC countries
-const generateGCCCustomers = (count = 30) => {
-  const customers = [];
-  
-  for (let i = 0; i < count; i++) {
-    const countryCode = faker.helpers.arrayElement(["SA", "AE", "EG"]);
-    const countryInfo = countryData[countryCode];
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
-    const email = faker.internet.email({ firstName, lastName }).toLowerCase();
-    const mobile = `${countryInfo.mobilePrefix}${faker.number.int({ min: 10000000, max: 99999999 })}`;
-    
-    customers.push({
-      firstName,
-      lastName,
-      email,
-      mobile,
-      password: `Customer${i+1}@123`, // Strong password
-      role: "user",
-      status: "approved",
-      joinDate: faker.date.past({ years: 2 }),
-      isBlocked: false,
-      verification: {
-        emailVerified: faker.datatype.boolean(),
-        phoneVerified: faker.datatype.boolean(),
-        identityVerified: false
-      },
-      communicationPreferences: {
-        email: true,
-        sms: faker.datatype.boolean(),
-        whatsapp: faker.datatype.boolean(),
-        pushNotifications: true
-      },
-      addresses: [{
-        country: countryInfo.country,
-        province: { 
-          id: faker.number.int({ min: 1, max: 20 }).toString(),
-          name: faker.helpers.arrayElement(countryInfo.provinces)
-        },
-        city: {
-          id: faker.number.int({ min: 1, max: 50 }).toString(),
-          provinceId: faker.number.int({ min: 1, max: 20 }).toString(),
-          name: faker.helpers.arrayElement(countryInfo.cities)
-        },
-        street: faker.location.streetAddress(),
-        postalCode: faker.location.zipCode(),
-        isDefault: true
-      }],
-      ordersCount: faker.number.int({ min: 0, max: 50 }),
-      totalSpent: faker.number.int({ min: 0, max: 10000 }),
-      lastOrderDate: faker.date.recent(),
-      lastSiteVisit: faker.date.recent(),
-      isSubscribedToNewsletter: faker.datatype.boolean(),
-      customerTier: calculateCustomerTier(faker.number.int({ min: 0, max: 10000 }))
-    });
-  }
-  
-  return customers;
-};
-
-// Calculate customer tier based on total spending
-const calculateCustomerTier = (totalSpent) => {
-  if (totalSpent >= 5000) return "platinum";
-  if (totalSpent >= 2000) return "gold";
-  if (totalSpent >= 500) return "silver";
-  return "basic";
-};
-
-// Main seeding function
-const seedCustomers = async () => {
+const connectDB = async () => {
   try {
-    await connectDB();
-    console.log("🚀 Generating fake customers...");
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("✅ Connected to MongoDB");
 
-    await User.deleteMany({ role: "user" });
-    console.log("🧹 Cleared existing customers");
-
-    const customers = generateGCCCustomers(50);
-    await User.insertMany(customers);
-
-    console.log(`✅ Successfully created ${customers.length} customers`);
-    console.log("Sample customer:", customers[0]);
-
-    await mongoose.connection.close();
-    console.log("🔌 MongoDB connection closed");
-    process.exit(0);
+    // بعد الاتصال، نفذ التحديث
+    await activateSomeBlockedUsers();
+    
+    // بعد الانتهاء، اغلق الاتصال
+    mongoose.disconnect();
   } catch (error) {
-    console.error("❌ Seeding failed:", error);
-    await mongoose.connection.close();
+    console.error("❌ MongoDB connection error:", error);
     process.exit(1);
   }
 };
 
-// Run the script
-seedCustomers();
+async function activateSomeBlockedUsers() {
+  try {
+    const result = await User.updateMany(
+      { state: 'blocked' },
+      { $set: { state: 'active' } },
+      { limit: 40 } // اختياري: لو عايزة تعدلي عدد معين فقط
+    );
+
+    console.log(`✅ Updated ${result.modifiedCount} users`);
+  } catch (error) {
+    console.error('❌ Error updating users:', error);
+  }
+}
+
+connectDB();
+
+
+// // const seedUsers = async () => {
+// //   try {
+// //     const users = await User.find();
+
+// //     const states = ["active", "blocked"];
+
+// //     for (const user of users) {
+// //       const randomState = states[Math.floor(Math.random() * states.length)];
+
+// //       await User.findByIdAndUpdate(user._id, { state: randomState });
+
+// //       console.log(`✔️ Updated user ${user._id} => state: ${randomState}`);
+// //     }
+
+// //     console.log("✅ All users updated successfully.");
+// //   } catch (error) {
+// //     console.error("❌ Error updating users:", error);
+// //   } finally {
+// //     mongoose.disconnect();
+// //   }
+// // };
+
+// // const run = async () => {
+// //   await connectDB();
+// //   await seedUsers();
+// // };
+// // 
+// run();
+
+

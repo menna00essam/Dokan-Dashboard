@@ -14,6 +14,7 @@ import { VFileUpload } from 'vuetify/labs/VFileUpload'
 
 // Pinia (state management)
 import { createPinia } from 'pinia'
+import { useAuthStore } from './store/auth' // استورد الـ Auth Store
 
 // Router
 import router from './router'
@@ -42,6 +43,7 @@ const vuetify = createVuetify({
     ...components,
     VFileUpload // Add the labs component here
   },
+  rtl: true, // Enable RTL support
   directives,
   icons: {
     defaultSet: 'mdi' // Material Design Icons
@@ -74,14 +76,17 @@ const vuetify = createVuetify({
         }
       }
     }
-  }
+  },
+  rtl: true
 })
 
 // Create and mount the app
-createApp(App)
-  .use(router)
-  .use(createPinia())
-  .use(vuetify)
-  .use(Toast, toastOptions)
-  .use(i18n)
-  .mount('#app')
+const app = createApp(App)
+const pinia = createPinia()
+app.use(router)
+app.use(pinia)
+
+const authStore = useAuthStore(pinia) // مرر الـ pinia instance للـ store
+authStore.loadUserFromStorage() // استدعاء loadUserFromStorage بعد إنشاء الـ pinia
+
+app.use(vuetify).use(Toast, toastOptions).use(i18n).mount('#app')

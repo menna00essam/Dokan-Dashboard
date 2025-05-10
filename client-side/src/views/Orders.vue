@@ -1,288 +1,279 @@
 <template>
   <v-form>
     <v-container>
-      <v-row class="d-flex align-center" no-gutters>
-        <v-col cols="8" lg="10" sm="9" xs="8">
-          <v-text-field
-            placeholder="Search order..."
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            hide-details
-            density="comfortable"
-            color="#ccc"
-          ></v-text-field>
-        </v-col>
+      <v-card class="mb-4" elevation="2">
+        <v-card-text>
+          <v-row :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+            <v-col cols="12" md="4" sm="6">
+              <v-text-field
+                :label="$t('Search Orders')"
+                prepend-inner-icon="mdi-magnify"
+                clearable
+                hide-details
+                v-model="ordersStore.searchQuery"
+                @input="ordersStore.setSearchQuery(ordersStore.searchQuery)"
+              />
+            </v-col>
 
-        <v-col cols="4" lg="2" sm="3" xs="4" class="d-flex justify-end">
-          <v-btn
-            prepend-icon="mdi-plus"
-            style="
-              background-color: #3b82f6;
-              height: 48px;
-              text-transform: capitalize;
-            "
-            class="text-white"
-          >
-            Add Order
-          </v-btn>
-        </v-col>
-      </v-row>
+            <v-col cols="6" md="3" sm="6">
+              <v-select
+                :items="statusOptions"
+                :label="$t('orderHeaders.status')"
+                clearable
+                hide-details
+                v-model="ordersStore.selectedStatus"
+                @update:model-value="ordersStore.setStatusFilter"
+              />
+            </v-col>
+
+            <v-col cols="6" md="3" sm="6">
+              <v-select
+                :items="sortOptions"
+                :label="$t('Sort By')"
+                hide-details
+                v-model="ordersStore.sortBy"
+              />
+            </v-col>
+
+            <v-col cols="6" md="2" sm="6" class="d-flex align-center">
+              <v-btn
+                color="secondary"
+                class="pa-6"
+                style="font-size: 1.2rem"
+                block
+                @click="ordersStore.resetFilters()"
+              >
+                {{ t('Reset') }}
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
     </v-container>
   </v-form>
 
   <v-card>
     <v-container>
-      <v-data-table
-        :headers="headers"
-        :items="filteredItems"
-        item-value="id"
-        class="elevation-0"
-        hide-default-footer
-      >
-        <template #item.product="{ item }">
-          <div class="d-flex align-center ga-5">
-            <div class="product-image-wrapper">
-              <v-img :src="item.image" alt="Product Image" cover />
-            </div>
-            <div>
-              <div>{{ item.product }}</div>
-              <div class="text-caption text-grey">
-                {{ item.variants }} Variants
+      <template v-if="ordersStore.loading">
+        <SkeletonLoader
+          :columns="headers.map((h) => h.title)"
+          :rows="ordersStore.itemsPerPage"
+        />
+      </template>
+      <template v-else>
+        <v-data-table
+          :headers="headers"
+          :items="ordersStore.sortedOrders"
+          item-value="_id"
+          :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+          class="elevation-0"
+          hide-default-footer
+          :no-data-text="t('No data available')"
+        >
+          <template #item.product="{ item }">
+            <div class="d-flex align-center ga-5">
+              <div class="product-image-wrapper">
+                <v-img
+                  :src="item.orderItems[0]?.selectedColors[0]?.image"
+                  alt="Product Image"
+                  cover
+                />
+              </div>
+              <div>
+                {{ item.orderItems[0]?.name }}
+                <v-tooltip v-if="item.orderItems.length > 1" location="bottom">
+                  <template #activator="{ props }">
+                    <span
+                      v-bind="props"
+                      class="text-grey-darken-1 text-caption cursor-pointer"
+                    >
+                      +{{ item.orderItems.length - 1 }} more
+                    </span>
+                  </template>
+                  <span>
+                    {{
+                      item.orderItems
+                        .slice(1)
+                        .map((p) => p.name)
+                        .join(', ')
+                    }}
+                  </span>
+                </v-tooltip>
               </div>
             </div>
-          </div>
-        </template>
+          </template>
 
-        <template #item.status="{ item }">
-          <v-chip :color="statusColor(item.status)" variant="tonal" small>
-            {{ item.status }}
-          </v-chip>
-        </template>
+          <template #item.user="{ item }">
+            <div>{{ item.user?.firstName }} {{ item.user?.lastName }}</div>
+          </template>
 
-        <template #item.actions="{ item }">
-          <v-btn
-            icon="mdi-pencil"
-            @click="openEditDialog(item)"
-            size="small"
-            variant="text"
-          />
-          <v-btn
-            icon="mdi-delete"
-            @click="deleteItem(item)"
-            size="small"
-            variant="text"
-          />
-        </template>
-      </v-data-table>
+          <template #item.total="{ item }"> ${{ item.total }} </template>
+
+          <template #item.date="{ item }"> {{ item.createdAt }} </template>
+
+          <template #item.payment="{ item }">
+            <div>{{ item.shippingMethod?.name }}</div>
+          </template>
+
+          <template #item.status="{ item }">
+            <v-chip :color="statusColor(item.status)" variant="tonal" small>
+              {{ item.status }}
+            </v-chip>
+          </template>
+
+          <template #item.actions="{ item }">
+            <v-btn
+              icon="mdi-pencil"
+              @click="openEditDialog(item)"
+              size="small"
+              variant="text"
+            />
+            <v-btn
+              icon="mdi-eye"
+              @click="orderDetails(item)"
+              size="small"
+              variant="text"
+            />
+            <v-btn
+              icon="mdi-delete"
+              @click="deleteItem(item)"
+              size="small"
+              variant="text"
+            />
+          </template>
+        </v-data-table>
+      </template>
     </v-container>
   </v-card>
 
-  <!-- Dialog -->
   <v-dialog
     v-model="dialog"
-    max-width="400"
-    transition="fade-transition"
+    max-width="420"
+    transition="dialog-bottom-transition"
     persistent
   >
-    <v-card>
-      <v-card-title class="justify-center text-h6 font-weight-bold">
-        Update Order Status
+    <v-card class="rounded-xl elevation-10 pa-4">
+      <v-card-title class="justify-center text-h6 font-weight-bold mb-3">
+        <v-icon class="mr-2">mdi-pencil</v-icon>
+        {{ t('orderDialog.title') }}
       </v-card-title>
 
       <v-card-text class="pt-0">
         <v-select
           v-model="selectedStatus"
-          :items="statuses"
-          label="Select New Status"
+          :items="
+            statuses.map((status) => ({
+              title: t(`orderStatus.${status}`),
+              value: status
+            }))
+          "
+          :label="t('orderDialog.selectStatus')"
           variant="outlined"
           density="comfortable"
-          color="primary"
+          class="rounded-md"
+          hide-details
+          clearable
         />
       </v-card-text>
 
-      <v-card-actions class="justify-center pb-4">
+      <v-card-actions class="justify-center pt-4">
         <v-btn
-          color="grey"
-          variant="tonal"
-          class="mr-2"
+          color="grey-darken-1"
+          variant="text"
+          class="rounded-pill px-5"
           @click="dialog = false"
         >
-          Cancel
+          {{ t('orderDialog.cancel') }}
         </v-btn>
-        <v-btn color="primary" variant="elevated" @click="saveStatus">
-          Save
+        <v-btn
+          color="primary"
+          variant="flat"
+          class="rounded-pill px-5"
+          @click="saveStatus"
+        >
+          {{ t('orderDialog.save') }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <ConfirmDialog
+    ref="confirmDialog"
+    :title="t('Confirm Delete')"
+    :message="deleteMessage"
+    :confirm-text="t('Delete')"
+    :cancel-text="t('Cancel')"
+    confirm-color="error"
+    @confirm="handleConfirmDelete"
+  />
+
+  <PaginationControls
+    class="px-10"
+    :page="ordersStore.currentPage"
+    :items-per-page="ordersStore.itemsPerPage"
+    :total-items="ordersStore.totalOrders"
+    @update:page="handlePageChange"
+    @update:itemsPerPage="handleItemsPerPageChange"
+    :loading="ordersStore.loading"
+  />
 </template>
 
 <script setup>
-  import { onMounted, ref } from 'vue'
+  import { onMounted, ref, computed } from 'vue'
+  import { useOrderStore } from '../store/order'
+  import router from '../router'
+  import { useI18n } from 'vue-i18n'
+  import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+  import PaginationControls from '../components/Shared/PaginationControls.vue'
+  import SkeletonLoader from '../components/Shared/SkeletonLoader.vue'
 
-  onMounted(() => {
-    const saveOrders = localStorage.getItem('orders')
-    if (saveOrders) {
-      filteredItems.value = JSON.parse(saveOrders)
-    } else {
-      filteredItems.value = [...items.value]
-    }
+  const ordersStore = useOrderStore()
+  onMounted(async () => {
+    await ordersStore.getOrders()
   })
 
-  const headers = [
-    { title: 'Order ID', value: 'id' },
-    { title: 'Product', value: 'product' },
-    { title: 'Date', value: 'date' },
-    { title: 'Customer', value: 'customer' },
-    { title: 'Total', value: 'total' },
-    { title: 'Payment', value: 'payment' },
-    { title: 'Status', value: 'status' },
-    { title: 'Actions', value: 'actions' }
-  ]
+  const { t } = useI18n()
 
-  const items = ref([
+  const headers = computed(() => [
     {
-      id: 1,
-      image: 'src/assets/bmw.jpg',
-      product: 'Handmade Pouch',
-      variants: 3,
-      date: '29 Dec 2022',
-      customer: 'John Bushmill',
-      total: '$121.00',
-      payment: 'Mastercard',
-      status: 'Processing'
+      title: t('orderHeaders.orderNumber'),
+      value: 'orderNumber',
+      align: 'center'
+    },
+    { title: t('orderHeaders.product'), value: 'product', align: 'center' },
+    {
+      title: t('orderHeaders.date'),
+      value: 'createdAt',
+      align: 'center',
+      sortable: true
     },
     {
-      id: 2,
-      image: 'src/assets/bmw.jpg',
-      product: 'Smartwatch E2',
-      variants: 2,
-      date: '24 Dec 2022',
-      customer: 'Linda Blair',
-      total: '$590.00',
-      payment: 'Visa',
-      status: 'Delivered'
+      title: t('orderHeaders.user'),
+      value: 'user',
+      align: 'center',
+      sortable: true
     },
     {
-      id: 3,
-      image: 'src/assets/bmw.jpg',
-      product: 'Smartwatch E2',
-      variants: 2,
-      date: '24 Dec 2022',
-      customer: 'Linda Blair',
-      total: '$590.00',
-      payment: 'Visa',
-      status: 'Cancelled'
+      title: t('orderHeaders.total'),
+      value: 'total',
+      align: 'center',
+      sortable: true
     },
-    {
-      id: 4,
-      image: 'src/assets/bmw.jpg',
-      product: 'Handmade Pouch',
-      variants: 3,
-      date: '29 Dec 2022',
-      customer: 'John Bushmill',
-      total: '$121.00',
-      payment: 'Mastercard',
-      status: 'Processing'
-    },
-    {
-      id: 5,
-      image: 'src/assets/bmw.jpg',
-      product: 'Smartwatch E2',
-      variants: 2,
-      date: '24 Dec 2022',
-      customer: 'Linda Blair',
-      total: '$590.00',
-      payment: 'Visa',
-      status: 'Delivered'
-    },
-    {
-      id: 6,
-      image: 'src/assets/bmw.jpg',
-      product: 'Smartwatch E2',
-      variants: 2,
-      date: '24 Dec 2022',
-      customer: 'Linda Blair',
-      total: '$590.00',
-      payment: 'Visa',
-      status: 'Cancelled'
-    },
-    {
-      id: 7,
-      image: 'src/assets/bmw.jpg',
-      product: 'Handmade Pouch',
-      variants: 3,
-      date: '29 Dec 2022',
-      customer: 'John Bushmill',
-      total: '$121.00',
-      payment: 'Mastercard',
-      status: 'Processing'
-    },
-    {
-      id: 8,
-      image: 'src/assets/bmw.jpg',
-      product: 'Smartwatch E2',
-      variants: 2,
-      date: '24 Dec 2022',
-      customer: 'Linda Blair',
-      total: '$590.00',
-      payment: 'Visa',
-      status: 'Delivered'
-    },
-    {
-      id: 9,
-      image: 'src/assets/bmw.jpg',
-      product: 'Smartwatch E2',
-      variants: 2,
-      date: '24 Dec 2022',
-      customer: 'Linda Blair',
-      total: '$590.00',
-      payment: 'Visa',
-      status: 'Cancelled'
-    },
-    {
-      id: 10,
-      image: 'src/assets/bmw.jpg',
-      product: 'Handmade Pouch',
-      variants: 3,
-      date: '29 Dec 2022',
-      customer: 'John Bushmill',
-      total: '$121.00',
-      payment: 'Mastercard',
-      status: 'Processing'
-    },
-    {
-      id: 11,
-      image: 'src/assets/bmw.jpg',
-      product: 'Smartwatch E2',
-      variants: 2,
-      date: '24 Dec 2022',
-      customer: 'Linda Blair',
-      total: '$590.00',
-      payment: 'Visa',
-      status: 'Delivered'
-    },
-    {
-      id: 12,
-      image: 'src/assets/bmw.jpg',
-      product: 'Smartwatch E2',
-      variants: 2,
-      date: '24 Dec 2022',
-      customer: 'Linda Blair',
-      total: '$590.00',
-      payment: 'Visa',
-      status: 'Cancelled'
-    }
+    { title: t('orderHeaders.payment'), value: 'payment', align: 'center' },
+    { title: t('orderHeaders.status'), value: 'status', align: 'center' },
+    { title: t('orderHeaders.actions'), value: 'actions', align: 'center' }
   ])
-
-  const filteredItems = ref([...items.value])
 
   const statusColor = (status) => {
     switch (status) {
+      case 'Pending':
+        return 'teal-lighten-1'
       case 'Processing':
-        return 'orange-lighten-2'
+        return 'orange-lighten-1'
+      case 'Shipped':
+        return 'purple-lighten-1'
       case 'Delivered':
-        return 'blue-lighten-2'
+        return 'green-lighten-1'
       case 'Cancelled':
         return 'red-lighten-2'
       default:
@@ -293,26 +284,94 @@
   const dialog = ref(false)
   const selectedStatus = ref('')
   const currentItem = ref(null)
-  const statuses = ['Processing', 'Delivered', 'Cancelled']
+  const statuses = [
+    'Pending',
+    'Processing',
+    'Shipped',
+    'Delivered',
+    'Cancelled'
+  ]
 
   function openEditDialog(item) {
     selectedStatus.value = item.status
     currentItem.value = item
     dialog.value = true
   }
-
-  function saveStatus() {
+  async function saveStatus() {
     if (currentItem.value) {
-      currentItem.value.status = selectedStatus.value
+      console.log(currentItem.value)
+      await ordersStore.updateOrderStatus(
+        currentItem.value._id,
+        selectedStatus.value
+      )
       dialog.value = false
     }
   }
 
+  async function orderDetails(item) {
+    ordersStore.setSelectedOrder(item)
+    router.push({
+      name: 'order-details',
+      params: { id: item._id }
+    })
+  }
+
+  // async function deleteItem(item) {
+  //   try {
+  //     await ordersStore.softDeleteOrder(item._id)
+  //     ordersStore.orders = ordersStore.orders.filter(
+  //       (order) => item._id !== order._id
+  //     )
+  //   } catch (err) {
+  //     console.log(err)
+  //   }
+  // }
+
+  const statusOptions = computed(() => [
+    { value: 'All', title: t('orderStatus.All') },
+    { value: 'Pending', title: t('orderStatus.Pending') },
+    { value: 'Processing', title: t('orderStatus.Processing') },
+    { value: 'Shipped', title: t('orderStatus.Shipped') },
+    { value: 'Delivered', title: t('orderStatus.Delivered') },
+    { value: 'Cancelled', title: t('orderStatus.Cancelled') }
+  ])
+
+  const sortOptions = computed(() => [
+    { value: 'userName', title: t('User Name') },
+    { value: 'totalPrice', title: t('Total Price') },
+    { value: 'date', title: t('orderHeaders.date') }
+  ])
+
+  const confirmDialog = ref(null)
+
+  const itemToDelete = ref(null)
+
   function deleteItem(item) {
-    filteredItems.value = filteredItems.value.filter(
-      (deletedItem) => item.id !== deletedItem.id
-    )
-    localStorage.setItem('orders', JSON.stringify(filteredItems.value))
+    itemToDelete.value = item
+    confirmDialog.value.open()
+  }
+
+  async function handleConfirmDelete() {
+    try {
+      await ordersStore.softDeleteOrder(itemToDelete.value._id)
+      ordersStore.orders = ordersStore.orders.filter(
+        (order) => itemToDelete.value._id !== order._id
+      )
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handlePageChange = async (newPage) => {
+    if (newPage === ordersStore.currentPage) return
+    ordersStore.currentPage = newPage
+    await ordersStore.getOrders({ page: newPage })
+  }
+
+  const handleItemsPerPageChange = async (newSize) => {
+    ordersStore.itemsPerPage = newSize
+    ordersStore.currentPage = 1
+    await ordersStore.getOrders({ page: 1, limit: newSize })
   }
 </script>
 
@@ -329,9 +388,9 @@
     object-fit: cover;
   }
   .item-style {
-    margin-bottom: 8px; /* مثال للمارجن السفلي */
-    background-color: #f5f5f5; /* مثال للباكجراوند كولو الرمادي الفاتح */
-    padding: 8px; /* ممكن تضيف padding عشان الشكل يكون أحسن */
-    border-radius: 4px; /* عشان الأطراف تكون مدورة شوية */
+    margin-bottom: 8px;
+    background-color: #f5f5f5;
+    padding: 8px;
+    border-radius: 4px;
   }
 </style>

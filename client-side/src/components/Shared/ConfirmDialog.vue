@@ -6,11 +6,18 @@
     persistent
     scrim="rgba(0, 0, 0, 0.5)"
   >
-    <v-card class="dialog-card">
+    <v-card class="dialog-card" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
       <v-card-title class="dialog-title">
-        <v-icon size="24" class="mr-2" :color="iconColor">{{
-          dialogIcon
-        }}</v-icon>
+        <v-icon
+          size="24"
+          class="mr-2"
+          :color="iconColor"
+          :class="{
+            'ma-3': $i18n.locale === 'ar',
+            'ml-0': $i18n.locale !== 'ar'
+          }"
+          >{{ dialogIcon }}</v-icon
+        >
         {{ title }}
       </v-card-title>
 

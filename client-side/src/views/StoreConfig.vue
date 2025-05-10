@@ -1,20 +1,16 @@
-<script>
+<script setup>
   import StoreSettings from '../components/Settings/StoreSettings.vue'
   import ShippingConfig from '../components/Settings/ShippingConfig.vue'
   import AdminRoleConfig from '../components/Settings/AdminRoleConfig.vue'
-  export default {
-    components: { StoreSettings, ShippingConfig, AdminRoleConfig }
-  }
+  import Currencies from '../components/Settings/Currencies.vue'
 </script>
 
 <template>
   <v-container fluid>
-    <!-- Store Settings Section -->
     <StoreSettings></StoreSettings>
-    <!-- Shipping Methods Section -->
     <ShippingConfig />
-    <!-- User Roles Section -->
-    <AdminRoleConfig />
+    <AdminRoleConfig></AdminRoleConfig>
+    <Currencies />
   </v-container>
 </template>
 

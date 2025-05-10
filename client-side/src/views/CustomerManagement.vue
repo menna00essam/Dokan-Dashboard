@@ -1,16 +1,18 @@
 <template>
-  <v-container fluid>
+  <v-container fluid :dir="locale === 'ar' ? 'rtl' : 'ltr'">
     <!-- Search and Filters -->
     <v-card class="mb-4" elevation="2">
       <v-card-text>
-        <v-row>
+        <v-row :class="{ 'flex-row-reverse': locale === 'ar' }">
           <v-col cols="12" md="4">
             <v-text-field
               v-model="customerStore.searchQuery"
-              label="Search customers"
+              :label="t('searchCustomers')"
               prepend-inner-icon="mdi-magnify"
               clearable
               hide-details
+              :dir="locale"
+              @update:modelValue="handleSearch"
             />
           </v-col>
 
@@ -18,9 +20,11 @@
             <v-select
               v-model="customerStore.statusFilter"
               :items="statusOptions"
-              label="Status"
+              :label="t('state')"
               clearable
               hide-details
+              :dir="locale"
+              @update:modelValue="refreshData"
             />
           </v-col>
 
@@ -28,9 +32,11 @@
             <v-select
               v-model="customerStore.tierFilter"
               :items="tierOptions"
-              label="Tier"
+              :label="t('customerTier')"
               clearable
               hide-details
+              :dir="locale"
+              @update:modelValue="refreshData"
             />
           </v-col>
 
@@ -38,8 +44,10 @@
             <v-select
               v-model="customerStore.sortBy"
               :items="sortOptions"
-              label="Sort By"
+              :label="t('sortBy')"
               hide-details
+              :dir="locale"
+              @update:modelValue="refreshData"
             />
           </v-col>
 
@@ -47,6 +55,7 @@
             <v-btn
               color="secondary"
               class="pa-6"
+              style="font-size: 1.2rem"
               @click="customerStore.resetFilters"
               block
             >
@@ -56,47 +65,73 @@
         </v-row>
       </v-card-text>
     </v-card>
+
     <!-- Action Toolbar -->
-    <div class="d-flex align-center mb-4">
+    <div
+      class="d-flex align-center mb-4"
+      :class="{ 'flex-row-reverse': locale === 'ar' }"
+    >
       <v-btn
         class="mr-3"
         variant="tonal"
         color="orange"
         :variant="selected.length ? 'flat' : 'outlined'"
       >
-        {{ selected.length }} selected
+        {{ t('selected', { count: selected.length }) }}
       </v-btn>
-      <v-menu :disabled="!selected.length">
-        <template v-slot:activator="{ props }">
-          <v-btn
-            color="secondary"
-            variant="tonal"
-            v-bind="props"
-            prepend-icon="mdi-tune"
-            class="mr-2"
-            :disabled="!selected.length"
-          >
-            Bulk Actions
-          </v-btn>
-        </template>
-        <v-list density="compact">
-          <v-list-item
-            @click="bulkUpdateStatus('active')"
-            prepend-icon="mdi-account-check"
-          >
-            <v-list-item-title>Mark as Active</v-list-item-title>
-          </v-list-item>
-          <v-list-item
-            @click="bulkUpdateStatus('blocked')"
-            prepend-icon="mdi-account-cancel"
-          >
-            <v-list-item-title>Mark as Blocked</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="addTagsToSelected" prepend-icon="mdi-tag">
-            <v-list-item-title>Add Tags</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+
+     <v-menu :disabled="!selected.length">
+    <template v-slot:activator="{ props }">
+      <v-btn
+        color="secondary"
+        variant="tonal"
+        v-bind="props"
+        prepend-icon="mdi-tune"
+        class="mr-2"
+        :disabled="!selected.length"
+      >
+        {{ t('bulkActions') }}
+      </v-btn>
+    </template>
+    
+    <v-list density="compact">
+      <v-list-item
+        @click="bulkUpdateStatus('active')"
+        prepend-icon="mdi-account-check"
+      >
+        <v-list-item-title>{{ t('markAsActive') }}</v-list-item-title>
+      </v-list-item>
+      
+      <v-list-item
+        @click="bulkUpdateStatus('blocked')"
+        prepend-icon="mdi-account-cancel"
+      >
+        <v-list-item-title>{{ t('markAsBlocked') }}</v-list-item-title>
+      </v-list-item>
+
+      <v-list-item>
+        <v-menu location="start">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              :title="t('changeTier')"
+              prepend-icon="mdi-account-star"
+            />
+          </template>
+          
+          <v-list>
+            <v-list-item
+              v-for="tier in tierOptions.filter(t => t.value !== 'all')"
+              :key="tier.value"
+              @click="handleBulkTierUpdate(tier.value)"
+            >
+              <v-list-item-title>{{ tier.title }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </v-list-item>
+    </v-list>
+  </v-menu>
 
       <v-btn
         color="error"
@@ -106,23 +141,29 @@
         :loading="isDeleting"
         :disabled="!selected.length"
       >
-        Delete
+        {{ t('delete') }}
       </v-btn>
     </div>
-    <!-- Main Data Table -->
+
+    <!-- Data Table -->
     <v-data-table
       :headers="enhancedHeaders"
-      :items="customerStore.filteredCustomers"
+      :items="customerStore.customers"
       :items-per-page="customerStore.itemsPerPage"
-      v-model:page="customerStore.currentPage"
       v-model="selected"
       show-select
-      item-value="id"
+      item-value="_id"
       class="elevation-1"
+      :loading="customerStore.loading"
+      hide-default-footer
       @click:row="(event, { item }) => viewCustomerDetails(item.id)"
     >
+      <!-- Table Content Templates -->
       <template #item.fullname="{ item }">
-        <div class="d-flex align-center">
+        <div
+          class="d-flex align-center"
+          :class="{ 'flex-row-reverse': locale === 'ar' }"
+        >
           <v-avatar size="36" class="mr-2">
             <v-img :src="item.avatar || defaultAvatar" />
           </v-avatar>
@@ -131,93 +172,73 @@
       </template>
 
       <template #item.tier="{ item }">
-        <v-chip :color="getTierColor(item.tier)" size="small">
-          {{ formatTier(item.tier) }}
+        <v-chip :color="getTierColor(item.customerTier)" size="small">
+          {{ formatTier(item.customerTier) }}
         </v-chip>
       </template>
 
-      <template #item.tags="{ item }">
+      <template #item.status="{ item }">
         <v-chip
-          v-for="tag in item.tags.slice(0, 2)"
-          :key="tag"
+          :color="item.state === 'active' ? 'success' : 'error'"
           size="small"
-          class="mr-1 mb-1"
         >
-          {{ tag }}
-          <v-tooltip activator="parent" location="top">
-            {{ item.tags.join(', ') }}
-          </v-tooltip>
+          {{ t(item.state) }}
         </v-chip>
-        <v-chip v-if="item.tags.length > 2" size="small"
-          >+{{ item.tags.length - 2 }}</v-chip
-        >
-      </template>
-
-      <template #item.totalSpent="{ item }">
-        {{ formatCurrency(item.totalSpent) }}
       </template>
 
       <template #item.actions="{ item }">
-  <div class="d-flex align-center">
-    <v-btn
-      icon
-      size="small"
-      color="info"
-      class="mr-2"
-      @click.stop="editCustomer(item)"
-    >
-      <v-icon>mdi-pencil</v-icon>
-    </v-btn>
-    <v-btn
-      icon
-      size="small"
-      color="error"
-      @click.stop="deleteSingleCustomer(item.id)"
-      :loading="isDeleting && customerToDelete === item.id"
-    >
-      <v-icon>mdi-delete</v-icon>
-    </v-btn>
-  </div>
-</template>
-
+        <div
+          class="d-flex align-center"
+          :class="{ 'flex-row-reverse': locale === 'ar' }"
+        >
+          <v-btn
+            icon
+            size="small"
+            color="info"
+            class="mr-2"
+            @click.stop="editCustomer(item)"
+          >
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="small"
+            color="error"
+            @click.stop="deleteSingleCustomer(item.id)"
+            :loading="isDeleting && customerToDelete === item.id"
+          >
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
+        </div>
+      </template>
     </v-data-table>
 
-    <!-- Delete Confirmation -->
+    <!-- Pagination -->
+    <PaginationControls
+      :key="`pagination-${customerStore.currentPage}-${customerStore.itemsPerPage}`"
+      :page="customerStore.currentPage"
+      :items-per-page="customerStore.itemsPerPage"
+      :total-items="customerStore.total"
+      @update:page="handlePageChange"
+      @update:items-per-page="handleItemsPerPageChange"
+      :loading="customerStore.loading"
+    />
+
+    <!-- Confirm Dialogs -->
     <ConfirmDialog
       ref="deleteConfirmDialog"
-      title="Confirm Deletion"
+      :title="t('confirmDeletion')"
       :message="deleteMessage"
-      confirm-text="Delete"
+      :confirm-text="t('delete')"
       confirm-color="error"
       @confirm="confirmDelete"
     />
 
-    <!-- Bulk Tag Dialog -->
-    <v-dialog v-model="tagDialog" max-width="500">
-      <v-card>
-        <v-card-title>Add Tags to Selected Customers</v-card-title>
-        <v-card-text>
-          <v-combobox
-            v-model="selectedTags"
-            label="Tags"
-            multiple
-            chips
-            :items="commonTags"
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn @click="tagDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="applyTags">Apply</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <!-- Single Delete Confirmation -->
     <ConfirmDialog
       ref="singleDeleteDialog"
-      title="Confirm Deletion"
-      message="Are you sure you want to delete this customer? This action cannot be undone."
-      confirm-text="Delete"
+      :title="t('confirmDeletion')"
+      :message="t('deleteCustomerConfirm', { count: 1 })"
+      :confirm-text="t('delete')"
       confirm-color="error"
       @confirm="confirmSingleDelete"
     />
@@ -225,56 +246,143 @@
 </template>
 
 <script setup>
-  import { ref, computed } from 'vue'
+  import { ref, computed, onMounted } from 'vue'
   import { useCustomerStore } from '../store/customers'
   import { useRouter } from 'vue-router'
+  import { useI18n } from 'vue-i18n'
+  import { useToast } from 'vue-toastification'
   import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+  import PaginationControls from '../components/Shared/PaginationControls.vue'
 
+  const { t, locale } = useI18n()
+  const toast = useToast()
   const router = useRouter()
   const customerStore = useCustomerStore()
 
-  // Data
-
   const selected = ref([])
-  const tagDialog = ref(false)
-  const selectedTags = ref([])
-  const customerToDelete = ref(null) // To store the ID of the customer to be deleted
-
-  // Refs for dialog components
+  const isDeleting = ref(false)
+  const customerToDelete = ref(null)
   const deleteConfirmDialog = ref(null)
   const singleDeleteDialog = ref(null)
-  // Constants
-  const defaultAvatar = 'https://cdn.vuetifyjs.com/images/profiles/male1.jpg'
-  const statusOptions = ['active', 'blocked']
-  const tierOptions = ['basic', 'silver', 'gold', 'platinum']
-  const sortOptions = [
-    { value: 'name', title: 'Name' },
-    { value: 'joinDate', title: 'Join Date' },
-    { value: 'totalSpent', title: 'Total Spent' },
-    { value: 'lastOrder', title: 'Last Order' }
-  ]
-  const commonTags = ['VIP', 'Frequent Buyer', 'New', 'At Risk', 'Wholesale']
 
-  // Computed
+  const defaultAvatar = 'https://cdn.vuetifyjs.com/images/profiles/male1.jpg'
+
+  const statusOptions = [
+    { value: 'all', title: t('all') },
+    ...['active', 'blocked'].map((state) => ({
+      value: state,
+      title: t(state)
+    }))
+  ]
+
+  const tierOptions = [
+    { value: 'all', title: t('all') },
+    ...['basic', 'silver', 'gold', 'platinum'].map((customerTier) => ({
+      value: customerTier,
+      title: t(customerTier)
+    }))
+  ]
+
+  const resetAll = async () => {
+    customerStore.resetFilters()
+    await refreshData()
+    toast.success(t('filtersReset'))
+  }
+  const handlePageChange = async (newPage) => {
+    if (newPage === customerStore.currentPage) return
+    try {
+      console.log('Changing to page:', newPage)
+      await customerStore.fetchCustomers(newPage)
+    } catch (error) {
+      console.error('Page change error:', error)
+      toast.error(t('pageChangeError'))
+    }
+  }
+
+  const bulkUpdateTier = async (tier) => {
+  try {
+    await customerStore.bulkUpdateTier(selected.value, tier)
+    await customerStore.fetchCustomers(customerStore.currentPage)
+    selected.value = []
+    toast.success(t('bulkTierUpdated', { tier: t(tier) }))
+  } catch (error) {
+    toast.error(t('bulkUpdateError'))
+  }
+}
+
+  const handleItemsPerPageChange = async (newSize) => {
+    console.log('Changing items per page to:', newSize)
+    customerStore.itemsPerPage = newSize
+    customerStore.currentPage = 1
+    await customerStore.fetchCustomers()
+  }
+
+  const refreshData = async () => {
+    customerStore.currentPage = 1
+    await customerStore.fetchCustomers()
+  }
+  const handleSearch = (value) => {
+    // Reset filters to 'all' when searching
+    customerStore.statusFilter = 'all'
+    customerStore.tierFilter = 'all'
+    // Trigger data refresh
+    refreshData()
+  }
+  const sortOptions = [
+    { value: 'name', title: t('name') },
+    { value: 'joinDate', title: t('joinDate') },
+    { value: 'totalSpent', title: t('totalSpent') }
+  ]
+
   const enhancedHeaders = computed(() => [
-    { title: 'Customer', key: 'fullname', sortable: true },
-    { title: 'Email', key: 'email' },
-    { title: 'Phone', key: 'mobile' },
-    { title: 'Tier', key: 'tier', sortable: true },
-    { title: 'Tags', key: 'tags' },
-    { title: 'Total Spent', key: 'totalSpent', sortable: true },
-    { title: 'Orders', key: 'ordersCount', sortable: true },
-    { title: 'Status', key: 'status' },
-    { title: 'Actions', key: 'actions', sortable: false }
+    { title: t('customer'), key: 'fullname', sortable: true },
+    { title: t('email'), key: 'email' },
+    { title: t('phone'), key: 'mobile' },
+    { title: t('customerTier'), key: 'customerTier', sortable: true },
+    { title: t('state'), key: 'state' },
+    { title: t('actions'), key: 'actions', sortable: false }
   ])
-  const deleteMessage = computed(
-    () =>
-      `Are you sure you want to delete ${selected.value.length} selected ${selected.value.length === 1 ? 'customer' : 'customers'}? This action cannot be undone.`
+
+
+
+  const tiers = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'silver', label: 'Silver' },
+  { value: 'gold', label: 'Gold' },
+  { value: 'platinum', label: 'Platinum' }
+];
+
+const handleBulkTierUpdate = async (tier) => {
+  if (!selected.value.length) return;
+  
+  try {
+    const count = await customerStore.bulkUpdateTier(selected.value, tier);
+    selected.value = [];
+  } catch (error) {
+    console.error('Update failed:', error);
+  }
+};
+
+  const deleteMessage = computed(() =>
+    t('deleteCustomerConfirm', { count: selected.value.length })
   )
-  // Methods
+
+  onMounted(async () => {
+    await customerStore.fetchCustomers()
+  })
+
+  // const handlePageChange = async (newPage) => {
+  //   await customerStore.fetchCustomers(newPage)
+  // }
+
   const viewCustomerDetails = (id) => {
     router.push(`/customers/${id}`)
   }
+
+  const editCustomer = (customer) => {
+    router.push(`/customers/edit/${customer.id}`)
+  }
+
   const deleteSingleCustomer = (id) => {
     customerToDelete.value = id
     singleDeleteDialog.value.open()
@@ -283,121 +391,107 @@
   const confirmSingleDelete = async () => {
     isDeleting.value = true
     try {
-      await customerStore.removeCustomers([customerToDelete.value])
-      // Optional: Show success notification
-    } catch (error) {
-      console.error('Failed to delete customer:', error)
-      // Optional: Show error notification
+      const success = await customerStore.deleteCustomer(customerToDelete.value)
+      if (success) {
+        await customerStore.fetchCustomers(customerStore.currentPage)
+      }
     } finally {
       isDeleting.value = false
       customerToDelete.value = null
     }
   }
-  const editCustomer = (customer) => {
-    router.push(`/customers/edit/${customer.id}`)
-  }
-
-  const isDeleting = ref(false)
 
   const confirmDelete = async () => {
     isDeleting.value = true
     try {
-      const idsToDelete = selected.value.map((c) =>
-        typeof c === 'object' ? c.id : c
-      )
-      await customerStore.removeCustomers(idsToDelete)
-      toast.success(
-        `Deleted ${idsToDelete.length} ${idsToDelete.length === 1 ? 'customer' : 'customers'}`
-      )
-      selected.value = []
-    } catch (error) {
-      console.error('Failed to delete customers:', error)
-      toast.error('Failed to delete customers')
+      const success = await customerStore.bulkDeleteCustomers(selected.value)
+      if (success) {
+        await customerStore.fetchCustomers(customerStore.currentPage)
+        selected.value = []
+      }
     } finally {
       isDeleting.value = false
     }
   }
 
-  const bulkUpdateStatus = async (status) => {
+
+  const toggleCustomerStatus = async (customer) => {
+  try {
+    const newState = customer.state === 'active' ? 'blocked' : 'active';
+    await customerStore.toggleBlockStatus(customer.id);
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    toast.success(t('statusChanged', { state: t(newState) }));
+  } catch (error) {
+    toast.error(t('statusChangeError'));
+  }
+};
+
+const updateCustomerTier = async (customer, newTier) => {
+  try {
+    await customerStore.updateCustomer(customer.id, {
+      customerTier: newTier
+    });
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    toast.success(t('tierUpdated', { tier: t(newTier) }));
+  } catch (error) {
+    toast.error(t('tierUpdateError'));
+  }
+};
+
+
+  const bulkUpdateStatus = async (state) => {
     try {
-      // Get IDs from selected items (handles both string IDs and objects)
-      const idsToUpdate = selected.value.map((c) =>
-        typeof c === 'object' ? c.id : c
-      )
-
-      // Call store method to update status
-      await customerStore.bulkUpdateStatus(idsToUpdate, status)
-
-      // Show success message
-      toast.success(`Updated status for ${idsToUpdate.length} customers`)
-
-      // Clear selection after operation
+      // You'll need to implement this function in your store
+      await customerStore.bulkUpdateStatus(selected.value, state)
+      await customerStore.fetchCustomers(customerStore.currentPage)
       selected.value = []
+      toast.success(t('statusUpdated', { count: selected.value.length }))
     } catch (error) {
-      console.error('Failed to update status:', error)
-      toast.error('Failed to update customer status')
+      toast.error(t('updateError'))
     }
   }
 
-  // Fixed applyTags method
-  const applyTags = async () => {
-    try {
-      // Get IDs from selected items
-      const idsToTag = selected.value.map((c) =>
-        typeof c === 'object' ? c.id : c
-      )
-
-      // Call store method to add tags to each customer
-      for (const id of idsToTag) {
-        await customerStore.addTag(id, ...selectedTags.value)
-      }
-
-      // Show success message
-      toast.success(`Added tags to ${idsToTag.length} customers`)
-
-      // Clear selection and close dialog
-      selected.value = []
-      selectedTags.value = []
-      tagDialog.value = false
-    } catch (error) {
-      console.error('Failed to add tags:', error)
-      toast.error('Failed to add tags to customers')
-    }
+  const formatTier = (customerTier) => {
+    if (!customerTier) return t('unknown')
+    return t(customerTier)
   }
 
-  const addTagsToSelected = () => {
-    selectedTags.value = []
-    tagDialog.value = true
-  }
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount)
-  }
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString()
-  }
-
-  const getTierColor = (tier) => {
+  const getTierColor = (customerTier) => {
     const colors = {
       basic: 'grey',
       silver: 'blue-grey',
       gold: 'amber',
       platinum: 'blue'
     }
-    return colors[tier] || 'primary'
-  }
-
-  const formatTier = (tier) => {
-    return tier.charAt(0).toUpperCase() + tier.slice(1)
+    return colors[customerTier] || 'primary'
   }
 </script>
 
 <style scoped>
+  [dir='rtl'] .v-data-table-header th {
+    text-align: right;
+  }
+  [dir='rtl'] .v-btn__prepend {
+    margin-right: 0;
+    margin-left: 8px;
+  }
   .v-avatar {
     flex-shrink: 0;
+  }
+  [dir='rtl'] .v-list-item__prepend {
+    margin-right: 0;
+    margin-left: 16px;
+  }
+  [dir='rtl'] .v-text-field .v-input__control {
+    direction: rtl;
+  }
+  [dir='rtl'] .v-text-field .v-label {
+    right: 0;
+    left: auto;
+    transform-origin: top right;
+  }
+  [dir='rtl'] .v-select .v-select__selection {
+    direction: rtl;
+    text-align: right;
   }
 </style>
