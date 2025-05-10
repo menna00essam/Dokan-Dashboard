@@ -88,13 +88,13 @@ const getAllProducts = asyncWrapper(async (req, res, next) => {
 
 //  Create new product
 const createProduct = asyncWrapper(async (req, res, next) => {
-  console.log('Received data:', req.body);  
+  console.log('Received data:', req.body);
 
   const {
     name,
-    subtitle = '', 
+    subtitle = '',
     price,
-    description = '', 
+    description = '',
     categories,
     brand = '',
     colors,

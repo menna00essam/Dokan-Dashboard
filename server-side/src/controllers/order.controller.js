@@ -23,26 +23,21 @@ const createOrder = asyncWrapper(async (req, res, next) => {
   });
 });
 
+/*
 const getOrders = asyncWrapper(async (req, res, next) => {
   try {
     console.log('[DEBUG] Incoming Order Body:', req.body);
 
-    let { limit = 10, page = 1, search = "" } = req.query;
+    let { limit = 10, page = 1, search = "", status = "", sortBy = "createdAt", sortOrder = "desc" } = req.query;
 
     limit = Math.max(1, limit);
     page = Math.max(1, page);
 
     const skip = (page - 1) * limit;
-    const query = {};
+    const query = { isDeleted: false };
 
-    if (isNaN(limit) || isNaN(page)) {
-      return next(
-        new AppError(
-          "Invalid pagination parameters. 'limit' and 'page' must be positive numbers.",
-          400,
-          httpStatusText.FAIL
-        )
-      );
+    if (status && status !== 'All') {
+      query.status = status;
     }
 
     if (search.trim() !== "") {
@@ -54,17 +49,18 @@ const getOrders = asyncWrapper(async (req, res, next) => {
         { status: regex },
       ];
     }
-    console.log(query);
 
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
 
-    const orders = await Order.find({ isDeleted: false, ...query })
+    const orders = await Order.find(query)
       .populate("userId", "-password -__v")
       .populate("orderItems.productId")
-      .sort({ createdAt: -1 })
+      .sort(sortOptions)
       .skip(skip)
       .limit(limit);
 
-    const totalOrders = await Order.countDocuments({ isDeleted: false });
+    const totalOrders = await Order.countDocuments(query);
 
     const formattedOrders = formatOrders(orders);
 
@@ -77,6 +73,77 @@ const getOrders = asyncWrapper(async (req, res, next) => {
     res.status(500).json({ error: 'Internal Server Error', message: err.message });
   }
 });
+*/
+
+
+const getOrders = asyncWrapper(async (req, res, next) => {
+  try {
+    console.log('[DEBUG] Incoming Order Body:', req.body);
+
+    let { limit = 10, page = 1, search = "", status = "", sortBy = "createdAt", sortOrder = "desc" } = req.query;
+
+    limit = Math.max(1, parseInt(limit));
+    page = Math.max(1, parseInt(page));
+
+    const query = { isDeleted: false };
+
+    if (status && status !== 'All') {
+      query.status = status;
+    }
+
+    const orders = await Order.find(query)
+      .populate("userId", "-password -__v")
+      .populate("orderItems.productId");
+
+    // فلترة السيرش
+    let filteredOrders = orders;
+    if (search.trim() !== "") {
+      const regex = new RegExp(search, "i");
+      filteredOrders = orders.filter(order =>
+        regex.test(order.userId?.firstName) ||
+        regex.test(order.userId?.lastName) ||
+        regex.test(order.orderNumber) ||
+        regex.test(order.status)
+      );
+    }
+
+    filteredOrders.sort((a, b) => {
+      let valA, valB;
+
+      if (sortBy === "User Name") {
+        valA = a.userId?.firstName?.toLowerCase() || "";
+        valB = b.userId?.firstName?.toLowerCase() || "";
+      } else if (sortBy === "Total Price") {
+        valA = a.total || 0;
+        valB = b.total || 0;
+      } else if (sortBy === "createdAt") {
+        valA = new Date(a.createdAt);
+        valB = new Date(b.createdAt);
+      }
+
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    const totalOrders = filteredOrders.length;
+
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginatedOrders = filteredOrders.slice(start, end);
+
+    const formattedOrders = formatOrders(paginatedOrders);
+
+    res.status(200).json({
+      status: httpStatusText.SUCCESS,
+      data: { orders: formattedOrders, totalOrders },
+    });
+  } catch (err) {
+    console.error('Error fetching orders:', err);
+    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  }
+});
+
 
 
 const updateOrderStatus = asyncWrapper(async (req, res, next) => {

@@ -42,7 +42,7 @@ const formatOrders = (orders) => {
                     const defaultImage = item.productId?.image || "https://www.w3schools.com/w3images/lights.jpg";
 
                     const selectedColors = item.selectedColors.map((color) => {
-                        const colorData = colors.find((c) => c.name === color.colorName);
+                        const colorData = colors.find((c) => c.name === color.colorName.toLowerCase());
                         const imageUrl = colorData?.images?.[0]?.url || defaultImage;
 
                         return {
@@ -55,7 +55,7 @@ const formatOrders = (orders) => {
                         productId: item.productId?._id,
                         name: item.productId?.name || "",
                         price: item.productId?.price || 0,
-                        brand: item.productId?.brand || "",
+                        brand: item.productId?.brand || "Default Brand",
                         selectedColors,
                         image: defaultImage,
                     };
