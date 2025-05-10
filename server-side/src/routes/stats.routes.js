@@ -14,7 +14,7 @@ router.get("/stats/revenue", getTotalRevenue);
 router.get("/stats/orders", getOrderCount);
 router.get("/stats/avg-order-value", getAvgOrderValue);
 router.get("/stats/weekly-stats", getWeeklyStats);
-router.get("/stats/orders",getNewlyOrders);
+router.get("/stats/neworders",getNewlyOrders);
 router.get("/stats/customers", getNewlyCustomers);
 router.get("/stats/products", getNewlyProducts);
 

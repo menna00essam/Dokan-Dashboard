@@ -2,6 +2,7 @@ const Order = require("../models/order.model");
 const Product = require("../models/product.model");
 const User = require("../models/user.model");
 const formatOrders = require("../utils/formatOrders");
+const httpStatusText = require("../utils/httpStatusText");
 
 const getTotalRevenue = async (req, res) => {
   const result = await Order.aggregate([
@@ -119,7 +120,30 @@ const getNewlyOrders = async (req, res) => {
     });
   }
 };
-const getNewlyProducts = async (req, res) => {};
+const getNewlyProducts = async (req, res) => {
+  try {
+    const products = await Product.find({})
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .limit(10) // Get only 10 products
+      .populate("categories", "name") // Keep category population if needed
+      .lean(); // Use lean() for better performance if you don't need Mongoose documents
+
+    res.status(200).json({
+      status: httpStatusText.SUCCESS,
+      data: {
+        products,
+        totalProducts: products.length,
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching new products:", err);
+    res.status(500).json({
+      status: httpStatusText.ERROR,
+      message: "Internal Server Error",
+      error: err.message,
+    });
+  }
+};
 
 module.exports = {
   getTotalRevenue,
