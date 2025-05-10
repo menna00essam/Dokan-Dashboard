@@ -96,14 +96,14 @@
     
     <v-list density="compact">
       <v-list-item
-        @click="bulkUpdateUserStatus('active')"
+        @click="bulkUpdateStatus('active')"
         prepend-icon="mdi-account-check"
       >
         <v-list-item-title>{{ t('markAsActive') }}</v-list-item-title>
       </v-list-item>
       
       <v-list-item
-        @click="bulkUpdateUserStatus('blocked')"
+        @click="bulkUpdateStatus('blocked')"
         prepend-icon="mdi-account-cancel"
       >
         <v-list-item-title>{{ t('markAsBlocked') }}</v-list-item-title>

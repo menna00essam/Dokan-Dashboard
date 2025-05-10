@@ -29,8 +29,6 @@ export const useCustomerStore = defineStore('customer', () => {
   const selectedCustomers = ref([])
   const loading = ref(false)
   const error = ref(null)
-  const selected = ref([])
-
 
   const searchQuery = ref('')
   const statusFilter = ref('all')
@@ -217,22 +215,22 @@ const getCustomerOrders = computed(() => currentCustomerOrders.value)
   }
 
 
-// في الـ Pinia store
 async function bulkUpdateTier(ids, tier) {
   try {
-    loading.value = true;
-    const response = await apiClient.patch('/bulk-update-tier', { ids, tier });
-    
-    await customerStore.fetchCustomers(customerStore.currentPage);
-    
-    selected.value = [];
-    toast.success(t('bulkTierUpdated', { tier: t(tier) }));
-    return response.data.modifiedCount;
+    loading.value = true
+    const response = await apiClient.patch('/bulk-update-tier', { ids, tier })
+
+    customers.value = customers.value.map((c) =>
+      ids.includes(c._id) ? { ...c, customerTier: tier } : c
+    )
+
+    toast.success(`Updated ${response.data.modifiedCount} users`)
+    return response.data.modifiedCount
   } catch (err) {
-    toast.error(t('bulkUpdateError'));
-    throw err;
+    toast.error('Tier update failed')
+    throw err
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
@@ -286,53 +284,24 @@ const index = customers.value.findIndex((c) => c._id === id);
   }
 
 // Pinia store
-const bulkUpdateUserStatus = async (state) => {
-  console.log('bulkUpdateUserStatus called'); // إضافة هذا السطر للتحقق من الاستدعاء
+async function bulkUpdateStatus(ids, state) {
   try {
-    loading.value = true;
-
-    if (!selected.value || selected.value.length === 0) {
-      toast.error("No users selected");
-      return;
-    }
-
-    const response = await apiClient.patch('/bulk-update-status', { ids: selected.value, state });
-    console.log('Response:', response);
+    loading.value = true
+    const response = await apiClient.patch('/bulk-update-status', { ids, state })
 
     customers.value = customers.value.map((c) =>
-      selected.value.includes(c._id) ? { ...c, state } : c
-    );
+      ids.includes(c._id) ? { ...c, state } : c
+    )
 
-    const updatedCount = response.data.modifiedCount;
-    if (updatedCount > 0) {
-      toast.success(`Updated ${updatedCount} users`);
-    } else {
-      toast.info('No users were updated');
-    }
-
-    return updatedCount;
+    toast.success(`Updated ${response.data.modifiedCount} users`)
+    return response.data.modifiedCount
   } catch (err) {
-    console.error('Error while updating:', err);
-    toast.error('Status update failed');
-    throw err;
+    toast.error('Status update failed')
+    throw err
   } finally {
-    loading.value = false;
-    selected.value = [];
+    loading.value = false
   }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
 
 
 
@@ -495,7 +464,6 @@ watch(
     totalPages,
     selectedCustomers,
     total,
-    avgOrder,
     // Getters
     filteredCustomers,
     paginatedCustomers,
@@ -503,7 +471,6 @@ watch(
     getCustomerOrders,
     getCustomerActivityLog,
     toggleBlockStatus,
-    formatDate,
 
     // Actions
     fetchCustomers,
@@ -512,11 +479,11 @@ watch(
     updateCustomer,
     deleteCustomer,
     bulkDeleteCustomers,
+    bulkUpdateStatus,
     addTagsToCustomers,
     fetchCustomerOrders,
     changePage,
     resetFilters,
-    bulkUpdateTier,
-    bulkUpdateUserStatus
+    bulkUpdateTier
   }
 })

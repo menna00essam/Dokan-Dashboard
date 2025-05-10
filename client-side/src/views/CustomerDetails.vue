@@ -596,9 +596,8 @@
   ]
 
   // Computed
-  const customerOrders = computed(() =>
-    customerStore.getCustomerOrders(route.params.id)
-  )
+ const customerOrders = computed(() => customerStore.getCustomerOrders)
+
   const provinces = computed(() => customerStore.provinces)
   const filteredCities = computed(() => {
     if (!newAddress.value.province) return []
