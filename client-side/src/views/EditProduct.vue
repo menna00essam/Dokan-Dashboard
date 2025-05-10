@@ -47,7 +47,7 @@
         item-title="name"
         :rules="[rules.required]"
         label="Product Category"
-        multiple
+       
       ></v-select>
 
       <!-- <v-text-field
@@ -108,64 +108,61 @@
       </v-row>
 
       <div>
-        <div
-          v-for="(color, index) in editedProduct.colors"
-          :key="'color_' + index"
-        >
-          <h3 class="text-h6 mb-4">Color {{ index + 1 }}</h3>
-          <v-row>
-            <v-col cols="6">
-              <v-select
-                v-model="color.name"
-                :items="colorsList"
-                item-value="name"
-                item-title="name"
-                label="Select Color Name"
-                :rules="[rules.required]"
-                @change="updateColorHex(index)"
-                class="mb-4"
-              ></v-select>
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="color.hex"
-                label="Color Hex Value"
-                readonly
-                class="mb-4"
-              >
-                <template v-slot:append-inner>
-                  <div
-                    :style="{
-                      width: '30px',
-                      height: '30px',
-                      borderRadius: '4px',
-                      backgroundColor: color.hex,
-                      border: '1px solid #ccc',
-                      marginRight: '8px'
-                    }"
-                  ></div>
-                </template>
-                ></v-text-field
-              >
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="color.quantity"
-                label="Color Quantity"
-                type="number"
-                :rules="[rules.required]"
-                class="mb-4"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="color.sku"
-                label="Color SKU"
-                :rules="[rules.required]"
-                class="mb-6"
-              ></v-text-field>
-            </v-col>
-          </v-row>
+        <div v-for="(color, index) in editedProduct.colors" :key="'color_' + index">
+  <h3 class="text-h6 mb-4">Color {{ index + 1 }}</h3>
+  <v-row>
+    <v-col cols="6">
+      <v-select
+        v-model="color.name"
+        :items="colorsList"
+        item-value="name"
+        item-title="name"
+        label="Select Color Name"
+        :rules="[rules.required]"
+        @change="updateColorHex(index)"
+        class="mb-4"
+      ></v-select>
+    </v-col>
+    <v-col cols="6">
+      <v-text-field
+        v-model="color.hex"
+        label="Color Hex Value"
+        readonly
+        class="mb-4"
+      >
+        <template v-slot:append-inner>
+          <div
+            :style="{
+              width: '30px',
+              height: '30px',
+              borderRadius: '4px',
+              backgroundColor: color.hex,
+              border: '1px solid #ccc',
+              marginRight: '8px'
+            }"
+          ></div>
+        </template>
+      </v-text-field>
+    </v-col>
+    <v-col cols="6">
+      <v-text-field
+        v-model="color.quantity"
+        label="Color Quantity"
+        type="number"
+        :rules="[rules.required]"
+        class="mb-4"
+      ></v-text-field>
+    </v-col>
+    <v-col cols="6">
+      <v-text-field
+        v-model="color.sku"
+        label="Color SKU"
+        :rules="[rules.required]"
+        class="mb-6"
+      ></v-text-field>
+    </v-col>
+  </v-row>
+
 
           <h5 class="text-h6 mb-2">Images for Color {{ index + 1 }}</h5>
           <v-row dense class="mb-4">

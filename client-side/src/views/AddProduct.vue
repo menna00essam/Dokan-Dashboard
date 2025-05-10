@@ -53,7 +53,6 @@
         item-title="name"
         :rules="[rules.required]"
         label="Product Category"
-        multiple
       ></v-select>
 
       <!-- <v-text-field
@@ -71,12 +70,13 @@
             type="number"
           ></v-text-field>
         </v-col>
-
-        <v-select
-          v-model="newProduct.DiscountType"
-          :items="['Percentage', 'Fixed']"
-          label="Discount Type"
-        ></v-select>
+        <v-col cols="4">
+          <v-select
+            v-model="newProduct.DiscountType"
+            :items="['Percentage', 'Fixed']"
+            label="Discount Type"
+          ></v-select>
+        </v-col>
         <v-col cols="4">
           <v-text-field
             v-model="newProduct.DiscountValue"
@@ -84,6 +84,9 @@
             type="number"
           ></v-text-field>
         </v-col>
+      </v-row>
+      <h3 class="text-h6 mb-2">Inventory</h3>
+      <v-row>
         <v-col cols="4">
           <v-text-field
             v-model="newProduct.SKU"
@@ -99,51 +102,60 @@
             type="number"
           ></v-text-field>
         </v-col>
+        <v-col cols="4">
+          <v-select
+            v-model="newProduct.ProductStatus"
+            :items="['Draft', 'Published']"
+            label="Product Status"
+          ></v-select>
+        </v-col>
       </v-row>
-      <h3 class="text-h6 mb-2">Inventory</h3>
-
-      <v-select
-        v-model="newProduct.ProductStatus"
-        :items="['Draft', 'Published']"
-        label="Product Status"
-      ></v-select>
 
       <div v-for="(color, index) in newProduct.colors" :key="index">
         <h3>Color {{ index + 1 }}</h3>
-        <v-select
-          v-model="color.name"
-          :items="colorsList"
-          item-value="name"
-          item-title="name"
-          label="Select Color Name"
-          :rules="[rules.required]"
-        ></v-select>
-        <v-text-field v-model="color.hex" label="Color Hex Value" readonly>
-          <template v-slot:append-inner>
-            <div
-              :style="{
-                width: '30px',
-                height: '30px',
-                borderRadius: '4px',
-                backgroundColor: color.hex,
-                border: '1px solid #ccc',
-                marginRight: '8px'
-              }"
-            ></div>
-          </template>
-        </v-text-field>
-
-        <v-text-field
-          v-model="color.quantity"
-          label="Color Quantity"
-          type="number"
-          :rules="[rules.required]"
-        ></v-text-field>
-        <v-text-field
-          v-model="color.sku"
-          label="Color SKU"
-          :rules="[rules.required]"
-        ></v-text-field>
+        <v-row>
+          <v-col cols="6">
+            <v-select
+              v-model="color.name"
+              :items="colorsList"
+              item-value="name"
+              item-title="name"
+              label="Select Color Name"
+              :rules="[rules.required]"
+            ></v-select>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field v-model="color.hex" label="Color Hex Value" readonly>
+              <template v-slot:append-inner>
+                <div
+                  :style="{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '4px',
+                    backgroundColor: color.hex,
+                    border: '1px solid #ccc',
+                    marginRight: '8px'
+                  }"
+                ></div>
+              </template>
+            </v-text-field>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="color.quantity"
+              label="Color Quantity"
+              type="number"
+              :rules="[rules.required]"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="color.sku"
+              label="Color SKU"
+              :rules="[rules.required]"
+            ></v-text-field>
+          </v-col>
+        </v-row>
         <input
           type="file"
           multiple

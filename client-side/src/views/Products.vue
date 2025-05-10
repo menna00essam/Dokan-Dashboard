@@ -1,8 +1,8 @@
 <template>
   <div>
     <v-toolbar flat color="white">
-      <router-link to="/addproducts" class="ml-auto">
-        <v-btn class="mb-2 bg-blue text-white">
+      <router-link to="/addproducts" class="ml-auto" >
+        <v-btn class="mb-2 bg-blue text-white" style="text-transform: none;">
           <v-icon start>mdi-plus</v-icon>
           Add a product
         </v-btn>
@@ -17,12 +17,12 @@
     >
       <template v-slot:[`item.name`]="{ item }">
         <div class="d-flex align-center product-cell">
-          <div style="width: 40px; flex-shrink: 0; margin-right: 8px;">
+          <!-- <div style="width: 40px; flex-shrink: 0; margin-right: 8px;">
             <v-checkbox
               v-model="item.selected"
               hide-details
             ></v-checkbox>
-          </div>
+          </div> -->
           <v-avatar
              v-if="item.imageUrl"
             size="30"
@@ -86,7 +86,7 @@ const productStore = useProductStore();
 const componentKey = ref(0);
 const headers = ref([
   { title: 'Name', key: 'name' },
-  { title: 'SKU', key: 'colors' },
+  { title: 'SKU', key: 'sku' },
   { title: 'Category', key: 'categories' },
   { title: 'Stock', key: 'colors' },
   { title: 'Price', key: 'price' },
