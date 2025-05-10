@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container fluid :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     <v-toolbar
       flat
       :color="$vuetify.theme.current.dark ? 'primary' : 'white'"
@@ -12,13 +12,13 @@
           style="text-transform: none"
         >
           <v-icon start>mdi-plus</v-icon>
-          Add a product
+          {{ t('add_a_product') }}
         </v-btn>
       </router-link>
     </v-toolbar>
     <v-data-table
       :key="componentKey"
-      :headers="headers"
+      :headers="translatedHeaders"
       :items="products"
       class="elevation-1"
       hide-default-footer
@@ -67,8 +67,8 @@
         <span>{{ item.price }}</span>
       </template>
 
-      <template v-slot:[`item.createdAt`]="{ item }">
-        <span>{{ new Date(item.createdAt).toLocaleDateString() }}</span>
+      <template v-slot:[`item.date`]="{ item }">
+        <span>{{ new Date(item.date).toLocaleDateString() }}</span>
       </template>
 
       <template v-slot:[`item.action`]="{ item }">
@@ -86,6 +86,10 @@
 </template>
 
 <script setup>
+  const { t, locale } = useI18n()
+  
+  import { useI18n } from 'vue-i18n'
+
   import { ref, computed, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { useProductStore } from '../store/product.js'
@@ -98,9 +102,15 @@
     { title: 'Category', key: 'categories' },
     { title: 'Stock', key: 'colors' },
     { title: 'Price', key: 'price' },
-    { title: 'Added', key: 'createdAt' },
+    { title: 'Added', key: 'date' },
     { title: 'Action', key: 'action', sortable: false }
   ])
+  const translatedHeaders = computed(() => {
+    return headers.value.map((header) => ({
+      ...header,
+      title: t(header.title.toLowerCase()) // هنستخدم الـ title الأصلي بعد تحويله لـ lowercase كمفتاح
+    }))
+  })
   const products = computed(() => productStore.products)
   onMounted(() => {
     productStore.fetchAll()

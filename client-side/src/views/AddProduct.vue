@@ -1,19 +1,19 @@
 <template>
   <v-container class="mb-8 pa-4 rounded-lg elevation-2">
     <v-form ref="form" @submit.prevent="addProduct">
-      <h3 class="text-h6 mb-2">General information</h3>
+      <h3 class="text-h6 mb-2">{{ t('general_information') }}</h3>
       <v-text-field
         v-model="newProduct.Product"
         :rules="[rules.required]"
-        label="Product Name"
+       :label="t('product_name')"
       ></v-text-field>
       <!-- Description -->
       <v-textarea
         :rules="[rules.required]"
         v-model="newProduct.Description"
-        label="Description"
+       :label="t('description')"
       ></v-textarea>
-      <h3 class="text-h6 mb-2">Dimensions</h3>
+     <h3 class="text-h6 mb-2">{{ t('dimensions') }}</h3>
       <!-- width -->
       <v-row>
         <v-col cols="4">
@@ -21,7 +21,7 @@
             :rules="[rules.required]"
             v-model="newProduct.dimensions.width"
             type="number"
-            label="Width"
+            :label="t('width')"
           ></v-text-field>
         </v-col>
         <!-- height -->
@@ -29,7 +29,7 @@
           <v-text-field
             :rules="[rules.required]"
             v-model="newProduct.dimensions.height"
-            label="Height"
+           :label="t('height')"
             type="number"
           ></v-text-field>
         </v-col>
@@ -38,13 +38,13 @@
           <v-text-field
             :rules="[rules.required]"
             v-model="newProduct.dimensions.depth"
-            label="Depth"
+          :label="t('depth')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
 
-      <h3 class="text-h6 mb-2">Categorey</h3>
+      <h3 class="text-h6 mb-2">{{ t('category') }}</h3>
 
       <v-select
         v-model="newProduct.ProductCategory"
@@ -52,21 +52,22 @@
         item-value="_id"
         item-title="name"
         :rules="[rules.required]"
-        label="Product Category"
+        :label="t('product_category')"
       ></v-select>
 
       <!-- <v-text-field
         v-model="newProduct.ProductTags"
         label="Product Tags (comma-separated)"
       ></v-text-field> -->
-      <h3 class="text-h6 mb-2">Pricing</h3>
+      <h3 class="text-h6 mb-2">{{ t('pricing') }}</h3>
+
 
       <v-row>
         <v-col cols="4">
           <v-text-field
             v-model="newProduct.BasePrice"
             :rules="[rules.required]"
-            label="Base Price"
+            :label="t('price')"
             type="number"
           ></v-text-field>
         </v-col>
@@ -74,31 +75,31 @@
           <v-select
             v-model="newProduct.DiscountType"
             :items="['Percentage', 'Fixed']"
-            label="Discount Type"
+          :label="t('discount_type')"
           ></v-select>
         </v-col>
         <v-col cols="4">
           <v-text-field
             v-model="newProduct.DiscountValue"
-            label="Discount Value"
+           :label="t('discount_value')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
-      <h3 class="text-h6 mb-2">Inventory</h3>
+  <h3 class="text-h6 mb-2">{{ t('inventory') }}</h3>
       <v-row>
         <v-col cols="12">
           <v-text-field
             v-model="newProduct.Quantity"
             :rules="[rules.required]"
-            label="Quantity"
+            :label="t('quantity')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
 
       <div v-for="(color, index) in newProduct.colors" :key="index">
-        <h3>Color {{ index + 1 }}</h3>
+        <h3>{{ t('color_n', { n: index + 1 }) }}</h3>
         <v-row>
           <v-col cols="6">
             <v-select
@@ -106,12 +107,12 @@
               :items="colorsList"
               item-value="name"
               item-title="name"
-              label="Select Color Name"
+            :label="t('select_color_name')"
               :rules="[rules.required]"
             ></v-select>
           </v-col>
           <v-col cols="6">
-            <v-text-field v-model="color.hex" label="Color Hex Value" readonly>
+            <v-text-field v-model="color.hex" :label="t('color_hex_value')" readonly>
               <template v-slot:append-inner>
                 <div
                   :style="{
@@ -129,7 +130,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="color.quantity"
-              label="Color Quantity"
+             :label="t('color_quantity')"
               type="number"
               :rules="[rules.required]"
             ></v-text-field>
@@ -137,7 +138,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="color.sku"
-              label="Color SKU"
+               :label="t('color_sku')"
               :rules="[rules.required]"
             ></v-text-field>
           </v-col>
@@ -148,7 +149,7 @@
               color="primary"
               class="my-2 text-error"
 
-              >Remove Color
+              > {{ t('remove_color') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -184,7 +185,7 @@
             <v-card-text class="pa-3">
               <div class="d-flex justify-space-between align-center mb-1">
                 <span class="text-caption font-weight-medium">
-                  Uploading images for Color {{ index + 1 }}
+                {{ t('uploading_images_for_color_n', { n: index + 1 }) }}
                 </span>
                 <span class="text-caption text-primary">
                   {{ uploadProgress[index] }}%
@@ -225,15 +226,15 @@
                 size="20"
                 width="2"
               ></v-progress-circular>
-              <span class="ml-2">Processing...</span>
+              <span class="ml-2">{{ t('processing') }}</span>
             </template>
-            Add Product
+           {{ t('add_product') }}
           </v-btn>
-          <v-btn class="mt-2" @click="goBack" color="primary">Cancel</v-btn>
+          <v-btn class="mt-2" @click="goBack" color="primary">{{ t('cancel') }}</v-btn>
         </v-col>
         <v-col cols="6" class="d-flex justify-end items-end">
           <v-btn @click="addColor" class="mt-2" color="secondary">
-            <v-icon start>mdi-plus</v-icon> Add Color</v-btn
+            <v-icon start>mdi-plus</v-icon> {{ t('add_color') }}</v-btn
           >
         </v-col>
       </v-row>
@@ -242,6 +243,8 @@
 </template>
 
 <script setup>
+ const { t, locale } = useI18n()
+  import { useI18n } from 'vue-i18n'
   import { ref, onMounted, watch } from 'vue'
   import { useRouter } from 'vue-router'
   import { useProductStore } from '../store/product'
@@ -494,6 +497,13 @@
       isLoading.value = false
     }
   }
+  const removeColor = (index) => {
+   console.log('Index to remove:', index);
+   if (newProduct.value.colors.length > 1) {
+     newProduct.value.colors.splice(index, 1);
+     console.log('Colors array after removal:', newProduct.value.colors);
+   }
+ };
 
   watch(
     () => newProduct.value.colors,

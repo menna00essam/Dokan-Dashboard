@@ -1,66 +1,59 @@
 <template>
   <v-container class="mb-8 pa-4 rounded-lg elevation-2">
     <v-form ref="form" @submit.prevent="updateProduct">
-      <h3 class="text-h6 mb-2">General information</h3>
+      <h3 class="text-h6 mb-2">{{ t('general_information') }}</h3>
       <v-text-field
         v-model="editedProduct.Product"
         :rules="[rules.required]"
-        label="Product Name"
+    :label="t('product_name')"
       ></v-text-field>
 
       <v-textarea
         v-model="editedProduct.Description"
-        label="Description"
+       :label="t('description')"
       ></v-textarea>
-      <h3 class="text-h6 mb-2">Dimensions</h3>
+     <h3 class="text-h6 mb-2">{{ t('dimensions') }}</h3>
       <v-row>
-        <!-- width -->
         <v-col cols="4">
           <v-text-field
             v-model="editedProduct.dimensions.width"
-            label="Width"
+          :label="t('width')"
             type="number"
           ></v-text-field>
         </v-col>
-        <!-- Height -->
         <v-col cols="4">
           <v-text-field
             v-model="editedProduct.dimensions.height"
-            label="Height"
+            :label="t('height')"
             type="number"
           ></v-text-field>
         </v-col>
-        <!-- Depth -->
         <v-col cols="4">
           <v-text-field
             v-model="editedProduct.dimensions.depth"
-            label="Depth"
+          :label="t('depth')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
-      <h3 class="text-h6 mb-2">Categorey</h3>
+    <h3 class="text-h6 mb-2">{{ t('category') }}</h3>
       <v-select
         v-model="editedProduct.ProductCategory"
         :items="categoriesList"
         item-value="_id"
         item-title="name"
         :rules="[rules.required]"
-        label="Product Category"
+        :label="t('product_category')"
       ></v-select>
 
-      <!-- <v-text-field
-        v-model="editedProduct.ProductTags"
-        label="Product Tags (comma-separated)"
-      ></v-text-field> -->
+     <h3 class="text-h6 mb-2">{{ t('pricing') }}</h3>
 
-      <h3 class="text-h6 mb-2">Pricing</h3>
       <v-row>
         <v-col cols="4">
           <v-text-field
             v-model="editedProduct.BasePrice"
             :rules="[rules.required]"
-            label=" Price"
+            :label="t('price')"
             type="number"
           ></v-text-field>
         </v-col>
@@ -68,24 +61,24 @@
           <v-select
             v-model="editedProduct.DiscountType"
             :items="['Percentage', 'Fixed']"
-            label="Discount Type"
+            :label="t('discount_type')"
           ></v-select>
         </v-col>
         <v-col cols="4">
           <v-text-field
             v-model="editedProduct.DiscountValue"
-            label="Discount Value"
+           :label="t('discount_value')"
             type="number"
           ></v-text-field>
         </v-col>
       </v-row>
-      <h3 class="text-h6 mb-2">Inventory</h3>
+       <h3 class="text-h6 mb-2">{{ t('inventory') }}</h3>
       <v-row>
         <v-col cols="12">
           <v-text-field
             v-model="editedProduct.Quantity"
             :rules="[rules.required]"
-            label="Quantity"
+    :label="t('quantity')"
             type="number"
           ></v-text-field>
         </v-col>
@@ -96,7 +89,7 @@
           v-for="(color, index) in editedProduct.colors"
           :key="'color_' + index"
         >
-          <h3 class="text-h6 mb-4">Color {{ index + 1 }}</h3>
+          <h3 class="text-h6 mb-4">{{ t('color_n', { n: index + 1 }) }}</h3>
           <v-row>
             <v-col cols="6">
               <v-select
@@ -104,7 +97,7 @@
                 :items="colorsList"
                 item-value="name"
                 item-title="name"
-                label="Select Color Name"
+                 :label="t('select_color_name')"
                 :rules="[rules.required]"
                 @change="updateColorHex(index)"
                 class="mb-4"
@@ -113,7 +106,7 @@
             <v-col cols="6">
               <v-text-field
                 v-model="color.hex"
-                label="Color Hex Value"
+                 :label="t('color_hex_value')"
                 readonly
                 class="mb-4"
               >
@@ -134,7 +127,7 @@
             <v-col cols="6">
               <v-text-field
                 v-model="color.quantity"
-                label="Color Quantity"
+               :label="t('color_quantity')"
                 type="number"
                 :rules="[rules.required]"
                 class="mb-4"
@@ -143,7 +136,7 @@
             <v-col cols="6">
               <v-text-field
                 v-model="color.sku"
-                label="Color SKU"
+                :label="t('color_sku')"
                 :rules="[rules.required]"
                 class="mb-6"
               ></v-text-field>
@@ -155,12 +148,12 @@
                 color="primary"
                 class="my-2 text-error"
               >
-                Remove Color
+                 {{ t('remove_color') }}
               </v-btn>
             </v-col>
           </v-row>
 
-          <h5 class="text-h6 mb-2">Images for Color {{ index + 1 }}</h5>
+          <h5 class="text-h6 mb-2">{{ t('images_for_color_n', { n: index + 1 }) }}</h5>
           <v-row dense class="mb-4">
             <v-col
               v-for="(image, imgIndex) in color.uploadedImages"
@@ -208,31 +201,24 @@
                   "
                   class="mt-2"
                 />
+                <!-- input image  -->
               </v-card>
             </v-col>
           </v-row>
 
-          <!-- <v-file-input
-            v-if="color.changingImageIndex === -1"
-            label="Upload New Images"
-            accept="image/*"
-            multiple
-            show-size
-            prepend-icon="mdi-upload"
-            @change="(files) => handleImageUpload(index, files)"
-            class="mb-4"
-          ></v-file-input> -->
-
           <v-divider class="my-6"></v-divider>
+          <!-- image upload -->
+
+          <!--  -->
         </div>
       </div>
       <v-row>
         <v-col>
           <v-btn class="mt-4" type="submit" color="secondary"
-            >Update Product</v-btn
+            >{{ t('update_product') }}</v-btn
           >
           <v-btn class="mt-4 ml-2" @click="goBack" color="primary"
-            >Cancel</v-btn
+            >{{ t('cancel') }}</v-btn
           >
         </v-col>
         <v-col class="d-flex justify-end">
@@ -242,7 +228,7 @@
             variant="elevated"
             class="mb-6"
           >
-            Add Color
+           {{ t('add_color') }}
           </v-btn>
         </v-col>
       </v-row>
@@ -251,11 +237,15 @@
 </template>
 
 <script setup>
+ const { t, locale } = useI18n()
+  import { useI18n } from 'vue-i18n'
   import { ref, onMounted, watch } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { useProductStore } from '../store/product'
   import axios from 'axios'
   import { api } from '../store/product'
+  const productImages = ref([])
+  const productImagePreviews = ref([])
 
   const router = useRouter()
   const route = useRoute()
@@ -269,7 +259,38 @@
     { name: 'Cream', hex: '#FFFDD0' },
     { name: 'Lavender', hex: '#E6E6FA' },
     { name: 'walnut', hex: '#8B4513' },
-    { name: 'Olive', hex: '#808000' }
+    { name: 'Olive', hex: '#808000' },
+    { name: 'Dark Brown', hex: '#5C4033' },
+    { name: 'Light Blue', hex: '#ADD8E6' },
+    { name: 'Dark Blue', hex: '#00008B' },
+    { name: 'Graphite Black', hex: '#1C1C1C' },
+    { name: 'Navy Blue', hex: '#000080' },
+    { name: 'Light Gray', hex: '#D3D3D3' },
+    { name: 'Dark Gray', hex: '#A9A9A9' },
+    { name: 'Red', hex: '#FF0000' },
+    { name: 'Pink', hex: '#FFC0CB' },
+    { name: 'Green', hex: '#008000' },
+    { name: 'Yellow', hex: '#FFFF00' },
+    { name: 'Purple', hex: '#800080' },
+    { name: 'Orange', hex: '#FFA500' },
+    { name: 'Turquoise', hex: '#40E0D0' },
+    { name: 'Light Green', hex: '#90EE90' },
+    { name: 'Dark Green', hex: '#006400' },
+    { name: 'Light Grey', hex: '#D3D3D3' },
+    { name: 'Dark Grey', hex: '#A9A9A9' },
+    { name: 'Ivory', hex: '#FFFFF0' },
+    { name: 'Cream', hex: '#FFFDD0' },
+    { name: 'Burgundy', hex: '#800020' },
+    { name: 'Olive', hex: '#808000' },
+    { name: 'Mustard', hex: '#FFDB58' },
+    { name: 'Coral', hex: '#FF7F50' },
+    { name: 'Salmon', hex: '#FA8072' },
+    { name: 'Lavender', hex: '#E6E6FA' },
+    { name: 'Peach', hex: '#FFDAB9' },
+    { name: 'walnut', hex: '#8B4513' },
+    { name: 'White Stained', hex: '#F5F5F5' },
+    { name: 'Pine', hex: '#F0E68C' },
+    { name: 'Oak', hex: '#8B4513' }
   ])
 
   const productId = ref(route.params.id)
@@ -355,10 +376,15 @@
           Description: productData.subtitle || '',
           ProductCategory: productData.categories || [],
           ProductTags: productData.tags ? productData.tags.join(', ') : '',
+          ProductStatus: productData.status || 'Draft',
           BasePrice: productData.price !== undefined ? productData.price : null,
           DiscountType: editedProduct.value.DiscountType || null,
           DiscountValue:
             productData.sale !== undefined ? productData.sale : null,
+          SKU:
+            productData.colors && productData.colors[0]
+              ? productData.colors[0].sku
+              : '',
           Quantity:
             productData.totalQuantity !== undefined
               ? productData.totalQuantity
