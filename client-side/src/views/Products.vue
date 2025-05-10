@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+  <v-container fluid>
     <v-toolbar
       flat
       :color="$vuetify.theme.current.dark ? 'primary' : 'white'"
@@ -11,8 +11,14 @@
           color="white"
           style="text-transform: none"
         >
-          <v-icon start>mdi-plus</v-icon>
-          {{ t('add_a_product') }}
+          <template v-if="$i18n.locale === 'ar'">
+            <v-icon start> mdi-plus </v-icon>
+            {{ t('add_a_product') }}
+          </template>
+          <template v-else>
+            {{ t('add_a_product') }}
+            <v-icon start> mdi-plus </v-icon>
+          </template>
         </v-btn>
       </router-link>
     </v-toolbar>
@@ -22,14 +28,16 @@
       :items="products"
       class="elevation-1"
       hide-default-footer
+      :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
     >
       <template v-slot:[`item.name`]="{ item }">
         <div class="d-flex align-center product-cell">
           <v-avatar
             v-if="item.imageUrl"
             size="30"
-            class="image-container mr-2"
+            class="image-container"
             rounded="0"
+            :class="$i18n.locale === 'ar' ? 'ml-2' : 'mr-2'"
           >
             <v-img :src="item.imageUrl" :alt="item.name"></v-img>
           </v-avatar>
@@ -73,7 +81,11 @@
 
       <template v-slot:[`item.action`]="{ item }">
         <div class="d-flex align-center gap-2">
-          <v-icon small class="mr-2" @click="editItem(item)">
+          <v-icon
+            small
+            :class="$i18n.locale === 'ar' ? 'ml-2' : 'mr-2'"
+            @click="editItem(item)"
+          >
             mdi-pencil
           </v-icon>
           <v-icon small @click="deleteItemHandler(item)" color="red">
@@ -87,7 +99,7 @@
 
 <script setup>
   const { t, locale } = useI18n()
-  
+
   import { useI18n } from 'vue-i18n'
 
   import { ref, computed, onMounted } from 'vue'
