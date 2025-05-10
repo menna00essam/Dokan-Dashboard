@@ -47,7 +47,6 @@ export const useRequestsStore = defineStore('requests', {
           totalPages: response.data.totalPages,
           itemsPerPage: params.limit || this.pagination.itemsPerPage
         })
-        
       } catch (error) {
         this.error = error.response?.data?.message || error.message
         throw error
