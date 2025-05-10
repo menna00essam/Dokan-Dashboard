@@ -4,6 +4,7 @@ const AppError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 const cloudinary = require("cloudinary").v2;
 const { body } = require("express-validator");
+const transporter = require("../utils/emailTransporter");
 
 // Helper function for pagination
 const paginate = async (model, query, options) => {
@@ -1067,10 +1068,7 @@ const getDeniedUsers = asyncWrapper(async (req, res, next) => {
 const approveUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    {
-      status: "approved",
-      adminRequest: false,
-    },
+    { role: "admin", status: "approved", adminRequest: false },
     { new: true, runValidators: true }
   ).select("-password -__v");
 
@@ -1079,7 +1077,7 @@ const approveUser = asyncWrapper(async (req, res, next) => {
   }
 
   // Send approval email
-  await sendEmail({
+  transporter.sendMail({
     email: user.email,
     subject: "Your Account Has Been Approved",
     template: "account-approved",
@@ -1119,7 +1117,7 @@ const denyUser = asyncWrapper(async (req, res, next) => {
   }
 
   // Send denial email
-  await sendEmail({
+  transporter.sendMail({
     email: user.email,
     subject: "Your Account Request Has Been Denied",
     template: "account-denied",

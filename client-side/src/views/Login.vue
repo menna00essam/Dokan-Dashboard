@@ -37,10 +37,6 @@
         const token = response.data.data.token // Correct token path
         authStore.setToken(token) // Store token in Pinia
 
-        // Token is automatically stored in Pinia, no need to store manually in localStorage
-        localStorage.setItem('token', token) // Optionally keep token in localStorage
-
-        router.push('/dashboard')
       } catch (error) {
         console.error('login error:', error.response?.data || error.message)
         alert(
