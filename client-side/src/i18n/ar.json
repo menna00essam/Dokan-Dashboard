@@ -337,5 +337,10 @@
   "retry": "إعادة المحاولة",
   "noResultsFound": "لا توجد نتائج",
   "tryDifferentSearch": "جرب مصطلح بحث مختلف",
-  "requestDate": "تاريخ"
+  "requestDate": "تاريخ",
+  "greeting": {
+    "welcome": "نتمنى لك يوماً سعيداً! سعداء بوجودك معنا.",
+    "hello":"مرحبًا"
+  },
+  "visitors": "عدد الزوار"
 }

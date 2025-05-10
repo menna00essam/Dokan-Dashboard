@@ -118,6 +118,7 @@
   "itemsPerPage": "Items per page",
   "showingItems": "Showing {from} to {to} of {total} items",
   "userApproved": "{name} has been approved",
+  "Haveaniceday!Wearehappytoseeyouhere.":"Have a nice day! We are happy to see you here.",
 
   "currencies": "Currencies",
   "addCurrency": "Add Currency",
@@ -339,5 +340,10 @@
   "No data available": "No data available",
   "Confirm Delete": "Confirm Delete",
   "Cancel": "Cancel",
-  "Delete": "Delete"
+  "Delete": "Delete",
+  "greeting": {
+    "welcome": "Have a nice day! We are happy to see you here.",
+    "hello": "Hello"
+  },
+  "visitors": "Number of Visitors"
 }
