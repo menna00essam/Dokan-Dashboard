@@ -6,31 +6,28 @@ import router from '../router'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('token') || null,
-    pendingEmail: null,
+    pendingEmail: localStorage.getItem('Pending_Email') || null,
     user: JSON.parse(localStorage.getItem('user')) || null
   }),
-
   getters: {
     isLoggedIn: (state) => !!state.token,
     userRole: (state) => state.user?.role,
     isSuperAdmin: (state) => state.user?.role === 'super_admin',
     isAdmin: (state) => state.user?.role === 'admin'
   },
-
   actions: {
     setToken(token) {
       this.token = token
       localStorage.setItem('token', token)
       this.setUserFromToken(token)
     },
-
     setUserFromToken(token) {
       try {
         const decoded = jwtDecode(token)
         this.user = {
           id: decoded._id,
           email: decoded.email,
-          role: decoded.role,
+          role: decoded.role
           // token:token,
           // ... other user properties
         }
@@ -43,7 +40,6 @@ export const useAuthStore = defineStore('auth', {
         this.logout()
       }
     },
-
     redirectAfterLogin() {
       if (!this.user?.role) return
 
@@ -64,7 +60,14 @@ export const useAuthStore = defineStore('auth', {
         }
       }
     },
-
+    setPendingEmail(mail) {
+      this.pendingEmail = mail
+      localStorage.setItem('Pending_Email', mail)
+    },
+    clearPendingEmail() {
+      this.pendingEmail = null
+      localStorage.removeItem('Pending_Email')
+    },
     logout() {
       this.token = null
       this.user = null
@@ -72,7 +75,6 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('user')
       router.push({ name: 'login' })
     },
-
     async loadUserFromStorage() {
       if (this.token && !this.user) {
         await this.setUserFromToken(this.token)

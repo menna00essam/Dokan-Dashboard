@@ -2,6 +2,14 @@
   "title": "Dashboard",
   "welcome": "Welcome to the Dashboard",
   "users": "Users",
+  "pages": {
+    "orders": "Orders",
+    "customers": "Customers",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "requests": "Requests",
+    "settings": "Settings"
+  },
   "settings": "Settings",
   "storeSettings": "Store Settings",
   "saveSettings": "Save Settings",
@@ -130,10 +138,18 @@
   "error": {
     "saveCurrency": "Failed to save currency",
     "deleteCurrency": "Failed to delete currency",
-    "fetchCurrencies": "Failed to load currencies"
+    "fetchCurrencies": "Failed to load currencies",
+    "updatingRole": "Failed to update {name}'s role",
+    "fetchingUsers": "Failed to load users",
+    "failedToLoadSettings": "Failed to load settings",
+    "failedToSaveSettings": "Failed to save settings",
+    "fetchingRequests": "Failed loading requests",
+    "approvingUser": "Failed approving user",
+    "denyingUser": "Failed denying user",
+    "fetchMethods": "Failed loading shipping methods"
   },
   "noShippingMethods": "No shipping methods available",
-  "Config":"Configration",
+  "Config": "Configration",
   "addCustomer": "Add New Customer",
   "country": "Country",
   "mobile": "Mobile Number",
@@ -295,5 +311,12 @@
       "title": "Unblock Customer",
       "message": "Are you sure you want to unblock this customer? They will regain access to their account."
     }
-  }
+  },
+  "userRoleUpdated": "Updated {name}'s role to {role}",
+  "noCurrenciesAvailable": "No currencies available",
+  "retry": "Retry",
+  "noResultsFound": "No results found",
+  "tryDifferentSearch": "Try a different search term",
+  "requestDate": "Date",
+  "noUsersFound": "No Users Found"
 }

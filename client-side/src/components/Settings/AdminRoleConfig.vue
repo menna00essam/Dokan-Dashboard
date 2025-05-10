@@ -1,322 +1,222 @@
 <template>
-  <v-dialog v-model="internalDialog" max-width="800" :dir="locale === 'ar' ? 'rtl' : 'ltr'">
-    <v-card :dir="locale === 'ar' ? 'rtl' : 'ltr'">
-      <v-card-title
-        class="text-h5 font-weight-bold"
-        :class="{ 'flex-row-reverse': locale === 'ar' }"
+  <v-card>
+    <v-card-title
+      class="primary d-flex align-center"
+      :class="{ 'flex-row-reverse': $i18n.locale === 'ar' }"
+    >
+      <v-icon
+        class="mx-2"
+        :left="$i18n.locale !== 'ar'"
+        :right="$i18n.locale === 'ar'"
+        >mdi-account-cog</v-icon
       >
-        {{ props.mode === 'add' ? t('addCustomer') : t('editCustomer') }}
-      </v-card-title>
+      {{ $t('userPermissions') }}
+    </v-card-title>
 
-      <v-card-subtitle class="mb-4" :dir="locale === 'ar' ? 'rtl' : 'ltr'">
-        {{ t('customerInformation') }}
-      </v-card-subtitle>
+    <v-card-text>
+      <v-data-table
+        :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+        :headers="userHeaders"
+        :items="userStore.users"
+        :items-per-page="itemsPerPage"
+        :page.sync="page"
+        hide-default-footer
+        class="elevation-1"
+        :loading="initialLoading"
+        loading-text="Loading users... Please wait"
+      >
+        <!-- Skeleton loading state -->
+        <template v-slot:loading>
+          <tbody>
+            <tr v-for="i in 5" :key="`skeleton-row-${i}`">
+              <td
+                v-for="header in userHeaders"
+                :key="`skeleton-${header.value}`"
+              >
+                <v-skeleton-loader type="text" />
+              </td>
+            </tr>
+          </tbody>
+        </template>
 
-      <v-card-text>
-        <v-row :class="{ 'flex-row-reverse': locale === 'ar' }">
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="form.firstName"
-              :label="t('firstName')"
-              :rules="[required]"
-              :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="form.lastName"
-              :label="t('lastName')"
-              :rules="[required]"
-              :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-            />
-          </v-col>
-        </v-row>
+        <!-- Error state -->
+        <template v-slot:error>
+          <tbody>
+            <tr>
+              <td :colspan="userHeaders.length" class="text-center py-12">
+                <v-icon size="96" color="error"
+                  >mdi-alert-circle-outline</v-icon
+                >
+                <p class="text-h4 grey--text mt-4">
+                  {{ $t('errorLoadingData') }}
+                </p>
+                <p class="text-body-1 mt-2">{{ userStore.error }}</p>
+                <v-btn color="primary" class="mt-4" @click="retryFetch">
+                  {{ $t('retry') }}
+                </v-btn>
+              </td>
+            </tr>
+          </tbody>
+        </template>
 
-        <v-text-field
-          v-model="form.email"
-          :label="t('email')"
-          type="email"
-          :rules="[required, emailRule]"
-          :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-        />
-
-        <div class="d-flex align-center" :dir="locale === 'ar' ? 'rtl' : 'ltr'">
-          <v-select
-            v-model="form.countryCode"
-            :items="countries"
-            item-title="label"
-            item-value="code"
-            :label="t('country')"
-            dense
-            style="max-width: 150px"
-            :rules="[required]"
-            :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-          />
-          <v-text-field
-            v-model="form.mobile"
-            :label="t('mobileNumber')"
-            class="ml-3"
-            style="flex: 1"
-            :prefix="form.countryCode || ''"
-            :rules="[required]"
-            :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-          />
-        </div>
-
-        <v-switch
-          v-model="form.isBlocked"
-          :label="t('blockCustomer')"
-          color="error"
-          class="mt-4"
-          :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-          :class="{ 'v-switch--reversed': locale === 'ar' }"
-        />
-
-        <v-switch
-          v-model="showAddress"
-          :label="t('addAddress')"
-          color="primary"
-          class="mt-4"
-          :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-          :class="{ 'v-switch--reversed': locale === 'ar' }"
-        />
-
-        <div v-if="showAddress">
-          <v-subheader class="pl-0" :dir="locale === 'ar' ? 'rtl' : 'ltr'">{{ t('customerAddress') }}</v-subheader>
-          <v-text-field 
-            v-model="form.address.street" 
-            :label="t('street')" 
-            :dir="locale === 'ar' ? 'rtl' : 'ltr'" 
-          />
-          <v-text-field 
-            v-model="form.address.city" 
-            :label="t('city')" 
-            :dir="locale === 'ar' ? 'rtl' : 'ltr'" 
-          />
-          <v-text-field 
-            v-model="form.address.state" 
-            :label="t('state')" 
-            :dir="locale === 'ar' ? 'rtl' : 'ltr'" 
-          />
-          <v-text-field 
-            v-model="form.address.zipCode" 
-            :label="t('zipCode')" 
-            :dir="locale === 'ar' ? 'rtl' : 'ltr'" 
-          />
-
-          <v-switch
-            v-model="sameAsCustomer"
-            :label="t('sameBillingAddress')"
-            color="secondary"
-            class="mt-3"
-            :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-            :class="{ 'v-switch--reversed': locale === 'ar' }"
-          />
-
-          <div v-if="!sameAsCustomer">
-            <v-divider class="my-3" />
-            <v-subheader class="pl-0" :dir="locale === 'ar' ? 'rtl' : 'ltr'">{{ t('billingAddress') }}</v-subheader>
-            <v-text-field 
-              v-model="form.billingAddress.street" 
-              :label="t('street')" 
-              :dir="locale === 'ar' ? 'rtl' : 'ltr'" 
-            />
-            <v-text-field 
-              v-model="form.billingAddress.city" 
-              :label="t('city')" 
-              :dir="locale === 'ar' ? 'rtl' : 'ltr'" 
-            />
-            <v-text-field 
-              v-model="form.billingAddress.state" 
-              :label="t('state')" 
-              :dir="locale === 'ar' ? 'rtl' : 'ltr'" 
-            />
-            <v-text-field 
-              v-model="form.billingAddress.zipCode" 
-              :label="t('zipCode')" 
-              :dir="locale === 'ar' ? 'rtl' : 'ltr'" 
-            />
+        <!-- Empty state -->
+        <template v-slot:no-data>
+          <div class="text-center py-12">
+            <v-icon size="96" color="grey lighten-1">mdi-account-cog</v-icon>
+            <p class="text-h4 grey--text mt-4">
+              {{ $t('noUsersFound') }}
+            </p>
           </div>
-        </div>
-      </v-card-text>
+        </template>
 
-      <v-card-actions 
-        :class="[
-          'd-flex',
-          'justify-start',
-          locale === 'ar' ? 'flex-row-reverse' : ''
-        ]"
-      >
-        <v-btn
-          variant="tonal"
-          color="primary"
-          @click="handleSubmit"
-          :disabled="!isFormValid"
-          style="height: 50px; border-radius: 12px;"
-        >
-          {{ props.mode === 'add' ? t('add') : t('save') }}
-        </v-btn>
-        <v-btn
-          variant="outlined"
-          color="primary"
-          @click="handleCancel"
-          class="ml-2"
-          style="height: 50px; border-radius: 12px;"
-        >
-          {{ t('cancel') }}
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+        <!-- Normal data rows -->
+        <template v-slot:item.role="{ item }">
+          <div class="position-relative">
+            <v-select
+              v-model="item.role"
+              :items="userStore.roles"
+              :loading="loadingItems[item._id]"
+              @update:model-value="updateRole(item)"
+              dense
+              outlined
+              :label="$t('role')"
+              :disabled="loadingItems[item._id]"
+            ></v-select>
+            <v-progress-linear
+              v-if="loadingItems[item._id]"
+              indeterminate
+              absolute
+              bottom
+              color="primary"
+            ></v-progress-linear>
+          </div>
+        </template>
+
+        <template v-slot:item.name="{ item }">
+          <div class="d-flex align-center">
+            <v-avatar
+              size="36"
+              :class="$i18n.locale === 'ar' ? 'ml-3' : 'mr-3'"
+            >
+              <v-img
+                :src="
+                  item.avatar || 'https://cdn.vuetifyjs.com/images/john.jpg'
+                "
+              />
+            </v-avatar>
+            {{ item.name }}
+          </div>
+        </template>
+      </v-data-table>
+
+      <!-- Pagination component -->
+      <PaginationControls
+        v-if="!initialLoading && !userStore.error && userStore.users.length > 0"
+        v-model:page="page"
+        v-model:items-per-page="itemsPerPage"
+        :total-items="userStore.users.length"
+        @update:page="handlePageChange"
+        @update:items-per-page="handleItemsPerPageChange"
+        :rtl="$i18n.locale === 'ar'"
+      />
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup>
-import { ref, computed, watch, defineProps, defineEmits } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useToast } from 'vue-toastification'
+  import { ref, computed, onMounted } from 'vue'
+  import { useI18n } from 'vue-i18n'
+  import { useChangeRole } from '../../store/useChangeRole'
+  import PaginationControls from '../Shared/PaginationControls.vue'
+  import { useToast } from 'vue-toastification'
 
-const { t, locale } = useI18n()
-const toast = useToast()
+  const { t } = useI18n()
+  const userStore = useChangeRole()
+  const toast = useToast()
 
-const props = defineProps({
-  modelValue: Boolean,
-  mode: {
-    type: String,
-    default: 'add',
-    validator: value => ['add', 'edit'].includes(value)
-  },
-  customer: Object
-})
+  // State
+  const page = ref(1)
+  const itemsPerPage = ref(5)
+  const initialLoading = ref(true)
+  const loadingItems = ref({}) // Track loading state per item
 
-const emit = defineEmits(['update:modelValue', 'save'])
-
-const internalDialog = ref(props.modelValue)
-watch(internalDialog, val => emit('update:modelValue', val))
-watch(() => props.modelValue, val => (internalDialog.value = val))
-
-const countries = [
-  { label: 'Egypt +20', code: '+20' },
-  { label: 'Saudi Arabia +966', code: '+966' },
-  { label: 'UAE +971', code: '+971' },
-  { label: 'USA +1', code: '+1' },
-  { label: 'UK +44', code: '+44' }
-]
-
-const showAddress = ref(false)
-const sameAsCustomer = ref(true)
-
-const form = ref({
-  id: '',
-  firstName: '',
-  lastName: '',
-  email: '',
-  countryCode: '+20',
-  mobile: '',
-  isBlocked: false,
-  address: { street: '', city: '', state: '', zipCode: '' },
-  billingAddress: { street: '', city: '', state: '', zipCode: '' }
-})
-
-watch(() => props.customer, (customer) => {
-  if (customer) {
-    form.value = {
-      id: customer.id,
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      email: customer.email,
-      countryCode: customer.mobile?.startsWith('+') 
-        ? customer.mobile.substring(0, 3) 
-        : '+20',
-      mobile: customer.mobile?.startsWith('+') 
-        ? customer.mobile.substring(3) 
-        : customer.mobile,
-      isBlocked: customer.isBlocked || false,
-      address: customer.address?.[0]?.text 
-        ? { 
-            street: customer.address[0].text,
-            city: customer.address[0].city?.name || '',
-            state: customer.address[0].province?.name || '',
-            zipCode: ''
-          }
-        : { street: '', city: '', state: '', zipCode: '' },
-      billingAddress: { street: '', city: '', state: '', zipCode: '' }
+  // Headers
+  const userHeaders = computed(() => [
+    {
+      title: t('name'),
+      value: 'name',
+      sortable: true
+    },
+    {
+      title: t('email'),
+      value: 'email',
+      sortable: true
+    },
+    {
+      title: t('role'),
+      value: 'role',
+      sortable: false
     }
-    showAddress.value = !!customer.address?.[0]?.text
-  }
-}, { immediate: true })
+  ])
 
-const required = v => !!v || t('requiredField')
-const emailRule = v => /.+@.+\..+/.test(v) || t('invalidEmail')
-
-const isFormValid = computed(() => {
-  return form.value.firstName &&
-         form.value.lastName &&
-         form.value.email &&
-         form.value.countryCode &&
-         form.value.mobile
-})
-
-function reset() {
-  form.value = {
-    id: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    countryCode: '+20',
-    mobile: '',
-    isBlocked: false,
-    address: { street: '', city: '', state: '', zipCode: '' },
-    billingAddress: { street: '', city: '', state: '', zipCode: '' }
-  }
-  showAddress.value = false
-  sameAsCustomer.value = true
-}
-
-function handleCancel() {
-  internalDialog.value = false
-  reset()
-}
-
-function handleSubmit() {
-  const customerData = {
-    ...form.value,
-    mobile: form.value.countryCode + form.value.mobile
+  // Handle role updates with per-item loading
+  const updateRole = async (item) => {
+    loadingItems.value[item._id] = true
+    try {
+      await userStore.updateUserRole(item)
+      toast.success(t('userRoleUpdated', { name: item.name, role: item.role }))
+    } catch (error) {
+      console.error('Error updating role:', error)
+      toast.error(t('error.updatingRole', { name: item.name }))
+    } finally {
+      loadingItems.value[item._id] = false
+    }
   }
 
-  if (!showAddress.value) {
-    delete customerData.address
-    delete customerData.billingAddress
-  } else if (sameAsCustomer.value) {
-    customerData.billingAddress = { ...customerData.address }
+  // Retry fetching data
+  const retryFetch = async () => {
+    initialLoading.value = true
+    try {
+      await userStore.fetchUsers({
+        page: page.value,
+        itemsPerPage: itemsPerPage.value
+      })
+    } finally {
+      initialLoading.value = false
+    }
   }
 
-  emit('save', customerData)
+  // Pagination handlers
+  const handlePageChange = (newPage) => {
+    page.value = newPage
+  }
 
-  toast.success(props.mode === 'add' ? t('customerAdded') : t('customerUpdated'))
+  const handleItemsPerPageChange = (newSize) => {
+    itemsPerPage.value = newSize
+    page.value = 1
+  }
 
-  handleCancel()
-}
+  // Initial data fetch
+  onMounted(async () => {
+    await retryFetch()
+  })
 </script>
 
 <style scoped>
-/* تعديلات خاصة بالاتجاه RTL */
-[dir="rtl"] .v-input__control {
-  direction: rtl;
-  text-align: right;
-}
+  .force-show-headers thead {
+    display: table-header-group !important;
+  }
 
-[dir="rtl"] .v-label {
-  right: 0;
-  left: auto;
-}
+  /* RTL specific styles */
+  [dir='rtl'] tr th {
+    text-align: right !important;
+  }
 
-.v-switch--reversed :deep(.v-selection-control) {
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-}
+  [dir='rtl'] .v-table td {
+    text-align: right !important;
+  }
 
-.v-switch--reversed :deep(.v-label) {
-  padding-left: 0;
-  padding-right: 12px;
-}
+  .position-relative {
+    position: relative;
+  }
 </style>

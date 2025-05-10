@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -13,6 +12,9 @@ const userSchema = new mongoose.Schema(
       // required: [true, "Last name is required"],
       trim: true,
     },
+    username: {
+      type: String,
+    },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -21,7 +23,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
         },
-        message: (props) => `${props.value} is not a valid email!`, 
+        message: (props) => `${props.value} is not a valid email!`,
       },
     },
     password: {
@@ -35,7 +37,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^[0-9]{10,15}$/.test(v);
         },
-        message: (props) => `${props.value} is not a valid phone number!`, 
+        message: (props) => `${props.value} is not a valid phone number!`,
       },
     },
     addresses: [
@@ -66,7 +68,7 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return /^(https?:\/\/).+\.(jpg|jpeg|png|gif)$/i.test(v);
         },
-        message: (props) => `${props.value} is not a valid image URL!`, 
+        message: (props) => `${props.value} is not a valid image URL!`,
       },
     },
     role: {
@@ -194,7 +196,7 @@ const userSchema = new mongoose.Schema(
 
 // Virtuals
 userSchema.virtual("fullName").get(function () {
-  return `${this.firstName} ${this.lastName}`; 
+  return `${this.firstName} ${this.lastName}`;
 });
 
 userSchema.virtual("age").get(function () {
@@ -225,15 +227,12 @@ userSchema.pre("save", function (next) {
     if (this.ordersCount === 0) newTags.push("new");
 
     this.tags = [
-      ...new Set(
-        [
-          ...this.tags.filter(
-            (t) =>
-              !["premium", "frequent", "new", "vip", "loyal"].includes(t)
-          ),
-          ...newTags,
-        ]
-      ),
+      ...new Set([
+        ...this.tags.filter(
+          (t) => !["premium", "frequent", "new", "vip", "loyal"].includes(t)
+        ),
+        ...newTags,
+      ]),
     ];
 
     if (this.totalSpent >= 5000) this.customerTier = "platinum";
