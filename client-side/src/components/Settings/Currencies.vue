@@ -143,6 +143,7 @@
           !currencyStore.error &&
           currencyStore.pagination.total > 0
         "
+        :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
         v-model:page="currencyStore.pagination.page"
         v-model:itemsPerPage="currencyStore.pagination.limit"
         :total-items="currencyStore.pagination.total"

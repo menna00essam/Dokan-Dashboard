@@ -228,6 +228,7 @@
       @update:page="handlePageChange"
       @update:items-per-page="handleItemsPerPageChange"
       :loading="customerStore.loading"
+      :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
     />
 
     <!-- Confirm Dialogs -->

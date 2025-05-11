@@ -407,5 +407,6 @@
   "delete_product": "Confrim Delete Product",
   "customer": "Customer",
   "customerTier": "Customer Tier",
-  "Reset": "Reset"
+  "Reset": "Reset",
+  "pushNotifications": "Notification"
 }

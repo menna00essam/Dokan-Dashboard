@@ -77,7 +77,7 @@
       }"
     >
       <span
-        :class="{ 'me-2': direction === 'ltr', 'ms-2': direction === 'rtl' }"
+        :class="{ 'mx-2': direction === 'ltr', 'mx-2': direction === 'rtl' }"
         class="text-caption"
         >{{ t('itemsPerPage') }}:</span
       >
@@ -102,6 +102,7 @@
       :class="{ 'mx-sm-2': !mobile }"
       @update:model-value="handlePageChange"
       active-color="secondary"
+      
     ></v-pagination>
 
     <!-- Items count display -->
