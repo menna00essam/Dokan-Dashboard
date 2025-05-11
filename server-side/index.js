@@ -1,17 +1,16 @@
 const express = require("express");
 const app = express();
-const path = require('path');
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
-const cors = require('cors');
-require('dotenv').config();
-const passport = require('passport');
+const path = require("path");
+app.use("/images", express.static(path.join(__dirname, "public/images")));
+const cors = require("cors");
+require("dotenv").config();
+const passport = require("passport");
 require("dotenv").config();
 const cloudinary = require("./src/config/cloudinary.config");
 
 // Scripts to run
 require("./src/middlewares/passport.middleware");
 require("./src/services/orderStatus.service");
-
 
 /* * * * Utils * * * * */
 const httpStatusText = require("./src/utils/httpStatusText");
@@ -45,7 +44,9 @@ const statsRouter = require("./src/routes/stats.routes");
 connectDB();
 
 // Middlewares
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(
+  cors({ origin: "https://dokan-dashboard.netlify.app", credentials: true })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
