@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <!-- Back Button -->
-    <v-btn color="primary" class="mb-4" @click="$router.push('/customers')">
+    <v-btn color="primary" class="mb-4" @click="goBack()">
       <v-icon left>mdi-arrow-left</v-icon>
       {{ $t('customers.backToList') }}
     </v-btn>
@@ -34,14 +34,18 @@
                 {{ customer.firstName }} {{ customer.lastName }}
               </h1>
               <div class="d-flex align-center">
-                  <v-chip :color="customer.state === 'active' ? 'success' : 'error'" small class="mr-2">
-   {{ customer.state === 'active' 
-      ? $t('customers.active') 
-      : $t('customers.blocked') }}
-  </v-chip>
-                <span class="text-caption">{{
-                  customer.email
-                }}</span>
+                <v-chip
+                  :color="customer.state === 'active' ? 'success' : 'error'"
+                  small
+                  class="mr-2"
+                >
+                  {{
+                    customer.state === 'active'
+                      ? $t('customers.active')
+                      : $t('customers.blocked')
+                  }}
+                </v-chip>
+                <span class="text-caption">{{ customer.email }}</span>
               </div>
             </div>
           </div>
@@ -124,7 +128,8 @@
                         <v-icon>mdi-calendar</v-icon>
                       </template>
                       <v-list-item-title>
-                        {{ $t('customers.joinDate') }}: {{ formatDate(customer.joinDate) }}
+                        {{ $t('customers.joinDate') }}:
+                        {{ formatDate(customer.joinDate) }}
                       </v-list-item-title>
                     </v-list-item>
 
@@ -133,8 +138,10 @@
                         <v-icon>mdi-cake</v-icon>
                       </template>
                       <v-list-item-title>
-                        {{ $t('customers.birthDate') }}: {{ formatDate(customer.birthDate) }} ({{ $t('customers.age') }}:
-                        {{ calculateAge(customer.birthDate) }})
+                        {{ $t('customers.birthDate') }}:
+                        {{ formatDate(customer.birthDate) }} ({{
+                          $t('customers.age')
+                        }}: {{ calculateAge(customer.birthDate) }})
                       </v-list-item-title>
                     </v-list-item>
                   </v-list>
@@ -158,7 +165,9 @@
                           <div class="text-h5 font-weight-bold">
                             {{ customerStats.ordersCount }}
                           </div>
-                          <div class="text-caption">{{ $t('customers.totalOrders') }}</div>
+                          <div class="text-caption">
+                            {{ $t('customers.totalOrders') }}
+                          </div>
                         </div>
                       </v-col>
                       <v-col cols="6" sm="3">
@@ -169,7 +178,9 @@
                           <div class="text-h5 font-weight-bold">
                             {{ formatCurrency(customerStats.totalSpent) }}
                           </div>
-                          <div class="text-caption">{{ $t('customers.totalSpent') }}</div>
+                          <div class="text-caption">
+                            {{ $t('customers.totalSpent') }}
+                          </div>
                         </div>
                       </v-col>
                       <v-col cols="6" sm="3">
@@ -181,7 +192,8 @@
                             {{
                               formatCurrency(
                                 customerStats.ordersCount > 0
-                                  ? customerStats.totalSpent / customerStats.ordersCount
+                                  ? customerStats.totalSpent /
+                                      customerStats.ordersCount
                                   : 0
                               )
                             }}
@@ -203,11 +215,13 @@
                                 : '--'
                             }}
                           </div>
-                          <div class="text-caption">{{ $t('customers.lastOrder') }}</div>
+                          <div class="text-caption">
+                            {{ $t('customers.lastOrder') }}
+                          </div>
                         </div>
                       </v-col>
                     </v-row>
-                  </v-card-text> 
+                  </v-card-text>
                 </v-card>
 
                 <!-- Communication Preferences -->
@@ -219,7 +233,9 @@
                   <v-card-text>
                     <v-chip-group>
                       <v-chip
-                        v-for="(enabled, method) in customer.communicationPreferences"
+                        v-for="(
+                          enabled, method
+                        ) in customer.communicationPreferences"
                         :key="method"
                         :color="enabled ? 'primary' : 'grey'"
                         :variant="enabled ? 'elevated' : 'outlined'"
@@ -241,7 +257,9 @@
                     <div v-if="customer.notes" class="text-body-1">
                       {{ customer.notes }}
                     </div>
-                    <div v-else class="text-grey">{{ $t('customers.noNotes') }}</div>
+                    <div v-else class="text-grey">
+                      {{ $t('customers.noNotes') }}
+                    </div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -312,25 +330,37 @@
                       <v-card-text>
                         <v-list density="compact">
                           <v-list-item>
-                            <v-list-item-title>{{ $t('customers.street') }}:</v-list-item-title>
+                            <v-list-item-title
+                              >{{ $t('customers.street') }}:</v-list-item-title
+                            >
                             <v-list-item-subtitle>{{
                               address.street
                             }}</v-list-item-subtitle>
                           </v-list-item>
                           <v-list-item>
-                            <v-list-item-title>{{ $t('customers.city') }}:</v-list-item-title>
+                            <v-list-item-title
+                              >{{ $t('customers.city') }}:</v-list-item-title
+                            >
                             <v-list-item-subtitle>{{
                               address.city.name
                             }}</v-list-item-subtitle>
                           </v-list-item>
                           <v-list-item>
-                            <v-list-item-title>{{ $t('customers.province') }}:</v-list-item-title>
+                            <v-list-item-title
+                              >{{
+                                $t('customers.province')
+                              }}:</v-list-item-title
+                            >
                             <v-list-item-subtitle>{{
                               address.province.name
                             }}</v-list-item-subtitle>
                           </v-list-item>
                           <v-list-item>
-                            <v-list-item-title>{{ $t('customers.postalCode') }}:</v-list-item-title>
+                            <v-list-item-title
+                              >{{
+                                $t('customers.postalCode')
+                              }}:</v-list-item-title
+                            >
                             <v-list-item-subtitle>{{
                               address.postalCode
                             }}</v-list-item-subtitle>
@@ -380,11 +410,18 @@
                     <v-card>
                       <v-card-text>
                         <div class="d-flex justify-space-between">
-                          <strong>{{ formatActivityType(activity.activityType) }}</strong>
-                          <span class="text-caption">{{ formatDateTime(activity.createdAt) }}</span>
+                          <strong>{{
+                            formatActivityType(activity.activityType)
+                          }}</strong>
+                          <span class="text-caption">{{
+                            formatDateTime(activity.createdAt)
+                          }}</span>
                         </div>
                         <div>{{ activity.description }}</div>
-                        <div v-if="activity.ipAddress" class="text-caption mt-1">
+                        <div
+                          v-if="activity.ipAddress"
+                          class="text-caption mt-1"
+                        >
                           <v-icon small>mdi-ip</v-icon> {{ activity.ipAddress }}
                         </div>
                       </v-card-text>
@@ -403,18 +440,16 @@
             <v-icon left>mdi-pencil</v-icon>
             {{ $t('common.edit') }}
           </v-btn>
-<v-btn
-  :color="customer.state === 'active' ? 'error' : 'success'"
-  variant="tonal"
-  @click="handleBlockConfirm"
->
-  <v-icon left>
-    {{ customer.state === 'active' ? 'mdi-lock' : 'mdi-lock-open' }}
-  </v-icon>
-  {{ customer.state === 'active' 
-    ? $t('block') 
-    : $t('unblock') }}
-</v-btn>
+          <v-btn
+            :color="customer.state === 'active' ? 'error' : 'success'"
+            variant="tonal"
+            @click="handleBlockConfirm"
+          >
+            <v-icon left>
+              {{ customer.state === 'active' ? 'mdi-lock' : 'mdi-lock-open' }}
+            </v-icon>
+            {{ customer.state === 'active' ? $t('block') : $t('unblock') }}
+          </v-btn>
         </v-card-actions>
       </v-card>
 
@@ -465,10 +500,12 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="secondary" @click="addAddressDialog = false"
-              >{{ $t('common.cancel') }}</v-btn
-            >
-            <v-btn color="primary" @click="saveAddress">{{ $t('common.save') }}</v-btn>
+            <v-btn color="secondary" @click="addAddressDialog = false">{{
+              $t('common.cancel')
+            }}</v-btn>
+            <v-btn color="primary" @click="saveAddress">{{
+              $t('common.save')
+            }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -484,77 +521,80 @@
         @confirm="deleteAddress"
       />
 
-
-<ConfirmDialog
-  ref="blockStatusDialog"
-  :title="customer.state === 'active' 
-    ? $t('dialogs.blockCustomer.title') 
-    : $t('dialogs.unblockCustomer.title')"
-  :message="customer.state === 'active'
-    ? $t('dialogs.blockCustomer.message', { name: customer.firstName })
-    : $t('dialogs.unblockCustomer.message', { name: customer.firstName })"
-  @confirm="handleBlockConfirm"
-/>
-
+      <ConfirmDialog
+        ref="blockStatusDialog"
+        :title="
+          customer.state === 'active'
+            ? $t('dialogs.blockCustomer.title')
+            : $t('dialogs.unblockCustomer.title')
+        "
+        :message="
+          customer.state === 'active'
+            ? $t('dialogs.blockCustomer.message', { name: customer.firstName })
+            : $t('dialogs.unblockCustomer.message', {
+                name: customer.firstName
+              })
+        "
+        @confirm="handleBlockConfirm"
+      />
     </template>
     <template v-slot:no-data>
-  <v-alert type="info">{{ $t('orders.noOrders') }}</v-alert>
-</template>
+      <v-alert type="info">{{ $t('orders.noOrders') }}</v-alert>
+    </template>
   </v-container>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch,nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useCustomerStore } from '../store/customers'
-import { useToast } from 'vue-toastification'
-import { useI18n } from 'vue-i18n'
-import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+  import { ref, computed, onMounted, watch, nextTick } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
+  import { useCustomerStore } from '../store/customers'
+  import { useToast } from 'vue-toastification'
+  import { useI18n } from 'vue-i18n'
+  import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
+  import { useAuthStore } from '../store/auth'
 
-const { t } = useI18n()
-const route = useRoute()
-const router = useRouter()
-const customerStore = useCustomerStore()
-const toast = useToast()
+  const authStore = useAuthStore()
+  const { t } = useI18n()
+  const route = useRoute()
+  const router = useRouter()
+  const customerStore = useCustomerStore()
+  const toast = useToast()
 
-// State
-const loading = ref(true)
-const tab = ref('overview')
-const addAddressDialog = ref(false)
-const addressToDelete = ref(null)
-const ordersLoading = ref(false)
-const deleteAddressDialog = ref(null)
-const blockStatusDialog = ref(null)
+  // State
+  const loading = ref(true)
+  const tab = ref('overview')
+  const addAddressDialog = ref(false)
+  const addressToDelete = ref(null)
+  const ordersLoading = ref(false)
+  const deleteAddressDialog = ref(null)
+  const blockStatusDialog = ref(null)
 
-
-const handleBlock = () => {
-  if (blockStatusDialog.value) {
-    blockStatusDialog.value.open()
+  const handleBlock = () => {
+    if (blockStatusDialog.value) {
+      blockStatusDialog.value.open()
+    }
   }
-}
 
+  // import { useCurrencyStore } from '../store/useCurrencyStore'
+  // const currencyStore = useCurrencyStore()
 
-// import { useCurrencyStore } from '../store/useCurrencyStore'
-// const currencyStore = useCurrencyStore()
+  // const formatCurrency = (amount) => {
+  //   const convertedAmount = amount * currencyStore.rate;
+  //   return convertedAmount.toLocaleString('en-US', {
+  //     style: 'currency',
+  //     currency: currencyStore.selectedCurrency.code,
+  //     currencyDisplay: 'symbol'
+  //   });
+  // };
 
-// const formatCurrency = (amount) => {
-//   const convertedAmount = amount * currencyStore.rate;
-//   return convertedAmount.toLocaleString('en-US', {
-//     style: 'currency',
-//     currency: currencyStore.selectedCurrency.code,
-//     currencyDisplay: 'symbol'
-//   });
-// };
-
-
-// New address data
-const newAddress = ref({
-  province: null,
-  city: null,
-  street: '',
-  postalCode: '',
-  isDefault: false
-})
+  // New address data
+  const newAddress = ref({
+    province: null,
+    city: null,
+    street: '',
+    postalCode: '',
+    isDefault: false
+  })
 
   // Table headers
   const orderHeaders = [
@@ -565,19 +605,19 @@ const newAddress = ref({
     { title: t('common.actions'), key: 'actions', sortable: false }
   ]
 
-// CustomerDetails.vue
-watch(
-  () => customerStore.currentCustomer,
-  (newVal) => {
-    if (newVal && newVal._id === route.params.id) {
-      customer.value = { ...newVal };
-    }
-  },
-  { deep: true, immediate: true }
-);
+  // CustomerDetails.vue
+  watch(
+    () => customerStore.currentCustomer,
+    (newVal) => {
+      if (newVal && newVal._id === route.params.id) {
+        customer.value = { ...newVal }
+      }
+    },
+    { deep: true, immediate: true }
+  )
 
   // Computed
-const customerOrders = computed(() => customerStore.getCustomerOrders)
+  const customerOrders = computed(() => customerStore.getCustomerOrders)
 
   const provinces = computed(() => customerStore.provinces)
   const filteredCities = computed(() => {
@@ -586,15 +626,18 @@ const customerOrders = computed(() => customerStore.getCustomerOrders)
       (c) => c.provinceId === newAddress.value.province
     )
   })
-  
+
   const customerStats = computed(() => {
     const orders = customerOrders.value
     const ordersCount = orders.length
     const totalSpent = orders.reduce((sum, order) => sum + order.total, 0)
-    
-    const lastOrder = orders.length > 0 
-      ? new Date(Math.max(...orders.map(o => new Date(o.orderDate).getTime())))
-      : null
+
+    const lastOrder =
+      orders.length > 0
+        ? new Date(
+            Math.max(...orders.map((o) => new Date(o.orderDate).getTime()))
+          )
+        : null
 
     return {
       ordersCount,
@@ -618,10 +661,8 @@ const customerOrders = computed(() => customerStore.getCustomerOrders)
   })
 
   // In component script (corrected computed property)
- 
 
-
-const emptyCustomer = {
+  const emptyCustomer = {
     _id: '',
     firstName: '',
     lastName: '',
@@ -636,20 +677,17 @@ const emptyCustomer = {
     avatar: 'https://cdn.vuetifyjs.com/images/john.jpg'
   }
 
-const customer = computed(() => {
-  const current = customerStore.currentCustomer;
-  return current?._id ? current : { ...emptyCustomer };
-});
-
+  const customer = computed(() => {
+    const current = customerStore.currentCustomer
+    return current?._id ? current : { ...emptyCustomer }
+  })
 
   const customerActivity = computed(() =>
     customerStore.getCustomerActivityLog(route.params.id)
   )
 
   const isBlocked = computed(() => customer.value.state === 'blocked')
-const isActive = computed(() => customer.value.state === 'active')
-
- 
+  const isActive = computed(() => customer.value.state === 'active')
 
   const handleComponentError = (error) => {
     toast.error(t('errors.componentError'))
@@ -657,112 +695,112 @@ const isActive = computed(() => customer.value.state === 'active')
     router.push('/customers')
   }
 
-const handleTabChange = async (newTab) => {
-  if (newTab === 'orders' && customerOrders.value.length === 0) {
-    await loadOrders()
+  const handleTabChange = async (newTab) => {
+    if (newTab === 'orders' && customerOrders.value.length === 0) {
+      await loadOrders()
+    }
   }
-}
 
- const loadOrders = async () => {
-  ordersLoading.value = true
-  try {
-    await customerStore.fetchCustomerOrders(route.params.id)
-  } catch (error) {
-    toast.error(t('customers.ordersLoadError'))
-  } finally {
-    ordersLoading.value = false
+  const loadOrders = async () => {
+    ordersLoading.value = true
+    try {
+      await customerStore.fetchCustomerOrders(route.params.id)
+    } catch (error) {
+      toast.error(t('customers.ordersLoadError'))
+    } finally {
+      ordersLoading.value = false
+    }
   }
-}
 
-// Formatting functions
-const formatDate = (date) => {
-  if (!date) return '--'
-  return new Date(date).toLocaleDateString()
-}
-
-const formatDateTime = (date) => {
-  if (!date) return '--'
-  return new Date(date).toLocaleString()
-}
-
-const formatCurrency = (amount) => {
-  return parseFloat(amount || 0).toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  })
-}
-
-const calculateAge = (birthDate) => {
-  if (!birthDate) return '--'
-  const today = new Date()
-  const birth = new Date(birthDate)
-  let age = today.getFullYear() - birth.getFullYear()
-  const m = today.getMonth() - birth.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-    age--
+  // Formatting functions
+  const formatDate = (date) => {
+    if (!date) return '--'
+    return new Date(date).toLocaleDateString()
   }
-  return age
-}
 
-const formatCommunicationMethod = (method) => {
-  const methods = {
-    email: t('customers.communicationMethods.email'),
-    sms: t('customers.communicationMethods.sms'),
-    whatsapp: t('customers.communicationMethods.whatsapp')
+  const formatDateTime = (date) => {
+    if (!date) return '--'
+    return new Date(date).toLocaleString()
   }
-  return methods[method] || method
-}
 
-const getCommunicationIcon = (method) => {
-  const icons = {
-    email: 'mdi-email',
-    sms: 'mdi-message-text',
-    whatsapp: 'mdi-whatsapp'
+  const formatCurrency = (amount) => {
+    return parseFloat(amount || 0).toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    })
   }
-  return icons[method] || 'mdi-bell'
-}
 
-const getTierColor = (tier) => {
-  const colors = {
-    basic: 'grey',
-    silver: 'blue-grey',
-    gold: 'amber',
-    platinum: 'blue'
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return '--'
+    const today = new Date()
+    const birth = new Date(birthDate)
+    let age = today.getFullYear() - birth.getFullYear()
+    const m = today.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--
+    }
+    return age
   }
-  return colors[tier] || 'primary'
-}
 
-const getTierIcon = (tier) => {
-  const icons = {
-    basic: 'mdi-account',
-    silver: 'mdi-account-star',
-    gold: 'mdi-account-supervisor',
-    platinum: 'mdi-account-tie'
+  const formatCommunicationMethod = (method) => {
+    const methods = {
+      email: t('customers.communicationMethods.email'),
+      sms: t('customers.communicationMethods.sms'),
+      whatsapp: t('customers.communicationMethods.whatsapp')
+    }
+    return methods[method] || method
   }
-  return icons[tier] || 'mdi-account'
-}
 
-const formatTier = (tier) => {
-  const tiers = {
-    basic: t('customers.tiers.basic'),
-    silver: t('customers.tiers.silver'),
-    gold: t('customers.tiers.gold'),
-    platinum: t('customers.tiers.platinum')
+  const getCommunicationIcon = (method) => {
+    const icons = {
+      email: 'mdi-email',
+      sms: 'mdi-message-text',
+      whatsapp: 'mdi-whatsapp'
+    }
+    return icons[method] || 'mdi-bell'
   }
-  return tiers[tier] || tier
-}
 
-const getOrderStatusColor = (status) => {
-  const colors = {
-    pending: 'orange',
-    processing: 'blue',
-    shipped: 'teal',
-    delivered: 'green',
-    cancelled: 'red',
-    refunded: 'purple'
+  const getTierColor = (tier) => {
+    const colors = {
+      basic: 'grey',
+      silver: 'blue-grey',
+      gold: 'amber',
+      platinum: 'blue'
+    }
+    return colors[tier] || 'primary'
   }
-  return colors[status.toLowerCase()] || 'primary'
-}
+
+  const getTierIcon = (tier) => {
+    const icons = {
+      basic: 'mdi-account',
+      silver: 'mdi-account-star',
+      gold: 'mdi-account-supervisor',
+      platinum: 'mdi-account-tie'
+    }
+    return icons[tier] || 'mdi-account'
+  }
+
+  const formatTier = (tier) => {
+    const tiers = {
+      basic: t('customers.tiers.basic'),
+      silver: t('customers.tiers.silver'),
+      gold: t('customers.tiers.gold'),
+      platinum: t('customers.tiers.platinum')
+    }
+    return tiers[tier] || tier
+  }
+
+  const getOrderStatusColor = (status) => {
+    const colors = {
+      pending: 'orange',
+      processing: 'blue',
+      shipped: 'teal',
+      delivered: 'green',
+      cancelled: 'red',
+      refunded: 'purple'
+    }
+    return colors[status.toLowerCase()] || 'primary'
+  }
 
   const formatOrderStatus = (status) => {
     const statusLower = status.toLowerCase()
@@ -778,105 +816,116 @@ const getOrderStatusColor = (status) => {
     return statuses[statusLower] || status
   }
 
-const getActivityColor = (type) => {
-  const colors = {
-    login: 'blue',
-    purchase: 'green',
-    contact: 'teal',
-    review: 'amber',
-    complaint: 'orange',
-    refund: 'red'
-  }
-  return colors[type] || 'primary'
-}
-
-const getActivityIcon = (type) => {
-  const icons = {
-    login: 'mdi-login',
-    purchase: 'mdi-cart',
-    contact: 'mdi-email',
-    review: 'mdi-star',
-    complaint: 'mdi-alert',
-    refund: 'mdi-cash-refund'
-  }
-  return icons[type] || 'mdi-help'
-}
-
-const formatActivityType = (type) => {
-  const types = {
-    login: t('activity.types.login'),
-    purchase: t('activity.types.purchase'),
-    contact: t('activity.types.contact'),
-    review: t('activity.types.review'),
-    complaint: t('activity.types.complaint'),
-    refund: t('activity.types.refund')
-  }
-  return types[type] || type
-}
-
-// Methods
-const editCustomer = () => {
-  router.push(`/customers/edit/${customer.value.id}`)
-}
-
-const handleBlockConfirm = async () => {
-  try {
-    const newState = customer.value.state === 'active' ? 'blocked' : 'active';
-    
-    // استخدام _id بدلاً من id
-    await customerStore.updateCustomerStatus(customer.value._id, newState);
-    
-    // إعادة جلب البيانات للتأكد من التحديث
-    await customerStore.fetchCustomerById(customer.value._id);
-    
-    toast.success(t(`customers.${newState}Success`));
-  } catch (error) {
-    toast.error(t('customers.statusUpdateError'));
-  }
-};
-async function toggleBlockStatus(customerId) {
-  try {
-    // Change 'id' to '_id' when finding the customer
-    const customer = customers.value.find(c => c._id === customerId);
-    if (!customer) throw new Error('Customer not found');
-    
-    const newState = customer.state === 'blocked' ? 'active' : 'blocked';
-    
-    await apiClient.patch(`/${customerId}`, { state: newState });
-    
-    // Update local state
-    customer.state = newState;
-    
-    // Change 'id' to '_id' for current customer check
-    if (currentCustomer.value._id === customerId) {
-      currentCustomer.value.state = newState;
+  const getActivityColor = (type) => {
+    const colors = {
+      login: 'blue',
+      purchase: 'green',
+      contact: 'teal',
+      review: 'amber',
+      complaint: 'orange',
+      refund: 'red'
     }
-    
-    return true;
-  } catch (err) {
-    toast.error(t('customers.statusUpdateError'));
-    throw err;
+    return colors[type] || 'primary'
   }
-}
 
+  const getActivityIcon = (type) => {
+    const icons = {
+      login: 'mdi-login',
+      purchase: 'mdi-cart',
+      contact: 'mdi-email',
+      review: 'mdi-star',
+      complaint: 'mdi-alert',
+      refund: 'mdi-cash-refund'
+    }
+    return icons[type] || 'mdi-help'
+  }
 
+  const formatActivityType = (type) => {
+    const types = {
+      login: t('activity.types.login'),
+      purchase: t('activity.types.purchase'),
+      contact: t('activity.types.contact'),
+      review: t('activity.types.review'),
+      complaint: t('activity.types.complaint'),
+      refund: t('activity.types.refund')
+    }
+    return types[type] || type
+  }
 
-const viewOrderDetails = (order) => {
-  router.push(`/orders/${order.id}`)
-}
+  // Methods
+  const editCustomer = () => {
+    const prefix =
+      authStore.userRole === 'super_admin' ? 'super-admin' : 'admin'
+    router.push({
+      name: `${prefix}-edit-customer`,
+      params: { id: customer.value._id }
+    })
+  }
 
-const editAddress = (address) => {
-  toast.info(t('customers.addressEditComingSoon'))
-}
+  const handleBlockConfirm = async () => {
+    try {
+      const newState = customer.value.state === 'active' ? 'blocked' : 'active'
 
-const confirmDeleteAddress = (address) => {
-  addressToDelete.value = address
-  deleteAddressDialog.value.open()
-}
+      // استخدام _id بدلاً من id
+      await customerStore.updateCustomerStatus(customer.value._id, newState)
+
+      // إعادة جلب البيانات للتأكد من التحديث
+      await customerStore.fetchCustomerById(customer.value._id)
+
+      toast.success(t(`customers.${newState}Success`))
+    } catch (error) {
+      toast.error(t('customers.statusUpdateError'))
+    }
+  }
+  const goBack = () => {
+    const prefix =
+      authStore.userRole === 'super_admin' ? 'super-admin' : 'admin'
+    router.push({ name: `${prefix}-customers` })
+  }
+  async function toggleBlockStatus(customerId) {
+    try {
+      // Change 'id' to '_id' when finding the customer
+      const customer = customers.value.find((c) => c._id === customerId)
+      if (!customer) throw new Error('Customer not found')
+
+      const newState = customer.state === 'blocked' ? 'active' : 'blocked'
+
+      await apiClient.patch(`/${customerId}`, { state: newState })
+
+      // Update local state
+      customer.state = newState
+
+      // Change 'id' to '_id' for current customer check
+      if (currentCustomer.value._id === customerId) {
+        currentCustomer.value.state = newState
+      }
+
+      return true
+    } catch (err) {
+      toast.error(t('customers.statusUpdateError'))
+      throw err
+    }
+  }
+
+  const viewOrderDetails = (order) => {
+    router.push(`/orders/${order.id}`)
+  }
+
+  const editAddress = (address) => {
+    toast.info(t('customers.addressEditComingSoon'))
+  }
+
+  const confirmDeleteAddress = (address) => {
+    addressToDelete.value = address
+    deleteAddressDialog.value.open()
+  }
 
   const deleteAddress = async () => {
     try {
-      await customerStore.deleteCustomerAddress(customer.value.id, addressToDelete.value.id)
+      await customerStore.deleteCustomerAddress(
+        customer.value.id,
+        addressToDelete.value.id
+      )
       toast.success(t('customers.addressDeleteSuccess'))
       await customerStore.fetchCustomerById(route.params.id)
     } catch (error) {
@@ -888,7 +937,10 @@ const confirmDeleteAddress = (address) => {
 
   const addNewAddress = async () => {
     try {
-      await customerStore.addCustomerAddress(customer.value.id, newAddress.value)
+      await customerStore.addCustomerAddress(
+        customer.value.id,
+        newAddress.value
+      )
       toast.success(t('customers.addressAddSuccess'))
       newAddress.value = {
         province: null,
@@ -903,9 +955,7 @@ const confirmDeleteAddress = (address) => {
       toast.error(t('customers.addressAddError'))
     }
   }
-
 </script>
-
 
 <style scoped>
   .border-primary {
@@ -970,23 +1020,23 @@ const confirmDeleteAddress = (address) => {
     opacity: 0.3;
     font-size: 2.5rem;
   }
-  [dir="rtl"] .v-input__control {
-  direction: rtl;
-  text-align: right;
-}
+  [dir='rtl'] .v-input__control {
+    direction: rtl;
+    text-align: right;
+  }
 
-[dir="rtl"] .v-label {
-  right: 0;
-  left: auto;
-}
+  [dir='rtl'] .v-label {
+    right: 0;
+    left: auto;
+  }
 
-.v-switch--reversed :deep(.v-selection-control) {
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-}
+  .v-switch--reversed :deep(.v-selection-control) {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+  }
 
-.v-switch--reversed :deep(.v-label) {
-  padding-left: 0;
-  padding-right: 12px;
-}
+  .v-switch--reversed :deep(.v-label) {
+    padding-left: 0;
+    padding-right: 12px;
+  }
 </style>

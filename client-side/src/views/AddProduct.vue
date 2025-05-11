@@ -477,6 +477,10 @@
       isUploading.value = false
     }
   }
+  const getUserRole = () => {
+    const user = JSON.parse(localStorage.getItem('user'))
+    return user?.role || 'admin' // default to admin if not found
+  }
   const addProduct = async () => {
     const { valid } = await form.value.validate()
     if (!valid) return
@@ -519,7 +523,13 @@
       }
 
       await productStore.addProduct(productToAdd)
-      router.push('/products')
+      const role = getUserRole()
+      const routeName =
+        role === 'super_admin' ? 'super-admin-products' : 'admin-products'
+
+      router.push({
+        name: routeName
+      })
     } catch (error) {
       console.error('Error adding product:', error)
       uploadError.value =

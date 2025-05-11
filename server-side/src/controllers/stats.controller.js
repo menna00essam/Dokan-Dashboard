@@ -18,7 +18,6 @@ const httpStatusText = require("../utils/httpStatusText");
 //      },
 //    },
 //  ]);
- 
 
 //  res.json({ totalRevenue: result[0]?.total || 0 });
 // };
@@ -79,7 +78,10 @@ const getAvgOrderValue = async (req, res) => {
     },
   ]);
   const avg = result[0] ? result[0].total / result[0].count : 0;
-  res.json({ avgOrderValue: avg });
+
+  const roundedAvg = parseFloat(avg.toFixed(2)); // تقريب الناتج إلى رقمين بعد العلامة العشرية
+
+  res.json({ avgOrderValue: roundedAvg });
 };
 
 const getWeeklyStats = async (req, res) => {
@@ -151,15 +153,41 @@ const getWeeklyStats = async (req, res) => {
   }
 };
 
+// const getNewlyCustomers = async (req, res) => {
+//   try {
+//     const users = await User.find({
+//       role: "user",
+//       state: true,
+//     })
+//       .sort({ createdAt: -1 }) // Sort by newest first
+//       .limit(10); // Limit to 10 users
+
+//     res.status(200).json({
+//       status: httpStatusText.SUCCESS,
+//       data: {
+//         users,
+//         totalUsers: users.length,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Error fetching new users:", err);
+//     res.status(500).json({
+//       status: httpStatusText.ERROR,
+//       message: "Internal Server Error",
+//       error: err.message,
+//     });
+//   }
+// };
 
 const getNewlyCustomers = async (req, res) => {
   try {
+    const now = new Date();
     const users = await User.find({
       role: "user",
-      isActive: true,
+      state: "active",
     })
-      .sort({ createdAt: -1 }) // Sort by newest first
-      .limit(10); // Limit to 10 users
+      .sort({ createdAt: -1 })
+      .limit(5);
 
     res.status(200).json({
       status: httpStatusText.SUCCESS,
@@ -184,7 +212,7 @@ const getNewlyOrders = async (req, res) => {
       .populate("userId", "-password -__v")
       .populate("orderItems.productId")
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(5);
 
     const formattedOrders = formatOrders(orders);
 
@@ -205,7 +233,7 @@ const getNewlyProducts = async (req, res) => {
   try {
     const products = await Product.find({})
       .sort({ createdAt: -1 }) // Sort by newest first
-      .limit(10) // Get only 10 products
+      .limit(5) // Get only 10 products
       .populate("categories", "name") // Keep category population if needed
       .lean(); // Use lean() for better performance if you don't need Mongoose documents
 
@@ -235,4 +263,3 @@ module.exports = {
   getNewlyOrders,
   getNewlyProducts,
 };
-

@@ -24,10 +24,12 @@ export const useAuthStore = defineStore('auth', {
     setUserFromToken(token) {
       try {
         const decoded = jwtDecode(token)
+        console.log('Decoded token:', decoded) // Debug the token contents
+
         this.user = {
           id: decoded._id,
           email: decoded.email,
-          role: decoded.role
+          role: decoded.role.toLowerCase()
           // token:token,
           // ... other user properties
         }

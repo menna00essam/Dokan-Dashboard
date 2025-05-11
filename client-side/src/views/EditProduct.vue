@@ -620,7 +620,10 @@
       }, 1000)
     }
   }
-
+  const getUserRole = () => {
+    const user = JSON.parse(localStorage.getItem('user'))
+    return user?.role || 'admin' // default to admin if not found
+  }
   const updateProduct = async () => {
     const { valid } = await form.value.validate()
     if (!valid) return
@@ -696,7 +699,13 @@
 
       // Send the update request
       await productStore.updateProduct(productId.value, formData)
-      router.push('/products')
+      const role = getUserRole()
+      const routeName =
+        role === 'super_admin' ? 'super-admin-products' : 'admin-products'
+
+      router.push({
+        name: routeName
+      })
     } catch (error) {
       console.error('Error updating product:', error)
       uploadError.value =
