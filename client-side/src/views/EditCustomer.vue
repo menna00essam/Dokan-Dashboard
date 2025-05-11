@@ -104,15 +104,19 @@
               <v-card-text>
                 <v-row :class="{ 'flex-row-reverse': locale === 'ar' }">
                   <v-col cols="12" md="6">
-                    <v-select
-                      v-model="address.province"
-                      :items="provinces"
-                      :label="$t('province')"
-                      item-title="name"
-                      item-value="id"
-                      return-object
-                      :dir="locale"
-                    />
+                   <!-- In template address rendering -->
+<v-select
+  v-model="address.province"
+  :items="provinces"
+  :label="$t('province')"
+  item-title="name"
+  item-value="id"
+  return-object
+  :dir="locale"
+  @update:model-value="address.city = null"
+  :error="!address.province"
+  :error-messages="address.province ? undefined : $t('invalidProvince')"
+/>
                   </v-col>
                   <v-col cols="12" md="6">
                     <v-select
@@ -233,16 +237,15 @@ const router = useRouter()
 const customerStore = useCustomerStore()
 const toast = useToast()
 
-// Customer data structure
+// Customer data structure with default values
 const customer = ref({
   id: '',
   firstName: '',
   lastName: '',
   email: '',
   mobile: '',
-  state: 'active',
-  status: 'pending', 
-  customerTier: 'basic', 
+  state: 'active',       // Using state consistently throughout
+  customerTier: 'basic', // Using customerTier consistently throughout
   addresses: [],
   tags: [],
   communicationPreferences: {
@@ -256,7 +259,6 @@ const isSaving = ref(false)
 const stateOptions = ['active', 'blocked']
 const tierOptions = ['basic', 'silver', 'gold', 'platinum']
 const commonTags = ['VIP', 'Frequent Buyer', 'New', 'At Risk', 'Wholesale']
-
 
 // Validation rules
 const required = (value) => !!value || t('requiredField')
@@ -278,25 +280,26 @@ onMounted(async () => {
       return router.back()
     }
 
-    // Transform API data to UI format
+    // Transform API data to UI format with safeguards for empty addresses
     customer.value = {
-  ...existingCustomer,
-  state: existingCustomer.state,
-  status: existingCustomer.status,
-  customerTier: existingCustomer.customerTier,
-  addresses: (existingCustomer.addresses || []).map(addr => ({
-    ...addr,
-    province: customerStore.provinces.find(p => p.id === Number(addr.provinceId)),
-    city: customerStore.cities.find(c => c.id === Number(addr.cityId))
-  })),
-  communicationPreferences: {
-    email: existingCustomer.communicationPreferences?.email || false,
-    sms: existingCustomer.communicationPreferences?.sms || false,
-    whatsapp: existingCustomer.communicationPreferences?.whatsapp || false
-  }
-}
+      ...existingCustomer,
+      // Make sure state is properly set
+      state: existingCustomer.state || 'active',
+      // Make sure customerTier is properly set
+      customerTier: existingCustomer.customerTier || 'basic', 
+      // Handle addresses with proper error checking
+      addresses: Array.isArray(existingCustomer.addresses) && existingCustomer.addresses.length > 0 
+        ? existingCustomer.addresses.map(addr => ({
+            ...addr,
+            // Convert string IDs to numbers for matching with store data
+            // Use optional chaining and nullish coalescing to prevent errors
+            province: addr.provinceId ? customerStore.provinces.find(p => p.id === Number(addr.provinceId)) || null : null,
+            city: addr.cityId ? customerStore.cities.find(c => c.id === Number(addr.cityId)) || null : null
+          }))
+        : []
+    }
 
-
+    // Ensure there's at least one address
     if (customer.value.addresses.length === 0) {
       addNewAddress(true)
     }
@@ -328,52 +331,73 @@ const removeAddress = (index) => {
   customer.value.addresses.splice(index, 1)
 }
 
+// Update setDefaultAddress method
 const setDefaultAddress = (index) => {
-  customer.value.addresses.forEach((addr, i) => {
-    addr.isDefault = i === index
-  })
+  if (customer.value.addresses[index].isDefault) {
+    customer.value.addresses.forEach((addr, i) => {
+      addr.isDefault = i === index
+    })
+  }
 }
 
-// Save handler
+// Get provinces and cities from store
+const provinces = computed(() => customerStore.provinces || [])
+const cities = computed(() => customerStore.cities || [])
+
+// Computed properties for filtering cities
+const filteredCities = (provinceId) => {
+  if (!provinceId) return []
+  return customerStore.cities.filter(c => c.provinceId === provinceId)
+}
+
+// Save handler with improved error checking
 const saveCustomer = async () => {
   isSaving.value = true
   try {
-    // Validation
     if (!customer.value.firstName || !customer.value.lastName || !customer.value.email) {
       throw new Error(t('fillRequiredFields'))
     }
 
-    // Transform data before sending
-    const customerData = {
-      ...customer.value,
-      customerTier: customer.value.customerTier,
-      addresses: customer.value.addresses.map(addr => ({
-        ...addr,
-        provinceId: addr.province?.id,
-        cityId: addr.city?.id,
-        province: undefined,
-        city: undefined
-      }))
+    // Verify at least one address has province and city
+    const hasValidAddress = customer.value.addresses.some(addr => 
+      addr.province?.id && addr.city?.id
+    )
+    
+    if (!hasValidAddress && customer.value.addresses.length > 0) {
+      throw new Error(t('atLeastOneValidAddress'))
     }
 
-    await customerStore.updateCustomer(customer.value.id, customerData)
+    // Prepare data for the API with proper mapping
+    const customerData = {
+      ...customer.value,
+      addresses: customer.value.addresses.map(addr => ({
+        ...addr,
+        provinceId: addr.province?.id || null,
+        cityId: addr.city?.id || null,
+        // Remove objects that will cause circular references
+        province: undefined,
+        city: undefined
+      })),
+      // Explicitly include these to ensure they're saved properly
+      customerTier: customer.value.customerTier,
+      state: customer.value.state
+    }
+
+    await customerStore.updateCustomer(customer.value.id || customer.value._id, customerData)
 
     toast.success(t('customerSaved'))
     router.push('/customers')
+    return true
   } catch (error) {
     toast.error(error.message || t('failedToSaveCustomer'))
     console.error(error)
+    return false
   } finally {
     isSaving.value = false
   }
 }
 
-
-// Computed properties
-const filteredCities = computed(() => (provinceId) => {
-  return customerStore.cities.filter(c => c.provinceId === provinceId)
-})
-
+// Save and navigate back
 const saveAndBack = () => {
   saveCustomer().then(success => {
     if (success) router.push('/customers')
