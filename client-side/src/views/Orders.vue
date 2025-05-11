@@ -1,59 +1,58 @@
 <template>
-  <v-form>
-    <v-container>
-      <v-card class="mb-4" elevation="2">
-        <v-card-text>
-          <v-row :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-            <v-col cols="12" md="4" sm="6">
-              <v-text-field
-                :label="$t('Search Orders')"
-                prepend-inner-icon="mdi-magnify"
-                clearable
-                hide-details
-                v-model="ordersStore.searchQuery"
-                @input="ordersStore.setSearchQuery(ordersStore.searchQuery)"
-              />
-            </v-col>
+  <v-form class="px-8">
+    <v-card class="mb-4" elevation="2">
+      <v-card-text>
+        <v-row :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+          <v-col cols="12" md="4" sm="6">
+            <v-text-field
+              :label="$t('Search Orders')"
+              prepend-inner-icon="mdi-magnify"
+              clearable
+              hide-details
+              v-model="ordersStore.searchQuery"
+              @input="ordersStore.setSearchQuery(ordersStore.searchQuery)"
+            />
+          </v-col>
 
-            <v-col cols="6" md="3" sm="6">
-              <v-select
-                :items="statusOptions"
-                :label="$t('orderHeaders.status')"
-                clearable
-                hide-details
-                v-model="ordersStore.selectedStatus"
-                @update:model-value="ordersStore.setStatusFilter"
-              />
-            </v-col>
+          <v-col cols="6" md="3" sm="6">
+            <v-select
+              :items="statusOptions"
+              :label="$t('orderHeaders.status')"
+              clearable
+              hide-details
+              v-model="ordersStore.selectedStatus"
+              @update:model-value="ordersStore.setStatusFilter"
+            />
+          </v-col>
 
-            <v-col cols="6" md="3" sm="6">
-              <v-select
-                :items="sortOptions"
-                :label="$t('Sort By')"
-                hide-details
-                v-model="ordersStore.sortBy"
-              />
-            </v-col>
+          <v-col cols="6" md="3" sm="6">
+            <v-select
+              :items="sortOptions"
+              :label="$t('Sort By')"
+              hide-details
+              v-model="ordersStore.sortBy"
+              @update:model-value="handleSortChange"
+            />
+          </v-col>
 
-            <v-col cols="6" md="2" sm="6" class="d-flex align-center">
-              <v-btn
-                color="secondary"
-                class="pa-6"
-                style="font-size: 1.2rem"
-                block
-                @click="ordersStore.resetFilters()"
-              >
-                {{ t('Reset') }}
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
-    </v-container>
+          <v-col cols="6" md="2" sm="6" class="d-flex align-center">
+            <v-btn
+              color="secondary"
+              class="pa-6"
+              style="font-size: 1.2rem"
+              block
+              @click="ordersStore.resetFilters()"
+            >
+              {{ t('Reset') }}
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
   </v-form>
 
-  <v-card>
-    <v-container>
+  <div class="px-8">
+    <v-card>
       <template v-if="ordersStore.loading">
         <SkeletonLoader
           :columns="headers.map((h) => h.title)"
@@ -74,7 +73,7 @@
             <div class="d-flex align-center ga-5">
               <div class="product-image-wrapper">
                 <v-img
-                  :src="item.orderItems[0]?.selectedColors[0]?.image"
+                  :src="item.orderItems[0]?.selectedColors[0]?.images[0]"
                   alt="Product Image"
                   cover
                 />
@@ -143,8 +142,8 @@
           </template>
         </v-data-table>
       </template>
-    </v-container>
-  </v-card>
+    </v-card>
+  </div>
 
   <v-dialog
     v-model="dialog"
@@ -339,7 +338,7 @@
   const sortOptions = computed(() => [
     { value: 'userName', title: t('User Name') },
     { value: 'totalPrice', title: t('Total Price') },
-    { value: 'date', title: t('orderHeaders.date') }
+    { value: 'createdAt', title: t('orderHeaders.date') }
   ])
 
   const confirmDialog = ref(null)
@@ -364,14 +363,11 @@
 
   const handlePageChange = async (newPage) => {
     if (newPage === ordersStore.currentPage) return
-    ordersStore.currentPage = newPage
-    await ordersStore.getOrders({ page: newPage })
+    await ordersStore.handlePageChange(newPage)
   }
 
   const handleItemsPerPageChange = async (newSize) => {
-    ordersStore.itemsPerPage = newSize
-    ordersStore.currentPage = 1
-    await ordersStore.getOrders({ page: 1, limit: newSize })
+    await ordersStore.handleItemsPerPageChange(newSize)
   }
 </script>
 

@@ -10,8 +10,8 @@ export const useOrderStore = defineStore('order', {
         error: null,
         selectedOrder: null,
         selectedStatus: 'All',
-        sortBy: 'userName',
-        sortOrder: 'asc',
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
         searchQuery: '',
         currentPage: 1,
         itemsPerPage: 10,
@@ -49,7 +49,7 @@ export const useOrderStore = defineStore('order', {
                     case 'totalPrice':
                         comparison = a.total - b.total;
                         break;
-                    case 'date':
+                    case 'createdAt':
                         comparison = new Date(a.createdAt) - new Date(b.createdAt);
                         break;
                 }
@@ -64,19 +64,20 @@ export const useOrderStore = defineStore('order', {
             page = this.currentPage,
             limit = this.itemsPerPage,
             search = this.searchQuery,
-            status,
-            sort = this.sortBy,
-            sortDirection = this.sortOrder
+            status = this.selectedStatus,
+            sortBy = this.sortBy,
+            sortOrder = this.sortOrder
         } = {}) {
             this.loading = true;
             this.error = null;
             try {
                 const res = await axios.get('http://localhost:5000/orders', {
-                    params: { page, limit, search, status, sort, sortDirection }
+                    params: { page, limit, search, status, sortBy, sortOrder }
                 })
                 console.log("Response data:", res.data);
                 if (res.data && res.data.data) {
-                    this.orders = res.data.data.orders || [];
+                    this.orders = res.data.data.orders;
+                    console.log(this.orders)
                     this.totalOrders = res.data.data.totalOrders || 0;
                     this.totalPages = Math.ceil(this.totalOrders / this.itemsPerPage);
                     this.currentPage = page;
@@ -133,22 +134,49 @@ export const useOrderStore = defineStore('order', {
 
         setStatusFilter(status) {
             this.selectedStatus = status;
+            this.currentPage = 1;
             const statusParam = status === 'All' ? '' : status;
             this.getOrders({ status: statusParam });
         },
 
         setSortBy(sortBy) {
             this.sortBy = sortBy;
+            this.getOrders();
         },
         resetFilters() {
             this.selectedStatus = 'All';
-            this.sortBy = 'userName';
-            this.sortOrder = 'asc';
+            this.sortBy = 'createdAt';
+            this.sortOrder = 'desc';
             this.getOrders();
         },
         setSearchQuery(query) {
             this.searchQuery = query;
+            this.currentPage = 1;
             this.getOrders({ search: query });
+        },
+        async handlePageChange(newPage) {
+            if (newPage === this.currentPage) return;
+            this.currentPage = newPage;
+            await this.getOrders({
+                page: newPage,
+                limit: this.itemsPerPage,
+                status: this.selectedStatus,
+                search: this.searchQuery,
+                sortBy: this.sortBy,
+                sortOrder: this.sortOrder
+            });
+        },
+        async handleItemsPerPageChange(newSize) {
+            this.itemsPerPage = newSize;
+            this.currentPage = 1;
+            await this.getOrders({
+                page: 1,
+                limit: newSize,
+                status: this.selectedStatus,
+                search: this.searchQuery,
+                sortBy: this.sortBy,
+                sortOrder: this.sortOrder
+            });
         }
     }
 })

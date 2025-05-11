@@ -1,31 +1,26 @@
 <template>
   <!--  -->
   <!-- User Data -->
-  <v-row class="px-10" no-gutters>
-    <!-- <v-col sm="6" cols="12" class="mb-sm-0 mb-5">
-      <div class="d-flex align-center">
-        <h3 class="mr-3 custom-heading">Order Number:</h3>
-        <p>A1003</p>
-      </div>
-    </v-col> -->
+  <v-row class="px-8" no-gutters>
     <v-col cols="12" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
       <div class="d-flex align-center">
-        <h3
+        <h2
+          style="font-size: 1.5rem"
           class="mr-3 custom-heading"
           :class="{
             'ma-3': $i18n.locale === 'ar',
-            'ml-3': $i18n.locale !== 'ar'
+            'ml-0': $i18n.locale !== 'ar'
           }"
         >
           {{ $t('Customer Name') }} :
-        </h3>
+        </h2>
         <p>{{ order.user?.firstName }} {{ order.user?.lastName }}</p>
       </div>
     </v-col>
   </v-row>
 
   <!-- Stepper -->
-  <div class="px-sm-10 px-0 my-5">
+  <div class="px-sm-8 px-0 my-5">
     <v-stepper
       v-model="step"
       alt-labels
@@ -74,10 +69,10 @@
   </div>
 
   <!-- Order Details -->
-  <section class="px-10">
+  <section class="px-8">
     <h2
       class="custom-heading my-5"
-      style="font-size: 1.7rem"
+      style="font-size: 1.5rem"
       :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
     >
       {{ $t('Order Details') }}
@@ -122,23 +117,23 @@
         v-for="(color, colorIndex) in item.selectedColors"
         :key="'color-' + colorIndex"
       >
-        <v-row no-gutters class="mt-5 align-center">
+        <v-row no-gutters class="mt-5 align-center elevation-1 pa-3 rounded-lg">
           <v-col
             class="mr-10"
             :class="{
               'ma-10': $i18n.locale === 'ar',
-              'ml-10': $i18n.locale !== 'ar'
+              'ma-0': $i18n.locale !== 'ar'
             }"
             cols="10"
             sm="3"
           >
             <div class="image" style="height: 250px">
               <img
-                :src="color.image"
+                :src="color.images[0]"
                 alt=""
                 width="100%"
                 height="100%"
-                class="rounded-lg mt-2"
+                class="rounded-lg"
               />
             </div>
           </v-col>
@@ -167,7 +162,7 @@
   <!-- Shipped Details -->
   <section class="px-10" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     <div
-      class="mt-10 border-t-lg border-dotted border-b-0 border-e-0 border-s-0 py-8"
+      class="mt-16 border-t-lg border-dotted border-b-0 border-e-0 border-s-0 py-10"
     >
       <v-row no-gutters>
         <v-col cols="12" sm="8" class="mb-10 mb-sm-0">

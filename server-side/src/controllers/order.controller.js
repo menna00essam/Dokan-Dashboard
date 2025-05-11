@@ -12,7 +12,6 @@ const createOrder = asyncWrapper(async (req, res, next) => {
     return next(new AppError("Missing required order fields", 400));
   }
 
-
   const newOrder = await Order.create({
     ...req.body,
   });
@@ -27,46 +26,60 @@ const getOrders = asyncWrapper(async (req, res, next) => {
   try {
     console.log('[DEBUG] Incoming Order Body:', req.body);
 
-    let { limit = 10, page = 1, search = "" } = req.query;
+    let { limit = 10, page = 1, search = "", status = "", sortBy = "createdAt", sortOrder = "desc" } = req.query;
 
-    limit = Math.max(1, limit);
-    page = Math.max(1, page);
+    limit = Math.max(1, parseInt(limit));
+    page = Math.max(1, parseInt(page));
 
-    const skip = (page - 1) * limit;
-    const query = {};
+    const query = { isDeleted: false };
 
-    if (isNaN(limit) || isNaN(page)) {
-      return next(
-        new AppError(
-          "Invalid pagination parameters. 'limit' and 'page' must be positive numbers.",
-          400,
-          httpStatusText.FAIL
-        )
+    if (status && status !== 'All') {
+      query.status = status;
+    }
+
+    const orders = await Order.find(query)
+      .populate("userId", "-password -__v")
+      .populate("orderItems.productId")
+      .populate("orderItems.productId.colors")
+      .populate("orderItems.productId.colors.images");
+
+    let filteredOrders = orders;
+    if (search.trim() !== "") {
+      const regex = new RegExp(search, "i");
+      filteredOrders = orders.filter(order =>
+        regex.test(order.userId?.firstName) ||
+        regex.test(order.userId?.lastName) ||
+        regex.test(order.orderNumber) ||
+        regex.test(order.status)
       );
     }
 
-    if (search.trim() !== "") {
-      const regex = new RegExp(search, "i");
-      query.$or = [
-        { "user.firstName": regex },
-        { "user.lastName": regex },
-        { orderNumber: regex },
-        { status: regex },
-      ];
-    }
-    console.log(query);
+    filteredOrders.sort((a, b) => {
+      let valA, valB;
 
+      if (sortBy === "userName") {
+        valA = a.userId?.firstName?.toLowerCase() || "";
+        valB = b.userId?.firstName?.toLowerCase() || "";
+      } else if (sortBy === "totalPrice") {
+        valA = a.total || 0;
+        valB = b.total || 0;
+      } else if (sortBy === "createdAt") {
+        valA = new Date(a.createdAt);
+        valB = new Date(b.createdAt);
+      }
 
-    const orders = await Order.find({ isDeleted: false, ...query })
-      .populate("userId", "-password -__v")
-      .populate("orderItems.productId")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
 
-    const totalOrders = await Order.countDocuments({ isDeleted: false });
+    const totalOrders = filteredOrders.length;
 
-    const formattedOrders = formatOrders(orders);
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginatedOrders = filteredOrders.slice(start, end);
+
+    const formattedOrders = await formatOrders(paginatedOrders);
 
     res.status(200).json({
       status: httpStatusText.SUCCESS,
@@ -77,7 +90,6 @@ const getOrders = asyncWrapper(async (req, res, next) => {
     res.status(500).json({ error: 'Internal Server Error', message: err.message });
   }
 });
-
 
 const updateOrderStatus = asyncWrapper(async (req, res, next) => {
   const orderId = req.params.id;
@@ -111,8 +123,6 @@ const updateOrderStatus = asyncWrapper(async (req, res, next) => {
     return next(new AppError('Failed to update order status', 500, httpStatusText.ERROR));
   }
 });
-
-
 
 const softDeleteOrder = asyncWrapper(async (req, res, next) => {
   const orderId = req.params.id;
@@ -165,8 +175,6 @@ const restoreOrder = asyncWrapper(async (req, res, next) => {
   })
 })
 
-module.exports = { createOrder, getOrders, updateOrderStatus, softDeleteOrder, restoreOrder };
-
 const getUserOrders = asyncWrapper(async (req, res, next) => {
   const { userId } = req.params;
 
@@ -190,69 +198,6 @@ const getUserOrders = asyncWrapper(async (req, res, next) => {
 });
 
 
+
+
 module.exports = { createOrder, getOrders, updateOrderStatus, softDeleteOrder, restoreOrder,getUserOrders };
-
-
-
-
-/*
-
-const getOrders = asyncWrapper(async (req, res, next) => {
-  const userId = req.user._id;
-
-  let { limit = 10, page = 1 } = req.query;
-
-  limit = Math.max(1, limit);
-  page = Math.max(1, page);
-
-  if (isNaN(limit) || isNaN(page)) {
-    return next(
-      new AppError(
-        "Invalid pagination parameters. 'limit' and 'page' must be positive numbers.",
-        400,
-        httpStatusText.FAIL
-      )
-    );
-  }
-  const skip = (page - 1) * limit;
-
-  const orders = await Order.find({ userId })
-    .populate("userId", "firstName lastName")
-    .select(
-      "orderNumber status orderItems totalAmount shippingMethod createdAt"
-    )
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const totalOrders = await Order.countDocuments({ userId });
-
-  if (orders.length === 0) {
-    return next(
-      new AppError("No orders found for this user", 404, httpStatusText.FAIL)
-    );
-  }
-
-  const formattedOrders = orders.map((order) => ({
-    orderNumber: order.orderNumber,
-    status: order.status,
-    total: `${order.totalAmount.toFixed(2)}`,
-    shippingMethod: {
-      name: order.shippingMethod?.name || "",
-      cost: order.shippingMethod?.cost?.toFixed(2) || "0.00",
-    },
-    createdAt: order.createdAt.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }),
-  }));
-
-  res.status(200).json({
-    status: httpStatusText.SUCCESS,
-    data: { orders: formattedOrders, totalOrders },
-  });
-});
-
-*/
-

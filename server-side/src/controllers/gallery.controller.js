@@ -1,82 +1,7 @@
-// const cloudinary = require('cloudinary').v2;
-// const Image = require('../models/gallary.model');
-// const uploadImage = async (req, res, next) => {
-//   try {
-//     const result = await cloudinaryUploadImage(
-//       req.file.path,
-//       req.params.folder
-//     );
-
-//     const imageDoc = await Image.create({
-//       publicId: result.public_id,
-//       imageUrl: result.secure_url,
-//     });
-
-//     res.status(201).send({
-//       message: "Successfully uploaded image",
-//       data: imageDoc,
-//     });
-//   } catch (err) {
-//     next(err);
-//   }
-// };
-
-// module.exports = {uploadImage}
-
-
 
 const cloudinary = require('cloudinary').v2; // ممكن تحتاجها لو بتعمل عمليات مباشرة هنا
 const Image = require('../models/gallary.model');
 const { cloudinaryUploadImage } = require('../config/cloudinary.config'); // استورد الـ Function بس
-
-// const uploadImage = async (req, res, next) => {
-//   console.log("Reached uploadImage controller");
-
-//     try {
-//       console.log("req.file:", req.file);
-//         const result = await cloudinaryUploadImage(
-//             req.file.path,
-//             req.params.folder
-//         );
-//         console.log("Cloudinary upload result:", result);
-//         const imageDoc = await Image.create({
-//             publicId: result.public_id,
-//             imageUrl: result.secure_url,
-//         });
-//         console.log("Image document created:", imageDoc);
-//         res.status(201).send({
-//             message: "Successfully uploaded image",
-//             data: imageDoc,
-//         });
-//     } catch (err) {
-//       console.error("Error in uploadImage:", err);
-//         next(err);
-//     }
-// };
-// const uploadImage = async (req, res, next) => {
-//   console.log("Reached uploadImage controller");
-
-//     try {
-//       console.log("req.file:", req.file);
-//         const result = await cloudinaryUploadImage(
-//             req.file.path,
-//             req.params.folder
-//         );
-//         console.log("Cloudinary upload result:", result);
-//         const imageDoc = await Image.create({
-//             publicId: result.public_id,
-//             imageUrl: result.secure_url,
-//         });
-//         console.log("Image document created:", imageDoc);
-//         res.status(201).send({
-//             message: "Successfully uploaded image",
-//             data: imageDoc,
-//         });
-//     } catch (err) {
-//       console.error("Error in uploadImage:", err);
-//         next(err);
-//     }
-// };
 
 
 const uploadImage = async (req, res, next) => {
@@ -215,6 +140,14 @@ const getImageById = async (req, res, next) => {
       res.status(500).json({ error: 'Failed to fetch image' });
     }
   };
-  
-  module.exports = { uploadImage, updatedImages, getImages, getImageById };
+  const getImageUrlsByIds = async (imageIds) => {
+  const images = await Promise.all(
+    imageIds.map(async (id) => {
+      const image = await Image.findById(id);
+      return image?.imageUrl || "https://via.placeholder.com/150";
+    })
+  );
+  return images;
+};
+  module.exports = { uploadImage, updatedImages, getImages, getImageById ,getImageUrlsByIds};
 
