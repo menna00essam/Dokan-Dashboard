@@ -31,7 +31,7 @@ router.patch("/:id/deny", allowedTo("super_admin"), userController.denyUser);
 
 // ===== Bulk Actions =====
 // Accessible by: admin, super_admin
-router.post("/bulk-delete", allowedTo("admin", "super_admin"), userController.bulkDeleteUsers);
+router.patch("/bulk-delete", allowedTo("admin", "super_admin"), userController.bulkDeleteUsers);
 router.patch('/bulk-status', allowedTo('admin', 'super_admin'),userController.bulkUpdateUserStatus);
 router.post("/bulk-assign-tags", allowedTo("admin","super_admin"), userController.bulkAssignTags);
 router.patch('/bulk-update-tier', allowedTo('admin', 'super_admin'), userController.bulkAssignTier);
