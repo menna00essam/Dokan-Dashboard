@@ -4,15 +4,21 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
+
       trim: true,
     },
     lastName: {
       type: String,
+
       trim: true,
     },
     username: {
       type: String,
     },
+    isDeleted: {
+    type: Boolean,
+    default: false
+  },
     email: {
       type: String,
       required: [true, "Email is required"],

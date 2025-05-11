@@ -211,10 +211,9 @@
           <v-icon
             small
             color="error"
-            @click.stop="deleteSingleCustomer(item.id)"
-            :loading="isDeleting && customerToDelete === item.id"
-            >mdi-delete</v-icon
-          >
+            @click.stop="deleteSingleCustomer(item._id)"
+            :loading="isDeleting && customerToDelete === item._id"            
+            >mdi-delete</v-icon>
         </div>
       </template>
     </v-data-table>
@@ -395,48 +394,87 @@
       params: { id: customer._id }
     })
   }
-  const deleteSingleCustomer = (id) => {
-    customerToDelete.value = id
-    singleDeleteDialog.value.open()
-  }
 
-  const confirmSingleDelete = async () => {
-    isDeleting.value = true
-    try {
-      const success = await customerStore.deleteCustomer(customerToDelete.value)
-      if (success) {
-        await customerStore.fetchCustomers(customerStore.currentPage)
-      }
-    } finally {
-      isDeleting.value = false
-      customerToDelete.value = null
-    }
-  }
+ const deleteSingleCustomer = (id) => {
+  customerToDelete.value = id;
+  singleDeleteDialog.value.open();
+};
 
-  // In component's confirmDelete function
-  const confirmDelete = async () => {
-    isDeleting.value = true
-    try {
-      const selectedIds = selected.value.map((c) => c._id)
-      await customerStore.bulkDeleteCustomers(selectedIds)
-      await customerStore.fetchCustomers()
-      selected.value = []
-      toast.success(t('customersDeleted', { count: selectedIds.length }))
-    } catch (error) {
-      toast.error(t('deleteError'))
-    } finally {
-      isDeleting.value = false
-    }
-  }
 
-  const toggleCustomerStatus = async (customerId, newState) => {
-    try {
-      await customerStore.toggleBlockStatus(customerId)
-      await customerStore.fetchCustomers(customerStore.currentPage)
-      toast.success(t('statusChanged', { state: t(newState) }))
-    } catch (error) {
-      toast.error(t('statusChangeError'))
+const confirmSingleDelete = async () => {
+  isDeleting.value = true;
+  try {
+    // First check if the ID is valid
+    if (!customerToDelete.value) {
+      throw new Error('Invalid customer ID');
     }
+    
+    // Delete the customer
+    const success = await customerStore.deleteCustomer(customerToDelete.value);
+    
+    if (success) {
+      // No need to fetchCustomerById here since we're deleting
+      toast.success(t('customerDeleted'));
+      
+      // Refresh the customer list
+      await customerStore.fetchCustomers(customerStore.currentPage);
+    }
+  } catch (error) {
+    console.error('Single delete error:', error);
+    toast.error(t('deleteError'));
+  } finally {
+    isDeleting.value = false;
+    customerToDelete.value = null;
+  }
+};
+
+// In component's confirmDelete function
+const confirmDelete = async () => {
+  isDeleting.value = true;
+  try {
+    // Get IDs from the selected array
+    const selectedIds = selected.value.map(id => typeof id === 'object' ? id._id : id);
+    
+    // Perform bulk delete
+    const deletedCount = await customerStore.bulkDeleteCustomers(selectedIds, t);
+    
+    if (deletedCount > 0) {
+      // Clear selection before fetching new data
+      selected.value = [];
+      
+      // Refresh customer list
+      await customerStore.fetchCustomers(customerStore.currentPage);
+      
+      toast.success(t('customersDeleted', { count: deletedCount }));
+    }
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    toast.error(t('deleteError'));
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+const toggleCustomerStatus = async (customerId, newState) => {
+  try {
+    await customerStore.toggleBlockStatus(customerId);
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    toast.success(t('statusChanged', { state: t(newState) }));
+  } catch (error) {
+    toast.error(t('statusChangeError'));
+  }
+};
+
+const updateCustomerTier = async (customer, newTier) => {
+  try {
+    await customerStore.updateCustomer(customer.id, {
+      customerTier: newTier
+    });
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    toast.success(t('tierUpdated', { tier: t(newTier) }));
+  } catch (error) {
+    toast.error(t('tierUpdateError'));
+
   }
 
   const updateCustomerTier = async (customer, newTier) => {
