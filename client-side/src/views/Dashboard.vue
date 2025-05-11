@@ -1,9 +1,9 @@
-
 <script setup>
 import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { Line as LineChart } from 'vue-chartjs';
+import { useAuthStore } from '../store/auth'
 import {
     Chart as ChartJS,
     Title,
@@ -22,6 +22,17 @@ const chartLabels = ref([]);
 const revenueChartData = ref(null);
 const ordersChartData = ref(null);
 const avgOrderValueChartData = ref(null);
+const authStore = useAuthStore()
+const cardHeight = ref('50vh')
+
+const userName = computed(() => {
+    const email = authStore.user?.email || 'Guest'
+    return email.split('@')[0]
+})
+
+
+
+
 const { t, locale } = useI18n();
 
 const updateChartLabels = () => {
@@ -44,6 +55,7 @@ const updateChartData = (weeklyStatsResponse) => {
             data: weeklyStatsResponse.data.map(day => day.revenue),
             borderColor: '#42A5F5',
             backgroundColor: 'rgba(66,165,245,0.2)',
+            tension: 0.4,
             fill: true,
             pointHoverRadius: 12
         }]
@@ -54,8 +66,9 @@ const updateChartData = (weeklyStatsResponse) => {
         datasets: [{
             label: t('Orders'),
             data: weeklyStatsResponse.data.map(day => day.orders),
-            borderColor: '#66BB6A',
-            backgroundColor: 'rgba(102,187,106,0.2)',
+            borderColor: '#FFA726',
+            backgroundColor: 'rgba(255,167,38,0.2)',
+            tension: 0.4,
             fill: true,
             pointHoverRadius: 12
         }]
@@ -66,8 +79,8 @@ const updateChartData = (weeklyStatsResponse) => {
         datasets: [{
             label: t('AvgOrderValue'),
             data: weeklyStatsResponse.data.map(day => day.avgOrderValue),
-            borderColor: '#FFA726',
-            backgroundColor: 'rgba(255,167,38,0.2)',
+            borderColor: '#66BB6A',
+            backgroundColor: 'rgba(102,187,106,0.2)',
             fill: true,
             tension: 0.4,
             pointHoverRadius: 12
@@ -100,8 +113,28 @@ const filteredOrders = computed(() => {
     if (filterOrders.value === 'All') return orders.value;
     return orders.value.filter(order => order.status === filterOrders.value);
 });
+const updateCardHeight = () => {
+    const width = window.innerWidth
+    if (width < 600) {
+        cardHeight.value = '25vh' 
+    } else if (width >= 600 && width < 960) {
+        cardHeight.value = '30vh'
+    } else if (width >= 960 && width < 1264) {
+        cardHeight.value = '30vh'
+    } else {
+        cardHeight.value = '25vh' 
+    }
+}
+
+
+
+  
+
+  
 
 onMounted(async () => {
+    updateCardHeight()
+    window.addEventListener('resize', updateCardHeight)
     try {
         updateChartLabels();
 
@@ -109,6 +142,10 @@ onMounted(async () => {
         const ordersResponse = await axios.get('http://localhost:5000/dashboard/stats/orders');
         const avgOrderValueResponse = await axios.get('http://localhost:5000/dashboard/stats/avg-order-value');
         const weeklyStatsResponse = await axios.get('http://localhost:5000/dashboard/stats/weekly-stats');
+
+        const ordersDataResponse = await axios.get('http://localhost:5000/dashboard/stats/neworders');
+        const customersDataResponse = await axios.get('http://localhost:5000/dashboard/stats/customers');
+        const productsDataResponse = await axios.get('http://localhost:5000/dashboard/stats/products');
 
         kpis.value = {
             totalRevenue: revenueResponse.data.totalRevenue,
@@ -118,9 +155,10 @@ onMounted(async () => {
 
         updateChartData(weeklyStatsResponse);
 
-        orders.value = weeklyStatsResponse.data.recentOrders;
-        newCustomers.value = weeklyStatsResponse.data.newCustomers;
-        newProducts.value = weeklyStatsResponse.data.newProducts;
+        orders.value = ordersDataResponse.data.data.orders;
+        newCustomers.value = customersDataResponse.data.data.users;
+        newProducts.value = productsDataResponse.data.data.products;
+        console.log(newProducts.value)
 
         isLoading.value = false;
     } catch (error) {
@@ -130,11 +168,21 @@ onMounted(async () => {
     }
 });
 watch(locale, async () => {
-    await nextTick(); 
+    await nextTick();
     updateChartLabels();
     const weeklyStatsResponse = await axios.get('http://localhost:5000/dashboard/stats/weekly-stats');
     updateChartData(weeklyStatsResponse);
+
 });
+const headers = computed(() => [
+    { text: t('OrderID'), value: 'orderNumber' },
+    { text: t('Customer'), value: 'user' },
+    { text: t('Products'), value: 'products' },
+    { text: t('Date'), value: 'createdAt' },
+    { text: t('Status'), value: 'status' },
+    { text: t('Amount'), value: 'amount' }
+]);
+console.log(headers)
 
 
 </script>
@@ -162,6 +210,41 @@ watch(locale, async () => {
         </v-row>
     </v-container>
     <v-container fluid v-if="!isLoading && !isError">
+        <!-- greeting cards -->
+        <v-row class="mb-6 mt-6 relative">
+
+            <v-col cols="12" sm="6" md="6" lg="6">
+                <v-card class="px-15 py-12 greeting-card   text-center" elevation="2" :style="{ height: cardHeight }">
+                    <div class="">
+                        <h3 class="mb-2">
+                            {{ $t('visitors') }}
+                        </h3>
+                        <h6 class="text-h6 font-weight-semi-bold">
+                            <p>2000</p>
+                        </h6>
+                    </div>
+
+                </v-card>
+            </v-col>
+            <v-col cols="12" sm="6" md="6" lg="6">
+                <v-card class="px-15 py-4 card-with-img text-center greeting-card" elevation="2"
+                    :style="{ height: cardHeight }">
+                    <div class="greeting">
+                        <h3 class="mb-2">
+                            <p>{{ $t('greeting.hello') }} {{ userName }}</p>
+                        </h3>
+                        <h6 class="text-h6 font-weight-semi-bold">
+                            <p>{{ $t('greeting.welcome') }}</p>
+                        </h6>
+                    </div>
+                    <div class=" img-wrapper ml-4">
+                        <img class="girlImg " src="/3d-female-character-waving-DBC38tAu.png" alt="">
+                    </div>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- cards -->
         <v-row class="mb-6 relative" justify="center">
             <v-col cols="12" sm="6" md="4">
                 <v-card elevation="2" class="pa-4 text-center">
@@ -176,10 +259,8 @@ watch(locale, async () => {
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="4">
-                <v-card elevation="2" class="pa-4 text-center card-with-img">
-                    <div class="img-wrapper">
-                        <img class="girlImg" src="/3d-female-character-waving-DBC38tAu.png" alt="">
-                    </div>
+                <v-card elevation="2" class="pa-4 text-center ">
+
                     <h3 class="mb-2 text-green">{{ t('AverageOrderValue') }}</h3>
                     <div class="text-h4 font-weight-bold">${{ kpis.averageOrderValue }}</div>
                 </v-card>
@@ -187,7 +268,7 @@ watch(locale, async () => {
             </v-col>
 
         </v-row>
-
+        <!-- charts -->
         <v-row class="mb-6" justify-center>
             <v-col cols="12" sm="6" md="6" lg="4" class="m-auto center-on-sm">
                 <v-card
@@ -222,12 +303,13 @@ watch(locale, async () => {
                 </v-card>
             </v-col>
         </v-row>
-
+        <!-- tables -->
+        <!-- order table -->
         <v-row class="mb-6 align-center justify-center">
             <v-col cols="12">
                 <v-card class="pa-4" elevation="2">
                     <h4 class="mb-4">{{ t('NewOrders') }}</h4>
-                    <v-table>
+                    <v-table height="300px">
                         <thead>
                             <tr>
                                 <th>{{ t('OrderID') }}</th>
@@ -240,17 +322,17 @@ watch(locale, async () => {
                         </thead>
                         <tbody>
                             <tr v-for="(o, index) in orders" :key="index">
-                                <td>{{ o.orderId }}</td>
-                                <td>{{ o.customerName }}</td>
-                                <td>{{ o.products.join(', ') }}</td>
-                                <td>{{ o.date }}</td>
+                                <td>{{ o.orderNumber }}</td>
+                                <td>{{ o.user.firstName + ' ' + o.user.lastName }}</td>
+                                <td>{{ o.orderItems[0].name }}</td>
+                                <td>{{ o.createdAt }}</td>
                                 <td>
                                     <v-chip :color="o.status === 'Pending' ? 'orange' : 'green'" class="text-white"
                                         size="small">
                                         {{ o.status }}
                                     </v-chip>
                                 </td>
-                                <td>{{ o.amount }}</td>
+                                <td>{{ o.orderItems.length }}</td>
                             </tr>
                         </tbody>
                     </v-table>
@@ -258,11 +340,39 @@ watch(locale, async () => {
             </v-col>
         </v-row>
 
+        <!-- <v-row class="mb-6 align-center justify-center">
+            <v-data-table :headers="headers" :items="orders" :items-per-page="5" class="elevation-1">
+                <template #item.user="{ item }">
+                    {{ item.user?.firstName || '' }} {{ item.user?.lastName || '' }}
+                </template>
+
+<template #item.products="{ item }">
+                    {{ item.orderItems[0]?.name || '' }}
+                </template>
+
+<template #item.createdAt="{ item }">
+                    {{ new Date(item.createdAt).toLocaleDateString() }}
+                </template>
+
+<template #item.status="{ item }">
+                    <v-chip :color="item.status === 'Pending' ? 'orange' : 'green'" class="text-white" size="small">
+                        {{ item.status }}
+                    </v-chip>
+                </template>
+
+<template #item.amount="{ item }">
+                    {{ item.orderItems.length }}
+                </template>
+</v-data-table>
+</v-row> -->
+
+        <!-- 2tables -->
         <v-row class="mb-6" justify="center" gap='1'>
+            <!-- customer table -->
             <v-col cols="12" sm="6" md="6">
                 <v-card class="pa-4" elevation="2">
                     <h4 class="mb-4">{{ t('NewCustomers') }}</h4>
-                    <v-table>
+                    <v-table height="300px">
                         <thead>
                             <tr>
                                 <th>{{ t('CustomerID') }}</th>
@@ -275,9 +385,10 @@ watch(locale, async () => {
                         <tbody>
                             <tr v-for="(customer, index) in newCustomers" :key="index">
                                 <td>{{ customer.id }}</td>
-                                <td>{{ customer.name }}</td>
+                                <td>{{ (customer.firstName && customer.lastName) ? customer.firstName + ' ' +
+                                    customer.lastName : '' }}</td>
                                 <td>{{ customer.email }}</td>
-                                <td>{{ customer.dateJoined }}</td>
+                                <td>{{ new Date(customer.joinDate).toLocaleDateString() }}</td>
                                 <td>
                                     <v-chip :color="customer.status === 'Active' ? 'green' : 'red'" class="text-white"
                                         size="small">
@@ -289,34 +400,27 @@ watch(locale, async () => {
                     </v-table>
                 </v-card>
             </v-col>
-
+            <!-- product table -->
             <v-col cols="12" sm="6" md="6">
                 <v-card class="pa-4" elevation="2">
                     <h4 class="mb-4">{{ t('NewProducts') }}</h4>
-                    <v-table>
+                    <v-table height="300px">
                         <thead>
                             <tr>
-                                <th>{{ t('ProductId') }}</th>
-                                <th>{{ t('Name') }}</th>
-                                <th>{{ t('Category') }}</th>
-                                <th>{{ t('Price') }}</th>
-                                <th>{{ t('DateAdded') }}</th>
-                                <th>{{ t('Status') }}</th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Subtitle</th>
+                                <th>Price</th>
+                                <th>Sale</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(product, index) in newProducts" :key="index">
-                                <td>{{ product.id }}</td>
+                                <td>{{ product._id }}</td>
                                 <td>{{ product.name }}</td>
-                                <td>{{ product.category }}</td>
+                                <td>{{ product.subtitle }}</td>
                                 <td>{{ product.price }}</td>
-                                <td>{{ product.dateAdded }}</td>
-                                <td>
-                                    <v-chip :color="product.status === 'In Stock' ? 'green' : 'red'" class="text-white"
-                                        size="small">
-                                        {{ product.status }}
-                                    </v-chip>
-                                </td>
+                                <td>{{ product.sale }}</td>
                             </tr>
                         </tbody>
                     </v-table>
@@ -353,9 +457,10 @@ watch(locale, async () => {
     font-weight: 600;
 }
 
-.line-chart{
+.line-chart {
     height: 320px;
 }
+
 @media (max-width: 599px) {
     .center-on-sm {
         display: flex;
@@ -367,29 +472,52 @@ watch(locale, async () => {
 .card-with-img {
     position: relative;
     overflow: visible;
-    padding-top: 100px;
+
+    display: flex;
+
 }
 
 .img-wrapper {
+    max-width: 120px;
     position: absolute;
-    top: -50px;
-    z-index: 2;
-    inset-inline-start: 10px;
-
-}
-
-:dir(rtl) .img-wrapper {
-    inset-inline-start: auto;
-    inset-inline-end: 40px;
+    top: -45px;
+    left: -40px;
 }
 
 .girlImg {
     height: 200px;
     width: auto;
+
 }
 
 :dir(rtl) .img-wrapper {
     inset-inline-start: auto;
-    inset-inline-end: 40px;
+    inset-inline-end: 5px;
+}
+
+/* .girlImg {
+    height: 200px;
+    width: auto;
+} */
+
+:dir(rtl) .img-wrapper {
+    inset-inline-start: auto;
+    inset-inline-end: 5px;
+}
+
+.v-data-table {
+    min-height: 300px;
+}
+
+.greeting {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.greeting-card{
+    height: 120px;
+    display: flex;
+    justify-content: center;
 }
 </style>

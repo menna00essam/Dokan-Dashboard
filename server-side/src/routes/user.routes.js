@@ -51,6 +51,13 @@ router.patch(
   userController.toggleUserRole
 );
 
+// ===== Bulk Actions =====
+// Accessible by: admin, super_admin
+router.post("/bulk-delete", allowedTo("admin", "super_admin"), userController.bulkDeleteUsers);
+router.patch('/bulk-status', allowedTo('admin', 'super_admin'),userController.bulkUpdateUserStatus);
+router.post("/bulk-assign-tags", allowedTo("admin","super_admin"), userController.bulkAssignTags);
+router.patch('/bulk-update-tier', allowedTo('admin', 'super_admin'), userController.bulkAssignTier);
+
 // Accessible by: admin, super_admin
 router.get(
   "/:id",
@@ -75,23 +82,7 @@ router.post(
   userController.restoreUser
 );
 
-// ===== Bulk Actions =====
-// Accessible by: admin, super_admin
-router.post(
-  "/bulk-delete",
-  allowedTo("admin", "super_admin"),
-  userController.bulkDeleteUsers
-);
-router.patch(
-  "/bulk-update-status",
-  allowedTo("admin", "super_admin"),
-  userController.bulkUpdateUserStatus
-);
-router.post(
-  "/bulk-assign-tags",
-  allowedTo("admin", "super_admin"),
-  userController.bulkAssignTags
-);
+
 
 // ===== Activities =====
 // Accessible by: admin, super_admin

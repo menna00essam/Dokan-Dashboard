@@ -8,7 +8,9 @@
     "dashboard": "Dashboard",
     "products": "Products",
     "requests": "Requests",
-    "settings": "Settings"
+    "settings": "Settings",
+    "editProduct": "Edit Product",
+    "addProduct": "Add Product"
   },
   "settings": "Settings",
   "storeSettings": "Store Settings",
@@ -26,6 +28,8 @@
   "methodAdded": "Shipping method added",
   "methodDeleted": "Shipping method deleted successfully",
   "confirmDelete": "Are you sure you want to delete this shipping method?",
+  "confirmDeleteImage": "Are you sure you want to delete ?",
+  "search_products": "search for products",
   "cancel": "Cancel",
   "required": "is required",
   "delete": "delete",
@@ -49,6 +53,51 @@
   "products": "Products",
   "requests": "Requests",
   "logout": "Logout",
+  "name": "Name",
+  "sku": "SKU",
+  "category": "Category",
+  "stock": "Stock",
+  "price": "Price",
+  "added": "Added",
+  "action": "Action",
+  "add_a_product": "Add a product",
+  "general_information": "General information",
+  "product_name": "Product Name",
+  "description": "Description",
+  "dimensions": "Dimensions",
+  "width": "Width",
+  "height": "Height",
+  "depth": "Depth",
+
+  "product_category": "Product Category",
+  "pricing": "Pricing",
+
+  "discount_type": "Discount Type",
+  "discount_value": "Discount Value",
+  "inventory": "Inventory",
+  "quantity": "Quantity",
+  "color_n": "Color {n}",
+  "select_color_name": "Select Color Name",
+  "color_hex_value": "Color Hex Value",
+  "color_quantity": "Color Quantity",
+  "color_sku": "Color SKU",
+  "remove_color": "Remove Color",
+  "images_for_color_n": "Images for Color {n}",
+  "update_product": "Update Product",
+
+  "add_color": "Add Color",
+
+  "product_tags": "Product Tags (comma-separated)",
+  "uploading_images_for_color_n": "Uploading images for Color {n}",
+  "processing": "Processing...",
+  "add_product": "Add Product",
+
+  "required_field": "Required.",
+  "preparing": "Preparing",
+  "starting": "Starting",
+  "uploading": "Uploading",
+  "almost_done": "Almost done",
+
   "orderHeaders": {
     "orderNumber": "Order Number",
     "product": "Product",
@@ -118,6 +167,7 @@
   "itemsPerPage": "Items per page",
   "showingItems": "Showing {from} to {to} of {total} items",
   "userApproved": "{name} has been approved",
+  "Haveaniceday!Wearehappytoseeyouhere.":"Have a nice day! We are happy to see you here.",
 
   "currencies": "Currencies",
   "addCurrency": "Add Currency",
@@ -339,5 +389,15 @@
   "No data available": "No data available",
   "Confirm Delete": "Confirm Delete",
   "Cancel": "Cancel",
-  "Delete": "Delete"
-}
+  "Delete": "Delete",
+  "greeting": {
+    "welcome": "Have a nice day! We are happy to see you here.",
+    "hello": "Hello"
+  },
+  "visitors": "Number of Visitors",
+
+  "statusUpdated": "Updated {count} users",
+  "selectUsersFirst": "Please select users first",
+  "confirmBulkUpdate": "Are you sure you want to update {count} users to {state}?",
+  "updateError": "Failed to update some users"
+  }
