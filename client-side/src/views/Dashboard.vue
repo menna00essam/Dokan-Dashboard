@@ -309,7 +309,7 @@ console.log(headers)
             <v-col cols="12">
                 <v-card class="pa-4" elevation="2">
                     <h4 class="mb-4">{{ t('NewOrders') }}</h4>
-                    <v-table height="300px">
+                    <v-table >
                         <thead>
                             <tr>
                                 <th>{{ t('OrderID') }}</th>

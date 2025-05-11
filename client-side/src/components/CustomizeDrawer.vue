@@ -34,7 +34,7 @@
       <!-- Color -->
       <div class="mt-4 pa-4">
         <div class="d-flex justify-space-between align-center mb-4">
-          <h4>Text Color</h4>
+          <h4>Theme Color</h4>
           <v-btn variant="text" color="error" size="small" @click="resetColors">
             Reset
           </v-btn>

@@ -137,6 +137,7 @@
               icon="mdi-delete"
               @click="deleteItem(item)"
               size="small"
+              class="text-error"
               variant="text"
             />
           </template>
@@ -199,7 +200,7 @@
   <ConfirmDialog
     ref="confirmDialog"
     :title="t('Confirm Delete')"
-    :message="deleteMessage"
+    :message="t('deletemessage')"
     :confirm-text="t('Delete')"
     :cancel-text="t('Cancel')"
     confirm-color="error"
@@ -214,6 +215,7 @@
     @update:page="handlePageChange"
     @update:itemsPerPage="handleItemsPerPageChange"
     :loading="ordersStore.loading"
+    :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
   />
 </template>
 
@@ -306,13 +308,22 @@
       dialog.value = false
     }
   }
-
+  const getUserRole = () => {
+    const user = JSON.parse(localStorage.getItem('user'))
+    return user?.role || 'admin' // default to admin if not found
+  }
   async function orderDetails(item) {
     ordersStore.setSelectedOrder(item)
+    const role = getUserRole()
+    const routeName =
+      role === 'super_admin'
+        ? 'super-admin-order-details'
+        : 'admin-order-details'
     router.push({
-      name: 'order-details',
+      name: routeName,
       params: { id: item._id }
     })
+    console.log('pushed')
   }
 
   // async function deleteItem(item) {

@@ -208,10 +208,7 @@ const getAllProducts = asyncWrapper(async (req, res, next) => {
       limit
     ),
   ]);
-await Product.populate(products, {
-    path: 'colors.images',
-    model: 'Image'
-  });
+
   res.status(200).json({
     status: httpStatusText.SUCCESS,
     data: { totalProducts, products },

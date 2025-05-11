@@ -214,8 +214,8 @@ const getNewlyOrders = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
-    const formattedOrders = formatOrders(orders);
-
+    const formattedOrders = await formatOrders(orders);
+    // console.log("formated ", formatOrders);
     res.status(200).json({
       status: httpStatusText.SUCCESS,
       data: { orders: formattedOrders, totalOrders: orders.length },

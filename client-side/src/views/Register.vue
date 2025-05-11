@@ -8,7 +8,7 @@
   const authStore = useAuthStore()
   const valid = ref(false)
   const formRef = ref(null)
-  const loading = ref(false) 
+  const loading = ref(false)
 
   const form = ref({
     username: '',
@@ -38,8 +38,8 @@
   async function signup() {
     const isValid = await formRef.value.validate()
 
-      if (isValid) {
-        loading.value = true 
+    if (isValid) {
+      loading.value = true
       try {
         const response = await axios.post('http://localhost:5000/auth/signup', {
           username: form.value.username,
@@ -56,7 +56,7 @@
           error.response?.data || error.message
         )
       } finally {
-         loading.value = false 
+        loading.value = false
       }
     } else {
       console.log(' Form is invalid')
@@ -179,9 +179,8 @@
                 rounded="lg"
                 size="large"
                 class="mt-4 btn-custom"
-            
               >
-               <v-progress-circular
+                <v-progress-circular
                   v-if="loading"
                   indeterminate
                   size="24"

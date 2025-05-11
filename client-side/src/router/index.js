@@ -55,7 +55,7 @@ const routes = [
       },
       {
         path: 'order-details/:id',
-        name: 'order-details',
+        name: 'super-admin-order-details',
         component: OrderDetails,
         meta: { breadcrumb: 'orderDetails' }
       },
@@ -139,6 +139,12 @@ const routes = [
       {
         path: 'orders',
         name: 'admin-orders',
+        component: Orders,
+        meta: { breadcrumb: 'orders' }
+      },
+      {
+        path: 'order-details/:id',
+        name: 'admin-order-details',
         component: Orders,
         meta: { breadcrumb: 'orders' }
       },
