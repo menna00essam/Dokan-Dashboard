@@ -29,7 +29,7 @@
             link
           >
             <v-list-item-title>{{
-              t('pages.' + item.title)
+              t('pages.'+ item.title)
             }}</v-list-item-title>
           </v-list-item>
         </v-list>
@@ -99,7 +99,7 @@
     { title: 'orders', to: '/orders' },
     { title: 'customers', to: '/customers' },
     { title: 'requests', to: '/requests' },
-    { title: 'settings', to: '/settings' }
+    { title: 'settings', to: '/settings' },   
   ]
 
   const toggleDrawer = () => {

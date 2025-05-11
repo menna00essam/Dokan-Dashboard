@@ -10,8 +10,14 @@
     "requests": "Requests",
     "settings": "Settings",
     "editProduct": "Edit Product",
-    "addProduct": "Add Product"
+    "addProduct": "Add Product",
+    "editCustomer": "Edit Customer",
+    "customerDetails": "Customer Details",
+    "orderDetails": "Order Details"
   },
+  "searchCustomers": "search for customers",
+  "deleteCustomerConfirm": "Are you sure to delete ?",
+  "confirmDeletion": "confirm delete",
   "settings": "Settings",
   "storeSettings": "Store Settings",
   "saveSettings": "Save Settings",
@@ -167,7 +173,7 @@
   "itemsPerPage": "Items per page",
   "showingItems": "Showing {from} to {to} of {total} items",
   "userApproved": "{name} has been approved",
-  "Haveaniceday!Wearehappytoseeyouhere.":"Have a nice day! We are happy to see you here.",
+  "Haveaniceday!Wearehappytoseeyouhere.": "Have a nice day! We are happy to see you here.",
 
   "currencies": "Currencies",
   "addCurrency": "Add Currency",
@@ -400,4 +406,4 @@
   "selectUsersFirst": "Please select users first",
   "confirmBulkUpdate": "Are you sure you want to update {count} users to {state}?",
   "updateError": "Failed to update some users"
-  }
+}

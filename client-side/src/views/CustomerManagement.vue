@@ -72,8 +72,7 @@
       :class="{ 'flex-row-reverse': locale === 'ar' }"
     >
       <v-btn
-        class="mr-3"
-        variant="tonal"
+      :class="$i18n.locale === 'ar' ? ' ml-2' : 'mr-2'"        variant="tonal"
         color="orange"
         :variant="selected.length ? 'flat' : 'outlined'"
       >
@@ -87,7 +86,7 @@
             variant="tonal"
             v-bind="props"
             prepend-icon="mdi-tune"
-            class="mr-2"
+            :class="$i18n.locale === 'ar' ? ' ml-2' : 'mr-2'"
             :disabled="!selected.length"
           >
             {{ t('bulkActions') }}
@@ -156,18 +155,16 @@
       class="elevation-1"
       :loading="customerStore.loading"
       hide-default-footer
+      :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
       @click:row="(event, { item }) => viewCustomerDetails(item._id)"
     >
       <!-- Table Content Templates -->
       <template #item.fullname="{ item }">
-        <div
-          class="d-flex align-center"
-          :class="{ 'flex-row-reverse': locale === 'ar' }"
-        >
-          <v-avatar size="36" class="mr-2">
+        <div class="d-flex align-center">
+          <v-avatar size="36" :class="$i18n.locale === 'ar' ? ' ml-2' : 'mr-2'">
             <v-img :src="item.avatar || defaultAvatar" />
           </v-avatar>
-          {{ item.firstName }} {{ item.lastName }}
+          <span>{{ item.firstName }} {{ item.lastName }}</span>
         </div>
       </template>
 
@@ -181,6 +178,7 @@
         <v-chip
           :color="item.state === 'active' ? 'success' : 'error'"
           size="small @click.stop"
+          class="pa-2"
         >
           {{ t(item.state) }}
           <v-icon
@@ -205,24 +203,17 @@
           class="d-flex align-center"
           :class="{ 'flex-row-reverse': locale === 'ar' }"
         >
-          <v-btn
-            icon
-            size="small"
-            color="info"
-            class="mr-2"
-            @click.stop="editCustomer(item)"
+          <v-icon size="small" class="mr-2" @click.stop="editCustomer(item)"
+            >mdi-pencil</v-icon
           >
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-          <v-btn
-            icon
-            size="small"
+
+          <v-icon
+            small
             color="error"
             @click.stop="deleteSingleCustomer(item.id)"
             :loading="isDeleting && customerToDelete === item.id"
+            >mdi-delete</v-icon
           >
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
         </div>
       </template>
     </v-data-table>

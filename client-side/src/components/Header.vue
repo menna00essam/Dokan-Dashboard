@@ -167,7 +167,7 @@
       .filter((r) => r.name && r.meta?.breadcrumb !== false)
       .map((r) => ({
         text: r.meta?.breadcrumb
-          ? t('pages.' + r.meta.breadcrumb.toLowerCase())
+          ? t('pages.' + r.meta.breadcrumb)
           : formatRouteName(r.name),
         to: r.path.includes(':') ? undefined : r.path,
         disabled: false
