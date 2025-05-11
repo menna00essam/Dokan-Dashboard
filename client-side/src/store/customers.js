@@ -40,16 +40,40 @@ export const useCustomerStore = defineStore('customer', () => {
   const totalPages = ref(1)
   const total = ref(0)
 
-  const provinces = ref([
-    { id: 1, name: 'Cairo' },
-    { id: 2, name: 'Alexandria' }
-  ])
+const provinces = ref([
+  { id: 1, name: 'Cairo' },
+  { id: 2, name: 'Alexandria' },
+  { id: 3, name: 'Giza' },
+  { id: 4, name: 'Dakahlia' },
+  { id: 5, name: 'Aswan' },
+  { id: 6, name: 'Luxor' },
+  { id: 7, name: 'Sharqia' },
+  { id: 8, name: 'Suez' },
+  { id: 9, name: 'Ismailia' },
+  { id: 10, name: 'Qalyubia' }
+])
 
-  const cities = ref([
-    { id: 1, provinceId: 1, name: 'Downtown Cairo' },
-    { id: 2, provinceId: 1, name: 'Nasr City' },
-    { id: 3, provinceId: 2, name: 'Montaza' }
-  ])
+const cities = ref([
+  { id: 1, provinceId: 1, name: 'Downtown Cairo' },
+  { id: 2, provinceId: 1, name: 'Nasr City' },
+  { id: 3, provinceId: 1, name: 'Maadi' },
+  { id: 4, provinceId: 2, name: 'Montaza' },
+  { id: 5, provinceId: 2, name: 'Sidi Gaber' },
+  { id: 6, provinceId: 3, name: 'Dokki' },
+  { id: 7, provinceId: 3, name: 'Mohandessin' },
+  { id: 8, provinceId: 4, name: 'Mansoura' },
+  { id: 9, provinceId: 4, name: 'Talkha' },
+  { id: 10, provinceId: 5, name: 'Aswan City' },
+  { id: 11, provinceId: 5, name: 'Edfu' },
+  { id: 12, provinceId: 6, name: 'Luxor City' },
+  { id: 13, provinceId: 6, name: 'Armant' },
+  { id: 14, provinceId: 7, name: 'Zagazig' },
+  { id: 15, provinceId: 7, name: '10th of Ramadan' },
+  { id: 16, provinceId: 8, name: 'Suez City' },
+  { id: 17, provinceId: 9, name: 'Ismailia City' },
+  { id: 18, provinceId: 10, name: 'Banha' },
+  { id: 19, provinceId: 10, name: 'Qalyub' }
+])
 
   // ------------------ Computed Getters ------------------
   const filteredCustomers = computed(() => {
@@ -164,9 +188,16 @@ async function fetchCustomerById(id) {
     }
 
     const apiCustomer = response.data.data.user;
-    
+
+    // تحويل العناوين بإضافة بيانات المحافظات والمدن
+    const transformedAddresses = (apiCustomer.addresses || []).map(addr => ({
+      ...addr,
+      province: customerStore.provinces.find(p => p.id === addr.provinceId) || null,
+      city: customerStore.cities.find(c => c.id === addr.cityId) || null
+    }));
+
     currentCustomer.value = {
-      _id: apiCustomer._id, // Use _id instead of id
+      _id: apiCustomer._id,
       firstName: apiCustomer.firstName,
       lastName: apiCustomer.lastName,
       email: apiCustomer.email,
@@ -174,7 +205,7 @@ async function fetchCustomerById(id) {
       state: apiCustomer.state,
       tier: apiCustomer.customerTier,
       avatar: apiCustomer.avatar || 'https://cdn.vuetifyjs.com/images/john.jpg',
-      addresses: apiCustomer.addresses || [],
+      addresses: transformedAddresses,
       activityLog: apiCustomer.activityLog || [],
       ordersCount: apiCustomer.ordersCount,
       totalSpent: apiCustomer.totalSpent,
@@ -191,6 +222,7 @@ async function fetchCustomerById(id) {
     loading.value = false;
   }
 }
+
   
 
   async function createCustomer(data) {
@@ -320,7 +352,6 @@ async function updateCustomerStatus(id, newState) {
   try {
     const response = await apiClient.patch(`/${id}`, { state: newState });
     
-    // تحديث القائمة باستخدام _id
     const index = customers.value.findIndex(c => c._id === id);
     if (index > -1) {
       customers.value.splice(index, 1, { 
@@ -329,7 +360,6 @@ async function updateCustomerStatus(id, newState) {
       });
     }
 
-    // تحديث العميل الحالي باستخدام _id
     if (currentCustomer.value?._id === id) {
       currentCustomer.value = { 
         ...currentCustomer.value, 
