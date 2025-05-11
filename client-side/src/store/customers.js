@@ -119,16 +119,16 @@ const getCustomerOrders = computed(() => currentCustomerOrders.value)
   async function fetchCustomers(page = currentPage.value) {
     try {
       loading.value = true
-      const response = await apiClient.get('/', {
-        params: {
-          page: page,
-          limit: itemsPerPage.value,
-          search: searchQuery.value,
-          state: statusFilter.value,
-          customerTier: tierFilter.value,
-          sortBy: sortBy.value,
-          sortOrder: sortOrder.value
-        }
+     const response = await apiClient.get("/", {
+      params: {
+        page: page,
+        limit: itemsPerPage.value,
+        search: searchQuery.value,
+        state: statusFilter.value,       // Should match backend expectation
+        customerTier: tierFilter.value,  // Should match backend expectation
+        sortBy: sortBy.value,
+        sortOrder: sortOrder.value,
+      },
       })
 
       // Update state from API response
@@ -171,7 +171,6 @@ const getCustomerOrders = computed(() => currentCustomerOrders.value)
         lastName: customerData.lastName,
         email: customerData.email,
         mobile: customerData.mobile,
-        isBlocked: customerData.state === 'blocked',
         tier: customerData.customerTier,
         joinDate: customerData.joinDate,
         avatar: customerData.avatar,
@@ -182,6 +181,7 @@ const getCustomerOrders = computed(() => currentCustomerOrders.value)
         activityLog: customerData.activityLog || [],
         communicationPreferences: customerData.communicationPreferences || {},
         notes: customerData.notes || '',
+        state: customerData.state,
       };
   
       currentCustomerActivity.value = customerData.activityLog || [];
@@ -235,22 +235,32 @@ async function bulkUpdateTier(ids, tier) {
 }
 
 
-  async function updateCustomer(id, customerData) {
-    try {
-      loading.value = true
-      const response = await apiClient.patch(`/${id}`, customerData)
-      const updated = response.data.data.user
-const index = customers.value.findIndex((c) => c._id === id);
-      if (index !== -1) customers.value[index] = updated
-      currentCustomer.value = updated
-      return updated
-    } catch (error) {
-      toast.error('Error updating customer')
-      throw error
-    } finally {
-      loading.value = false
+ async function updateCustomer(id, customerData) {
+  loading.value = true
+  try {
+    const response = await apiClient.patch(`/${id}`, customerData)
+    const updated = response.data.data?.user || response.data.data
+
+    const index = customers.value.findIndex(c => c.id === id || c._id === id)
+    if (index !== -1) {
+      customers.value[index] = { ...customers.value[index], ...updated }
+    } else {
+      customers.value.unshift(updated)
     }
+
+    if (currentCustomer.value?.id === id || currentCustomer.value?._id === id) {
+      currentCustomer.value = updated
+    }
+
+    toast.success('Customer updated successfully')
+    return updated
+  } catch (error) {
+    toast.error('Error updating customer')
+    throw error
+  } finally {
+    loading.value = false
   }
+}
 
   async function deleteCustomer(id) {
     try {
@@ -283,25 +293,32 @@ const index = customers.value.findIndex((c) => c._id === id);
     }
   }
 
-// Pinia store
-async function bulkUpdateStatus(ids, state) {
+// In useCustomerStore (Pinia store)
+async function bulkUpdateStatus(userIds, newState) {
   try {
-    loading.value = true
-    const response = await apiClient.patch('/bulk-update-status', { ids, state })
+    loading.value = true;
+    const response = await apiClient.patch('/bulk-status', { 
+      userIds, 
+      state: newState 
+    });
 
-    customers.value = customers.value.map((c) =>
-      ids.includes(c._id) ? { ...c, state } : c
-    )
+    // Update local state
+    customers.value = customers.value.map(c => 
+      userIds.includes(c._id) ? { ...c, state: newState } : c
+    );
+     const modifiedCount = response.data.data.modifiedCount;
 
-    toast.success(`Updated ${response.data.modifiedCount} users`)
-    return response.data.modifiedCount
+
+    toast.success(`Updated ${response.data.modifiedCount} users`);
+    return response.data.modifiedCount;
   } catch (err) {
-    toast.error('Status update failed')
-    throw err
+    toast.error('Failed to update statuses');
+    throw err;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
+
 
 
 
@@ -326,20 +343,22 @@ async function bulkUpdateStatus(ids, state) {
 
 
 
+// In useCustomerStore (Pinia store)
 async function toggleBlockStatus(customerId) {
   try {
-    const customer = customers.value.find(c => c.id === customerId);
+    // Change 'id' to '_id' when finding the customer
+    const customer = customers.value.find(c => c._id === customerId);
     if (!customer) throw new Error('Customer not found');
     
     const newState = customer.state === 'blocked' ? 'active' : 'blocked';
     
     await apiClient.patch(`/${customerId}`, { state: newState });
     
-    // تحديث الحالة المحلية
+    // Update local state
     customer.state = newState;
     
-    // إذا كان العميل الحالي هو الذي تم تحديثه
-    if (currentCustomer.value.id === customerId) {
+    // Change 'id' to '_id' for current customer check
+    if (currentCustomer.value._id === customerId) {
       currentCustomer.value.state = newState;
     }
     

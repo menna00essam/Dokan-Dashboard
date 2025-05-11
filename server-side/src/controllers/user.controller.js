@@ -66,38 +66,60 @@ const createUser = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users
 // @access  Public
 const getAllUsers = asyncWrapper(async (req, res, next) => {
-  const { page = 1, limit = 10, search, isActive } = req.query;
+  const { 
+    page = 1, 
+    limit = 10, 
+    search, 
+    state,
+    customerTier,
+    sortBy = 'createdAt',
+    sortOrder = 'desc' 
+  } = req.query;
 
-  const query = {
-    role: "user",
-    isActive: true,
-  };
+  const query = { role: "user" };
+
+  // التعديل 1: استخدام حقل state مباشرة بدل isActive
+  if (state === 'active') query.state = 'active'; // ← CHANGED
+  if (state === 'blocked') query.state = 'blocked'; // ← CHANGED
+
+  if (customerTier && customerTier !== 'all') {
+    query.customerTier = customerTier;
+  }
 
   if (search) {
     query.$or = [
       { firstName: { $regex: search, $options: "i" } },
       { lastName: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } }
     ];
   }
 
-  if (isActive === "true") query.isActive = true;
-  if (isActive === "false") query.isActive = false;
+  const allowedSortFields = ['firstName', 'lastName', 'email', 'createdAt', 'totalSpent'];
+  const validatedSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+  const validatedSortOrder = sortOrder.toLowerCase() === 'asc' ? 1 : -1;
+  const sortOptions = { [validatedSortBy]: validatedSortOrder };
 
   const {
     data: users,
     total,
     page: currentPage,
-    totalPages,
-  } = await paginate(User, query, { page, limit, sort: { createdAt: -1 } });
+    totalPages
+  } = await paginate(User, query, {
+    page: Number(page),
+    limit: Number(limit),
+    sort: sortOptions
+  });
+
+  // التعديل 2: إزالة التحويل غير الضروري
+  const transformedUsers = users.map(user => user.toObject()); // ← CHANGED
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    results: users.length,
+    results: transformedUsers.length,
     total,
     currentPage,
     totalPages,
-    data: { users },
+    data: { users: transformedUsers } // ← البيانات تحتوي على state مباشرة
   });
 });
 
@@ -1227,40 +1249,34 @@ const bulkDeleteUsers = asyncWrapper(async (req, res, next) => {
   });
 });
 
-// controllers/user.controller.js
+// @desc    Bulk update user statuses
+// @route   PATCH /api/users/bulk-status
+// @access  Private (Admin)
+// Bulk Status Update Controller
 const bulkUpdateUserStatus = asyncWrapper(async (req, res, next) => {
-  const { ids, state } = req.body;
+  const { userIds, state } = req.body; // ← MODIFIED (was ids, status)
 
   // Validation
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return next(new AppError("Please provide an array of user IDs", 400));
-  }
-  if (!['active', 'blocked'].includes(state)) {
-    return next(new AppError("Invalid status value", 400));
+  if (!Array.isArray(userIds)) { // Added missing closing parenthesis
+    return next(new AppError('User IDs must be an array', 400));
   }
 
-  try {
-    // Update logic
-    const updateData = {
-      state,
-      isActive: state === 'active',
-      isBlocked: state === 'blocked'
-    };
-
-    const result = await User.updateMany(
-      { _id: { $in: ids } },
-      { $set: updateData }
-    );
-
-    res.status(200).json({
-      status: "success",
-      data: { modifiedCount: result.modifiedCount }
-    });
-  } catch (error) {
-    console.error('Status update error:', error);
-    next(new AppError("Failed to update user statuses", 500));
+  if (!['active', 'blocked'].includes(state)) { // ← MODIFIED (status → state)
+    return next(new AppError('Invalid state value', 400));
   }
+
+  const result = await User.updateMany(
+    { _id: { $in: userIds } }, // ← MODIFIED (uses _id)
+    { $set: { state } } // ← MODIFIED (was isActive: status === 'active')
+  );
+
+  res.status(200).json({
+    status: "success",
+    data: { modifiedCount: result.modifiedCount } // ← MODIFIED response format
+  });
 });
+
+
 
 
 

@@ -387,7 +387,9 @@
     "statusChanged": "تم تغيير الحالة إلى {state}",
   "tierUpdated": "تم تحديث المستوى إلى {tier}",
   "statusChangeError": "حدث خطأ أثناء تغيير الحالة",
-  "tierUpdateError": "حدث خطأ أثناء تحديث المستوى"
-  
+  "tierUpdateError": "حدث خطأ أثناء تحديث المستوى",
+  "statusUpdated": "تم تحديث حالة {count} عميل",
+  "bulkUpdateSuccess": "تم تحديث {count} عميل بنجاح",
+  "bulkUpdateError": "فشل تحديث الحالة"
 }
 
