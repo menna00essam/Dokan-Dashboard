@@ -74,31 +74,30 @@ const createUser = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users
 // @access  Public
 const getAllUsers = asyncWrapper(async (req, res, next) => {
-  const { 
-    page = 1, 
-    limit = 10, 
-    search, 
+  const {
+    page = 1,
+    limit = 10,
+    search,
     state,
     customerTier,
     showDeleted,
-    sortBy = 'createdAt',
-    sortOrder = 'desc' 
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = req.query;
 
-  const query = { role: "user"};
+  const query = { role: "user" };
 
-
-   if (showDeleted === 'true') {
+  if (showDeleted === "true") {
     query.isDeleted = true;
   } else {
     query.isDeleted = false;
   }
 
   // التعديل 1: استخدام حقل state مباشرة بدل isActive
-  if (state === 'active') query.state = 'active'; // ← CHANGED
-  if (state === 'blocked') query.state = 'blocked'; // ← CHANGED
+  if (state === "active") query.state = "active"; // ← CHANGED
+  if (state === "blocked") query.state = "blocked"; // ← CHANGED
 
-  if (customerTier && customerTier !== 'all') {
+  if (customerTier && customerTier !== "all") {
     query.customerTier = customerTier;
   }
 
@@ -106,28 +105,36 @@ const getAllUsers = asyncWrapper(async (req, res, next) => {
     query.$or = [
       { firstName: { $regex: search, $options: "i" } },
       { lastName: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } }
+      { email: { $regex: search, $options: "i" } },
     ];
   }
 
-  const allowedSortFields = ['firstName', 'lastName', 'email', 'createdAt', 'totalSpent'];
-  const validatedSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
-  const validatedSortOrder = sortOrder.toLowerCase() === 'asc' ? 1 : -1;
+  const allowedSortFields = [
+    "firstName",
+    "lastName",
+    "email",
+    "createdAt",
+    "totalSpent",
+  ];
+  const validatedSortBy = allowedSortFields.includes(sortBy)
+    ? sortBy
+    : "createdAt";
+  const validatedSortOrder = sortOrder.toLowerCase() === "asc" ? 1 : -1;
   const sortOptions = { [validatedSortBy]: validatedSortOrder };
 
   const {
     data: users,
     total,
     page: currentPage,
-    totalPages
+    totalPages,
   } = await paginate(User, query, {
     page: Number(page),
     limit: Number(limit),
-    sort: sortOptions
+    sort: sortOptions,
   });
 
   // التعديل 2: إزالة التحويل غير الضروري
-  const transformedUsers = users.map(user => user.toObject()); // ← CHANGED
+  const transformedUsers = users.map((user) => user.toObject()); // ← CHANGED
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -135,7 +142,7 @@ const getAllUsers = asyncWrapper(async (req, res, next) => {
     total,
     currentPage,
     totalPages,
-    data: { users: transformedUsers } // ← البيانات تحتوي على state مباشرة
+    data: { users: transformedUsers }, // ← البيانات تحتوي على state مباشرة
   });
 });
 
@@ -256,9 +263,9 @@ const changePassword = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users/:id
 // @access  Private (Admin/SuperAdmin)
 const getUserById = asyncWrapper(async (req, res, next) => {
-   const user = await User.findOne({
+  const user = await User.findOne({
     _id: req.params.id,
-    isDeleted: false
+    isDeleted: false,
   });
   if (!user) {
     return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
@@ -283,8 +290,7 @@ const updateUser = asyncWrapper(async (req, res, next) => {
     "role",
     "isHotUser",
     "creditLimit",
-     "state",
-     
+    "state",
   ];
 
   allowedFields.forEach((field) => {
@@ -305,15 +311,14 @@ const updateUser = asyncWrapper(async (req, res, next) => {
     }
   }
 
-   const user = await User.findOneAndUpdate(
-    { 
+  const user = await User.findOneAndUpdate(
+    {
       _id: req.params.id,
-      isDeleted: false
+      isDeleted: false,
     },
     updates,
     { new: true, runValidators: true }
   );
-
 
   if (!user) {
     return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
@@ -332,7 +337,7 @@ const deleteUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-    isDeleted: true,
+      isDeleted: true,
       deletedAt: Date.now(),
       deletedBy: req.user.id,
     },
@@ -356,7 +361,7 @@ const restoreUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-    isDeleted: false,
+      isDeleted: false,
       deletedAt: null,
       deletedBy: null,
     },
@@ -1146,10 +1151,10 @@ const approveUser = asyncWrapper(async (req, res, next) => {
 
   // Send approval email
   transporter.sendMail({
-    email: user.email,
+    to: user.email,
     subject: "Your Account Has Been Approved",
     template: "account-approved",
-    context: { name: user.firstName },
+    context: { name: user.firstName || user.email },
   });
 
   res.status(200).json({
@@ -1186,11 +1191,11 @@ const denyUser = asyncWrapper(async (req, res, next) => {
 
   // Send denial email
   transporter.sendMail({
-    email: user.email,
+    to: user.email,
     subject: "Your Account Request Has Been Denied",
     template: "account-denied",
     context: {
-      name: user.firstName,
+      name: user.firstName || user.email,
       reason,
     },
   });
@@ -1270,7 +1275,7 @@ const getAdminRequests = asyncWrapper(async (req, res, next) => {
 
 // في ملف controllers/user.controller.js
 const bulkDeleteUsers = asyncWrapper(async (req, res, next) => {
-  const { ids } = req.body; 
+  const { ids } = req.body;
 
   if (!ids || !Array.isArray(ids)) {
     return next(new AppError("Invalid user IDs", 400, httpStatusText.FAIL));
@@ -1287,9 +1292,9 @@ const bulkDeleteUsers = asyncWrapper(async (req, res, next) => {
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { 
+    data: {
       deletedCount: result.modifiedCount,
-      message: `${result.modifiedCount} users deleted successfully`
+      message: `${result.modifiedCount} users deleted successfully`,
     },
   });
 });
@@ -1302,12 +1307,14 @@ const bulkUpdateUserStatus = asyncWrapper(async (req, res, next) => {
   const { userIds, state } = req.body; // ← MODIFIED (was ids, status)
 
   // Validation
-  if (!Array.isArray(userIds)) { // Added missing closing parenthesis
-    return next(new AppError('User IDs must be an array', 400));
+  if (!Array.isArray(userIds)) {
+    // Added missing closing parenthesis
+    return next(new AppError("User IDs must be an array", 400));
   }
 
-  if (!['active', 'blocked'].includes(state)) { // ← MODIFIED (status → state)
-    return next(new AppError('Invalid state value', 400));
+  if (!["active", "blocked"].includes(state)) {
+    // ← MODIFIED (status → state)
+    return next(new AppError("Invalid state value", 400));
   }
 
   const result = await User.updateMany(
@@ -1317,17 +1324,10 @@ const bulkUpdateUserStatus = asyncWrapper(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    data: { modifiedCount: result.modifiedCount } // ← MODIFIED response format
+    data: { modifiedCount: result.modifiedCount }, // ← MODIFIED response format
   });
 });
 
-
-
-
-
-
-
- 
 const bulkAssignTags = asyncWrapper(async (req, res, next) => {
   const { ids, customerTier } = req.body;
 
@@ -1416,11 +1416,14 @@ const toggleUserRole = asyncWrapper(async (req, res, next) => {
     { role: role },
     { new: true, runValidators: true }
   ).select("-password -__v");
-
+  console.log("Recipient email:", updatedUser.email); // Add this before sendMail
+  if (!updatedUser.email) {
+    throw new Error("No recipient email provided");
+  }
   // Send notification email if needed
   try {
     transporter.sendMail({
-      email: updatedUser.email,
+      to: updatedUser.email,
       subject: `Your account role has been updated to ${role}`,
       template: "role-updated",
       context: {
@@ -1445,14 +1448,14 @@ const toggleUserRole = asyncWrapper(async (req, res, next) => {
 
 const bulkAssignTier = asyncWrapper(async (req, res) => {
   const { ids, tier } = req.body;
-  const allowedTiers = ['basic', 'silver', 'gold', 'platinum'];
+  const allowedTiers = ["basic", "silver", "gold", "platinum"];
 
   // Validation
   if (!Array.isArray(ids) || ids.length === 0) {
-    return res.status(400).json({ error: 'Invalid user IDs array' });
+    return res.status(400).json({ error: "Invalid user IDs array" });
   }
   if (!allowedTiers.includes(tier)) {
-    return res.status(400).json({ error: 'Invalid tier value' });
+    return res.status(400).json({ error: "Invalid tier value" });
   }
 
   try {
@@ -1464,16 +1467,13 @@ const bulkAssignTier = asyncWrapper(async (req, res) => {
     res.json({
       success: true,
       message: `Updated ${result.modifiedCount} users`,
-      modifiedCount: result.modifiedCount
+      modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    console.error('Tier update error:', error);
-    res.status(500).json({ error: 'Failed to update tiers' });
+    console.error("Tier update error:", error);
+    res.status(500).json({ error: "Failed to update tiers" });
   }
 });
-
-
-
 
 // In user.controller.js
 // @desc    Get user orders
@@ -1543,6 +1543,6 @@ module.exports = {
   denyUser,
   handleAdminRequest,
   getAdminRequests,
-  bulkAssignTier
+  bulkAssignTier,
   // getUserOrders,
 };
