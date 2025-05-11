@@ -361,6 +361,7 @@
                 :total-items="requestsStore.pagination.total"
                 @update:page="changePage"
                 @update:itemsPerPage="changeItemsPerPage"
+                :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
                 class="mt-4"
               />
             </template>

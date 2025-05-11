@@ -35,7 +35,7 @@ const routes = [
         path: '',
         name: 'super-admin-dashboard',
         component: Dashboard,
-        meta: { breadcrumb: 'Dashboard' }
+        meta: { breadcrumb: 'dashboard' }
       },
       {
         path: 'dashboard',
@@ -45,63 +45,63 @@ const routes = [
         path: 'products',
         name: 'super-admin-products',
         component: Products,
-        meta: { breadcrumb: 'Products' }
+        meta: { breadcrumb: 'products' }
       },
       {
         path: 'orders',
         name: 'super-admin-orders',
         component: Orders,
-        meta: { breadcrumb: 'Orders' }
+        meta: { breadcrumb: 'orders' }
       },
       {
         path: 'order-details/:id',
         name: 'order-details',
         component: OrderDetails,
-        meta: { breadcrumb: 'Order Details' }
+        meta: { breadcrumb: 'orderDetails' }
       },
       {
         path: 'settings',
         name: 'super-admin-config',
         component: StoreConfig,
-        meta: { breadcrumb: 'Settings' }
+        meta: { breadcrumb: 'settings' }
       },
       {
         path: 'requests',
         name: 'super-admin-requests',
         component: Requests,
-        meta: { breadcrumb: 'Requests' }
+        meta: { breadcrumb: 'requests' }
       },
       {
         path: 'customers',
         name: 'super-admin-customers',
         component: CustomerManagement,
         props: true,
-        meta: { breadcrumb: 'Customers' }
+        meta: { breadcrumb: 'customers' }
       },
       {
         path: 'customers/edit/:id',
         name: 'super-admin-edit-customer',
         props: true,
         component: EditCustomer,
-        meta: { breadcrumb: 'Edit Customer' }
+        meta: { breadcrumb: 'editCustomer' }
       },
       {
         path: 'addproducts',
         name: 'super-admin-add-products',
         component: AddProduct,
-        meta: { breadcrumb: 'Add Product' }
+        meta: { breadcrumb: 'addProduct' }
       },
       {
-        path: 'editproducts/:sku',
+        path: 'editproducts/:id',
         name: 'super-admin-edit-products',
         component: EditProduct,
-        meta: { breadcrumb: 'Edit Product' }
+        meta: { breadcrumb: 'editProduct' }
       },
       {
         path: 'customers/:id',
         name: 'super-admin-customer-details',
         component: CustomerDetails,
-        meta: { breadcrumb: 'Customer Details' }
+        meta: { breadcrumb: 'customerDetails' }
       },
       {
         path: 'currencies',
@@ -124,7 +124,7 @@ const routes = [
         path: '',
         name: 'admin-dashboard',
         component: Dashboard,
-        meta: { breadcrumb: 'Dashboard' }
+        meta: { breadcrumb: 'dashboard' }
       },
       {
         path: 'dashboard',
@@ -134,45 +134,45 @@ const routes = [
         path: 'products',
         name: 'admin-products',
         component: Products,
-        meta: { breadcrumb: 'Products' }
+        meta: { breadcrumb: 'products' }
       },
       {
         path: 'orders',
         name: 'admin-orders',
         component: Orders,
-        meta: { breadcrumb: 'Orders' }
+        meta: { breadcrumb: 'orders' }
       },
       {
         path: 'customers',
         name: 'admin-customers',
         component: CustomerManagement,
         props: true,
-        meta: { breadcrumb: 'Customers' }
+        meta: { breadcrumb: 'customers' }
       },
       {
         path: 'customers/edit/:id',
         name: 'admin-edit-customer',
         props: true,
         component: EditCustomer,
-        meta: { breadcrumb: 'Edit Customer' }
+        meta: { breadcrumb: 'editCustomer' }
       },
       {
         path: 'addproducts',
         name: 'admin-add-products',
         component: AddProduct,
-        meta: { breadcrumb: 'Add Product' }
+        meta: { breadcrumb: 'addProduct' }
       },
       {
-        path: 'editproducts/:sku',
+        path: 'editproducts/:id',
         name: 'admin-edit-products',
         component: EditProduct,
-        meta: { breadcrumb: 'Edit Product' }
+        meta: { breadcrumb: 'editProduct' }
       },
       {
         path: 'customers/:id',
         name: 'admin-customer-details',
         component: CustomerDetails,
-        meta: { breadcrumb: 'Customer Details' }
+        meta: { breadcrumb: 'customerDetails' }
       },
       {
         path: 'currencies',

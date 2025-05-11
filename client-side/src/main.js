@@ -10,6 +10,7 @@ import '@mdi/font/css/materialdesignicons.css' // Icons
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+import { VFileUpload } from 'vuetify/labs/VFileUpload'
 
 // Pinia (state management)
 import { createPinia } from 'pinia'
@@ -38,8 +39,11 @@ const toastOptions = {
 
 // Vuetify Theme Configuration
 const vuetify = createVuetify({
+  components: {
+    ...components,
+    VFileUpload // Add the labs component here
+  },
   rtl: true, // Enable RTL support
-  components,
   directives,
   icons: {
     defaultSet: 'mdi' // Material Design Icons

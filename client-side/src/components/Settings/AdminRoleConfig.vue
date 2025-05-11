@@ -104,7 +104,7 @@
                 "
               />
             </v-avatar>
-            {{ item.name }}
+            {{ item.username }}
           </div>
         </template>
       </v-data-table>
@@ -118,6 +118,7 @@
         @update:page="handlePageChange"
         @update:items-per-page="handleItemsPerPageChange"
         :rtl="$i18n.locale === 'ar'"
+        :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
       />
     </v-card-text>
   </v-card>
@@ -164,10 +165,19 @@
     loadingItems.value[item._id] = true
     try {
       await userStore.updateUserRole(item)
-      toast.success(t('userRoleUpdated', { name: item.name, role: item.role }))
+      toast.success(
+        t('userRoleUpdated', {
+          name: item.username ? item.username : item.fullname,
+          role: item.role
+        })
+      )
     } catch (error) {
       console.error('Error updating role:', error)
-      toast.error(t('error.updatingRole', { name: item.name }))
+      toast.error(
+        t('error.updatingRole', {
+          name: item.username ? item.username : item.fullname
+        })
+      )
     } finally {
       loadingItems.value[item._id] = false
     }

@@ -151,6 +151,7 @@
         :total-items="shippingStore.pagination.total"
         @update:page="handlePageChange"
         @update:itemsPerPage="handleItemsPerPageChange"
+        :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
         class="mt-4"
       />
 

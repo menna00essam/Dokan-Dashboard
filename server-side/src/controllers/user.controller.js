@@ -4,6 +4,8 @@ const AppError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 const cloudinary = require("cloudinary").v2;
 const { body } = require("express-validator");
+const transporter = require("../utils/emailTransporter");
+const mongoose = require("mongoose");
 
 // Helper function for pagination
 const paginate = async (model, query, options) => {
@@ -11,13 +13,19 @@ const paginate = async (model, query, options) => {
   const limit = parseInt(options.limit) || 10;
   const skip = (page - 1) * limit;
 
+  // تطبيق شرط الحذف التلقائي إلا إذا طُلب خلاف ذلك
+  const finalQuery = { ...query };
+  if (finalQuery.showDeleted !== true) {
+    finalQuery.isDeleted = false;
+  }
+
   const data = await model
-    .find(query)
+    .find(finalQuery)
     .skip(skip)
     .limit(limit)
     .sort(options.sort);
 
-  const total = await model.countDocuments(query);
+  const total = await model.countDocuments(finalQuery);
 
   return {
     data,
@@ -66,38 +74,68 @@ const createUser = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users
 // @access  Public
 const getAllUsers = asyncWrapper(async (req, res, next) => {
-  const { page = 1, limit = 10, search, isActive } = req.query;
+  const { 
+    page = 1, 
+    limit = 10, 
+    search, 
+    state,
+    customerTier,
+    showDeleted,
+    sortBy = 'createdAt',
+    sortOrder = 'desc' 
+  } = req.query;
 
-  const query = {
-    role: "user",
-    isActive: true,
-  };
+  const query = { role: "user"};
+
+
+   if (showDeleted === 'true') {
+    query.isDeleted = true;
+  } else {
+    query.isDeleted = false;
+  }
+
+  // التعديل 1: استخدام حقل state مباشرة بدل isActive
+  if (state === 'active') query.state = 'active'; // ← CHANGED
+  if (state === 'blocked') query.state = 'blocked'; // ← CHANGED
+
+  if (customerTier && customerTier !== 'all') {
+    query.customerTier = customerTier;
+  }
 
   if (search) {
     query.$or = [
       { firstName: { $regex: search, $options: "i" } },
       { lastName: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } }
     ];
   }
 
-  if (isActive === "true") query.isActive = true;
-  if (isActive === "false") query.isActive = false;
+  const allowedSortFields = ['firstName', 'lastName', 'email', 'createdAt', 'totalSpent'];
+  const validatedSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+  const validatedSortOrder = sortOrder.toLowerCase() === 'asc' ? 1 : -1;
+  const sortOptions = { [validatedSortBy]: validatedSortOrder };
 
   const {
     data: users,
     total,
     page: currentPage,
-    totalPages,
-  } = await paginate(User, query, { page, limit, sort: { createdAt: -1 } });
+    totalPages
+  } = await paginate(User, query, {
+    page: Number(page),
+    limit: Number(limit),
+    sort: sortOptions
+  });
+
+  // التعديل 2: إزالة التحويل غير الضروري
+  const transformedUsers = users.map(user => user.toObject()); // ← CHANGED
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    results: users.length,
+    results: transformedUsers.length,
     total,
     currentPage,
     totalPages,
-    data: { users },
+    data: { users: transformedUsers } // ← البيانات تحتوي على state مباشرة
   });
 });
 
@@ -218,7 +256,10 @@ const changePassword = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users/:id
 // @access  Private (Admin/SuperAdmin)
 const getUserById = asyncWrapper(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
+   const user = await User.findOne({
+    _id: req.params.id,
+    isDeleted: false
+  });
   if (!user) {
     return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
@@ -240,9 +281,10 @@ const updateUser = asyncWrapper(async (req, res, next) => {
     "email",
     "mobile",
     "role",
-    "isActive",
     "isHotUser",
     "creditLimit",
+     "state",
+     
   ];
 
   allowedFields.forEach((field) => {
@@ -263,10 +305,15 @@ const updateUser = asyncWrapper(async (req, res, next) => {
     }
   }
 
-  const user = await User.findByIdAndUpdate(req.params.id, updates, {
-    new: true,
-    runValidators: true,
-  });
+   const user = await User.findOneAndUpdate(
+    { 
+      _id: req.params.id,
+      isDeleted: false
+    },
+    updates,
+    { new: true, runValidators: true }
+  );
+
 
   if (!user) {
     return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
@@ -285,7 +332,7 @@ const deleteUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-      isActive: false,
+    isDeleted: true,
       deletedAt: Date.now(),
       deletedBy: req.user.id,
     },
@@ -309,7 +356,7 @@ const restoreUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-      isActive: true,
+    isDeleted: false,
       deletedAt: null,
       deletedBy: null,
     },
@@ -996,14 +1043,36 @@ const updateCustomerTier = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users/pending
 // @access  Private (Admin/SuperAdmin)
 const getPendingUsers = asyncWrapper(async (req, res, next) => {
-  const { page = 1, limit = 10 } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    sortBy = "createdAt",
+    sortDirection = "desc",
+  } = req.query;
+
+  // Base query
+  const query = { status: "pending" };
+
+  // Add search functionality if search query exists
+  if (search) {
+    query.$or = [
+      { username: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { fullName: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  // Sort configuration
+  const sortOptions = {};
+  sortOptions[sortBy] = sortDirection === "asc" ? 1 : -1;
 
   const {
     data: users,
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { status: "pending" }, { page, limit });
+  } = await paginate(User, query, { page, limit, sort: sortOptions });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1067,10 +1136,7 @@ const getDeniedUsers = asyncWrapper(async (req, res, next) => {
 const approveUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    {
-      status: "approved",
-      adminRequest: false,
-    },
+    { role: "admin", status: "approved", adminRequest: false },
     { new: true, runValidators: true }
   ).select("-password -__v");
 
@@ -1079,7 +1145,7 @@ const approveUser = asyncWrapper(async (req, res, next) => {
   }
 
   // Send approval email
-  await sendEmail({
+  transporter.sendMail({
     email: user.email,
     subject: "Your Account Has Been Approved",
     template: "account-approved",
@@ -1119,7 +1185,7 @@ const denyUser = asyncWrapper(async (req, res, next) => {
   }
 
   // Send denial email
-  await sendEmail({
+  transporter.sendMail({
     email: user.email,
     subject: "Your Account Request Has Been Denied",
     template: "account-denied",
@@ -1204,47 +1270,66 @@ const getAdminRequests = asyncWrapper(async (req, res, next) => {
 
 // في ملف controllers/user.controller.js
 const bulkDeleteUsers = asyncWrapper(async (req, res, next) => {
-  const { ids } = req.body;
+  const { ids } = req.body; 
 
   if (!ids || !Array.isArray(ids)) {
-    return next(
-      new AppError(
-        "Please provide an array of user IDs",
-        400,
-        httpStatusText.FAIL
-      )
-    );
+    return next(new AppError("Invalid user IDs", 400, httpStatusText.FAIL));
   }
 
   const result = await User.updateMany(
     { _id: { $in: ids } },
-    { isActive: false, deletedAt: Date.now() }
+    {
+      isDeleted: true,
+      deletedAt: Date.now(),
+      deletedBy: req.user.id,
+    }
   );
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { deletedCount: result.modifiedCount },
+    data: { 
+      deletedCount: result.modifiedCount,
+      message: `${result.modifiedCount} users deleted successfully`
+    },
   });
 });
 
+// @desc    Bulk update user statuses
+// @route   PATCH /api/users/bulk-status
+// @access  Private (Admin)
+// Bulk Status Update Controller
 const bulkUpdateUserStatus = asyncWrapper(async (req, res, next) => {
-  const { ids, status } = req.body;
+  const { userIds, state } = req.body; // ← MODIFIED (was ids, status)
 
-  if (!ids || !Array.isArray(ids) || !status) {
-    return next(new AppError("Invalid request data", 400, httpStatusText.FAIL));
+  // Validation
+  if (!Array.isArray(userIds)) { // Added missing closing parenthesis
+    return next(new AppError('User IDs must be an array', 400));
   }
 
-  const result = await User.updateMany({ _id: { $in: ids } }, { status });
+  if (!['active', 'blocked'].includes(state)) { // ← MODIFIED (status → state)
+    return next(new AppError('Invalid state value', 400));
+  }
+
+  const result = await User.updateMany(
+    { _id: { $in: userIds } }, // ← MODIFIED (uses _id)
+    { $set: { state } } // ← MODIFIED (was isActive: status === 'active')
+  );
 
   res.status(200).json({
-    status: httpStatusText.SUCCESS,
-    data: { updatedCount: result.modifiedCount },
+    status: "success",
+    data: { modifiedCount: result.modifiedCount } // ← MODIFIED response format
   });
 });
 
-// داخل user.controller.js
+
+
+
+
+
+
+ 
 const bulkAssignTags = asyncWrapper(async (req, res, next) => {
-  const { ids, tags } = req.body;
+  const { ids, customerTier } = req.body;
 
   if (!ids || !Array.isArray(ids) || !tags || !Array.isArray(tags)) {
     return next(new AppError("Invalid data format", 400, httpStatusText.FAIL));
@@ -1260,6 +1345,135 @@ const bulkAssignTags = asyncWrapper(async (req, res, next) => {
     data: { updatedCount: result.modifiedCount },
   });
 });
+
+const getStandardRoleUsers = asyncWrapper(async (req, res, next) => {
+  const { page = 1, limit = 10, search, isActive } = req.query;
+
+  // Base query to only include admin or user roles
+  const query = {
+    role: { $in: ["admin", "user"] },
+  };
+
+  // Optional filters
+  if (search) {
+    query.$or = [
+      { firstName: { $regex: search, $options: "i" } },
+      { lastName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  if (isActive === "true") query.isActive = true;
+  if (isActive === "false") query.isActive = false;
+
+  const {
+    data: users,
+    total,
+    page: currentPage,
+    totalPages,
+  } = await paginate(User, query, { page, limit, sort: { createdAt: -1 } });
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    results: users.length,
+    total,
+    currentPage,
+    totalPages,
+    data: { users },
+  });
+});
+
+// @desc    Toggle user role between admin and user
+// @route   PATCH /api/users/:id/toggle-role
+// @access  Private (SuperAdmin)
+const toggleUserRole = asyncWrapper(async (req, res, next) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError("Invalid user ID", 400, httpStatusText.FAIL));
+  }
+
+  // Find the user first to check current role
+  const user = await User.findById(id);
+  if (!user) {
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+  }
+
+  // Check if user has a role that can be toggled
+  if (!["admin", "user"].includes(role)) {
+    return next(
+      new AppError(
+        "Can only toggle roles between admin and user",
+        400,
+        httpStatusText.FAIL
+      )
+    );
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    id,
+    { role: role },
+    { new: true, runValidators: true }
+  ).select("-password -__v");
+
+  // Send notification email if needed
+  try {
+    transporter.sendMail({
+      email: updatedUser.email,
+      subject: `Your account role has been updated to ${role}`,
+      template: "role-updated",
+      context: {
+        name: updatedUser.firstName || "User",
+        role,
+        oldRole: user.role,
+      },
+    });
+  } catch (e) {
+    console.error("Email send error:", e.message);
+    // Continue even if email fails
+  }
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: { user: updatedUser },
+    message: `User role changed from ${user.role} to ${role}`,
+  });
+});
+
+// routes/users.js
+
+const bulkAssignTier = asyncWrapper(async (req, res) => {
+  const { ids, tier } = req.body;
+  const allowedTiers = ['basic', 'silver', 'gold', 'platinum'];
+
+  // Validation
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Invalid user IDs array' });
+  }
+  if (!allowedTiers.includes(tier)) {
+    return res.status(400).json({ error: 'Invalid tier value' });
+  }
+
+  try {
+    const result = await User.updateMany(
+      { _id: { $in: ids } },
+      { $set: { customerTier: tier } }
+    );
+
+    res.json({
+      success: true,
+      message: `Updated ${result.modifiedCount} users`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Tier update error:', error);
+    res.status(500).json({ error: 'Failed to update tiers' });
+  }
+});
+
+
+
 
 // In user.controller.js
 // @desc    Get user orders
@@ -1287,6 +1501,8 @@ const bulkAssignTags = asyncWrapper(async (req, res, next) => {
 // });
 
 module.exports = {
+  toggleUserRole,
+  getStandardRoleUsers,
   bulkAssignTags,
   bulkDeleteUsers,
   bulkUpdateUserStatus,
@@ -1327,5 +1543,6 @@ module.exports = {
   denyUser,
   handleAdminRequest,
   getAdminRequests,
+  bulkAssignTier
   // getUserOrders,
 };

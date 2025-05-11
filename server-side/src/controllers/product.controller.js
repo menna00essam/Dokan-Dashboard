@@ -122,11 +122,12 @@ const getAllProducts = asyncWrapper(async (req, res, next) => {
     sortBy = "date",
     minPrice,
     maxPrice,
+    search = "", // Add search parameter
   } = req.query;
 
   limit = Number(limit);
   page = Number(page);
-
+  console.log("Received search query:", search); // At the beginning of your controller
   if (isNaN(limit) || isNaN(page) || limit < 1 || page < 1) {
     return next(
       new AppError("Invalid pagination parameters.", 400, httpStatusText.FAIL)
@@ -144,7 +145,10 @@ const getAllProducts = asyncWrapper(async (req, res, next) => {
 
   const sortField = sortFields[sortBy] || "date";
 
-  let categoryFilter = {};
+  // Initialize base filter with isDeleted condition
+  let baseFilter = { isDeleted: { $ne: true } };
+
+  // Add category filter if categories are provided
   if (categories) {
     const categoryIds = categories.split(",").map((id) => id.trim());
 
@@ -154,14 +158,12 @@ const getAllProducts = asyncWrapper(async (req, res, next) => {
       );
     }
 
-    categoryFilter = {
-      categories: {
-        $in: categoryIds.map((id) => new mongoose.Types.ObjectId(id)),
-      },
+    baseFilter.categories = {
+      $in: categoryIds.map((id) => new mongoose.Types.ObjectId(id)),
     };
   }
-  const isDeletedFilter = { isDeleted: { $ne: true } }; // هنا بنضيف الفلتر
 
+  // Handle price range
   if (!minPrice || !maxPrice) {
     const { minPrice: min, maxPrice: max } = await getPriceRange();
     minPrice = minPrice ?? min;
@@ -176,10 +178,29 @@ const getAllProducts = asyncWrapper(async (req, res, next) => {
       ? { effectivePrice: { $gte: minPrice, $lte: maxPrice } }
       : {};
 
+  if (search && search.trim()) {
+    try {
+      // Escape special regex characters properly
+      const escapedSearch = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+      const searchRegex = new RegExp(escapedSearch, "i");
+
+      baseFilter.$or = [
+        { name: { $regex: searchRegex } },
+        { description: { $regex: searchRegex } },
+        { "colors.sku": { $regex: searchRegex } },
+      ];
+
+      console.log("Applied search filter:", baseFilter.$or); // Debug log
+    } catch (err) {
+      console.error("Error creating search regex:", err);
+      return next(new AppError("Invalid search query", 400));
+    }
+  }
+
   const [totalProducts, products] = await Promise.all([
-    getTotalProducts({ ...categoryFilter, ...isDeletedFilter }, priceFilter),
+    getTotalProducts({ ...baseFilter }, priceFilter),
     getFilteredProducts(
-      { ...categoryFilter, ...isDeletedFilter },
+      { ...baseFilter },
       priceFilter,
       sortField,
       sortOrder,
@@ -187,79 +208,15 @@ const getAllProducts = asyncWrapper(async (req, res, next) => {
       limit
     ),
   ]);
-
-  await Product.populate(products, {
+await Product.populate(products, {
     path: 'colors.images',
-    model: 'Image'
-  });
+    model: 'Image'
+  });
   res.status(200).json({
     status: httpStatusText.SUCCESS,
     data: { totalProducts, products },
   });
 });
-//Create product
-
-/*
-const createProduct = asyncWrapper(async (req, res, next) => {
-  console.log("Received data:", req.body);
-
-  const {
-    name,
-    subtitle = "",
-    price,
-    description = "",
-    categories,
-    brand = "",
-    colors,
-    additionalInformation = {},
-  } = req.body;
-
-  let imageUrl = "";
-
-  if (!name && !price) {
-    return next(
-      new AppError(
-        "At least one of the fields: name, price, or categories must be provided.",
-        400,
-        httpStatusText.FAIL
-      )
-    );
-  }
-
-  if (req.file) {
-    try {
-      const result = await cloudinary.uploader.upload(req.file.path);
-      imageUrl = result.secure_url;
-    } catch (error) {
-      console.error("Error uploading image to Cloudinary:", error);
-      return next(
-        new AppError(
-          "Error uploading image to Cloudinary",
-          500,
-          httpStatusText.FAIL
-        )
-      );
-    }
-  }
-
-  const product = await Product.create({
-    name,
-    subtitle,
-    price,
-    description,
-    categories,
-    brand,
-    colors,
-    additionalInformation,
-    image: imageUrl,
-  });
-
-  res.status(201).json({
-    status: httpStatusText.SUCCESS,
-    data: { product },
-  });
-});
-*/
 const createProduct = asyncWrapper(async (req, res, next) => {
   console.log("Received data:", req.body);
 
@@ -358,96 +315,7 @@ const getProductById = asyncWrapper(async (req, res, next) => {
 
   res.status(200).json({ status: httpStatusText.SUCCESS, data: { product } });
 });
-// Update product
-// const updateProduct = asyncWrapper(async (req, res, next) => {
-//   const { product_id } = req.params;
-//   const {
-//     name,
-//     subtitle,
-//     price,
-//     description,
-//     categories,
-//     brand,
-//     colors,
-//     additionalInformation,
-//   } = req.body;
 
-//   const updateData = {};
-//   if (name) updateData.name = name;
-//   if (subtitle) updateData.subtitle = subtitle;
-//   if (price) updateData.price = price;
-//   if (description) updateData.description = description;
-//   if (categories) updateData.categories = categories;
-//   if (brand) updateData.brand = brand;
-//   if (colors) {
-//     // Validate that each color object has the required properties, and upload images
-//     const validatedColors = [];
-//     for (const color of colors) {
-//       if (
-//         !color.name ||
-//         !color.hex ||
-//         !Array.isArray(color.images) ||
-//         color.images.length === 0 ||
-//         color.quantity === undefined
-//       ) {
-//         return next(
-//           new AppError(
-//             "Each color must have a name, hex, at least one image and quantity.",
-//             400,
-//             httpStatusText.FAIL
-//           )
-//         );
-//       }
-
-//       const uploadedImages = [];
-//       for (const image of color.images) {
-//         if (typeof image === "string") {
-//           uploadedImages.push({ url: image });
-//         } else if (image.path) {
-//           // Check if it's a file path from multer
-//           try {
-//             const result = await cloudinary.uploader.upload(image.path);
-//             uploadedImages.push({
-//               public_id: result.public_id,
-//               url: result.secure_url,
-//             });
-//           } catch (error) {
-//             console.error("Error uploading image to Cloudinary:", error);
-//             return next(
-//               new AppError(
-//                 "Error uploading images to Cloudinary",
-//                 500,
-//                 httpStatusText.FAIL
-//               )
-//             );
-//           }
-//         } else {
-//           return next(
-//             new AppError(
-//               "Image must be either a URL or a file path",
-//               500,
-//               httpStatusText.FAIL
-//             )
-//           );
-//         }
-//       }
-//       validatedColors.push({ ...color, images: uploadedImages });
-//     }
-//     updateData.colors = validatedColors;
-//   }
-//   if (additionalInformation)
-//     updateData.additionalInformation = additionalInformation;
-
-//   const product = await Product.findByIdAndUpdate(product_id, updateData, {
-//     new: true,
-//   });
-//   if (!product) {
-//     return next(new AppError("Product not found.", 404, httpStatusText.FAIL));
-//   }
-//   res.status(200).json({ status: httpStatusText.SUCCESS, data: { product } });
-// });
-// Update product
-// Update product
 const updateProduct = asyncWrapper(async (req, res, next) => {
   const { product_id } = req.params;
   let updateData = {};
@@ -456,6 +324,9 @@ const updateProduct = asyncWrapper(async (req, res, next) => {
   if (req.body.name) updateData.name = req.body.name;
   if (req.body.subtitle) updateData.subtitle = req.body.subtitle;
   if (req.body.price) updateData.price = req.body.price;
+  if (req.body.discountType) updateData.discountType = req.body.discountType;
+  if (req.body.discountValue) updateData.sale = req.body.discountValue;
+  if (req.body.quantity) updateData.totalQuantity = req.body.quantity;
 
   // Handle categories
   if (req.body.categories) {
@@ -464,48 +335,110 @@ const updateProduct = asyncWrapper(async (req, res, next) => {
       : [new mongoose.Types.ObjectId(req.body.categories)];
   }
 
+  // Handle dimensions
+  if (req.body.dimensions) {
+    try {
+      updateData.additionalInformation = {
+        dimensions: JSON.parse(req.body.dimensions),
+      };
+    } catch (err) {
+      console.error("Error parsing dimensions:", err);
+      return next(new AppError("Invalid dimensions data", 400));
+    }
+  }
+
   // Handle colors and images
   if (req.body.colors) {
     try {
       const colors = JSON.parse(req.body.colors);
+
+      // First get the current product to compare with existing images
+      const currentProduct = await Product.findById(product_id).populate(
+        "colors.images"
+      );
+      const currentColorImages = currentProduct?.colors?.[0]?.images || [];
+
       updateData.colors = await Promise.all(
-        colors.map(async (color) => {
+        colors.map(async (color, colorIndex) => {
           const images = [];
+          const processedPublicIds = new Set();
 
+          // Process each image
           for (const img of color.images) {
-            // Existing image being updated
-            if (img._id && img._oldPublicId) {
-              // Delete old image from Cloudinary
-              await cloudinary.uploader.destroy(img._oldPublicId);
+            // Skip if we've already processed this public_id
+            if (img.public_id && processedPublicIds.has(img.public_id))
+              continue;
 
-              // Update image document
-              const updatedImg = await Image.findByIdAndUpdate(
-                img._id,
-                {
-                  publicId: img.public_id,
-                  imageUrl: img.url,
-                },
-                { new: true }
+            // Existing image being updated (with new version)
+            if (img._id && img.public_id) {
+              const existingImg = await Image.findById(img._id);
+
+              if (!existingImg) {
+                console.warn(`Image not found: ${img._id}`);
+                continue;
+              }
+
+              // Check if this is actually a new upload (public_id changed)
+              if (existingImg.publicId !== img.public_id) {
+                // Delete old image from Cloudinary if it exists
+                if (existingImg.publicId) {
+                  try {
+                    await cloudinary.uploader.destroy(existingImg.publicId);
+                  } catch (err) {
+                    console.warn(
+                      `Failed to delete old image from Cloudinary: ${existingImg.publicId}`
+                    );
+                  }
+                }
+
+                // Update image document
+                existingImg.publicId = img.public_id;
+                existingImg.imageUrl = img.url;
+                await existingImg.save();
+              }
+
+              images.push(existingImg._id);
+              processedPublicIds.add(img.public_id);
+            }
+            // New image (no _id but has public_id)
+            else if (img.public_id && !img._id) {
+              // Check if this image already exists in the current product
+              const isExisting = currentColorImages.some(
+                (currentImg) => currentImg.publicId === img.public_id
               );
 
-              images.push(updatedImg._id);
+              if (!isExisting) {
+                const newImg = await Image.create({
+                  publicId: img.public_id,
+                  imageUrl: img.url,
+                  reference: {
+                    model: "Product",
+                    field: "colors.images",
+                    documentId: product_id,
+                  },
+                });
+                images.push(newImg._id);
+                processedPublicIds.add(img.public_id);
+              } else {
+                // Find the existing image in current product
+                const existingImg = currentColorImages.find(
+                  (currentImg) => currentImg.publicId === img.public_id
+                );
+                if (existingImg) {
+                  images.push(existingImg._id);
+                  processedPublicIds.add(img.public_id);
+                }
+              }
             }
-            // New image
-            else if (img.public_id && !img._id) {
-              const newImg = await Image.create({
-                publicId: img.public_id,
-                imageUrl: img.url,
-                reference: {
-                  model: "Product",
-                  field: "colors.images",
-                  documentId: product_id,
-                },
-              });
-              images.push(newImg._id);
-            }
-            // Existing unchanged image
+            // Existing unchanged image (has _id but no public_id change)
             else if (img._id) {
-              images.push(new mongoose.Types.ObjectId(img._id));
+              const existingImg = await Image.findById(img._id);
+              if (existingImg) {
+                images.push(existingImg._id);
+                if (existingImg.publicId) {
+                  processedPublicIds.add(existingImg.publicId);
+                }
+              }
             }
           }
 
@@ -514,7 +447,7 @@ const updateProduct = asyncWrapper(async (req, res, next) => {
             hex: color.hex,
             quantity: color.quantity,
             sku: color.sku,
-            images: images,
+            images: Array.from(new Set(images)), // Ensure no duplicate ObjectIds
           };
         })
       );
@@ -522,13 +455,6 @@ const updateProduct = asyncWrapper(async (req, res, next) => {
       console.error("Error processing colors:", err);
       return next(new AppError("Invalid colors data", 400));
     }
-  }
-
-  // Handle dimensions
-  if (req.body.dimensions) {
-    updateData.additionalInformation = {
-      dimensions: JSON.parse(req.body.dimensions),
-    };
   }
 
   // Update product
@@ -552,6 +478,25 @@ const updateProduct = asyncWrapper(async (req, res, next) => {
   }
 });
 
+const deleteProductImage = asyncWrapper(async (req, res, next) => {
+  const { publicId } = req.params;
+
+  try {
+    // Delete from Cloudinary
+    await cloudinary.uploader.destroy(publicId);
+
+    // Delete from database if it exists
+    await Image.findOneAndDelete({ publicId });
+
+    res.status(200).json({
+      status: httpStatusText.SUCCESS,
+      message: "Image deleted successfully",
+    });
+  } catch (err) {
+    console.error("Error deleting image:", err);
+    next(new AppError("Failed to delete image", 500));
+  }
+});
 // Soft delete product
 const softDeleteProduct = asyncWrapper(async (req, res, next) => {
   const product = await Product.findById(req.params.product_id);
@@ -730,4 +675,5 @@ module.exports = {
   getSearchProducts,
   updateProductColors,
   getProductStock,
+  deleteProductImage,
 };

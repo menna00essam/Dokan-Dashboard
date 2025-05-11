@@ -3,7 +3,7 @@
   import { useI18n } from 'vue-i18n'
   import { useDisplay } from 'vuetify'
 
-  const { t, locale } = useI18n() // Assuming you're using vue-i18n for locale
+  const { t, locale } = useI18n()
   const { mobile } = useDisplay()
 
   const props = defineProps({
@@ -24,7 +24,6 @@
       default: () => [5, 10, 20, 50]
     },
     direction: {
-      // New prop to control direction
       type: String,
       default: 'ltr',
       validator: (value) => ['ltr', 'rtl'].includes(value)
@@ -51,14 +50,13 @@
   // Event handlers
   const handlePageChange = (newPage) => {
     if (newPage !== props.page) {
-      // Only emit if actually changed
       emit('update:page', newPage)
     }
   }
 
   const handleItemsPerPageChange = (newSize) => {
     emit('update:itemsPerPage', newSize)
-    emit('update:page', 1) // Reset to first page
+    emit('update:page', 1)
   }
 </script>
 
@@ -68,6 +66,7 @@
     class="d-flex flex-wrap align-center justify-space-between mt-4 pa-3 pagination-container"
     :class="{ 'flex-row-reverse': direction === 'rtl' }"
   >
+    <!-- Items per page selector -->
     <div
       class="d-flex align-center mb-2 mb-sm-0"
       :class="{
@@ -78,7 +77,7 @@
       }"
     >
       <span
-        :class="{ 'me-2': direction === 'ltr', 'ms-2': direction === 'rtl' }"
+        :class="{ 'mx-2': direction === 'ltr', 'mx-2': direction === 'rtl' }"
         class="text-caption"
         >{{ t('itemsPerPage') }}:</span
       >
@@ -93,6 +92,7 @@
       ></v-select>
     </div>
 
+    <!-- Pagination controls -->
     <v-pagination
       :model-value="page"
       :length="totalPages"
@@ -102,8 +102,10 @@
       :class="{ 'mx-sm-2': !mobile }"
       @update:model-value="handlePageChange"
       active-color="secondary"
+      
     ></v-pagination>
 
+    <!-- Items count display -->
     <div
       class="text-caption text-center"
       :class="{
@@ -113,7 +115,11 @@
         'text-sm-start': direction === 'rtl'
       }"
     >
-      {{ showingFrom }}-{{ showingTo }} {{ t('of') }} {{ totalItems }}
+      <span class="numbers-display" :dir="direction">
+        {{ showingFrom }}-{{ showingTo }}
+        <span class="of-word">{{ t('of') }}</span>
+        {{ totalItems }}
+      </span>
     </div>
   </div>
 </template>
@@ -123,40 +129,63 @@
     gap: 12px;
   }
 
+  /* Ensure pagination numbers remain LTR even in RTL mode */
+  .v-pagination :deep(.v-pagination__item) {
+    direction: ltr;
+    display: inline-flex;
+  }
+
   /* Mobile-specific styles */
   @media (max-width: 600px) {
     .pagination-container {
       flex-direction: column;
-      align-items: stretch;
+      align-items: center;
     }
 
     .v-pagination {
-      order: -1; /* Move pagination to top on mobile */
+      order: -1;
       margin-bottom: 16px;
+      width: 100%;
     }
 
     .v-pagination :deep(.v-pagination__list) {
-      justify-content: center; /* Keep buttons centered on mobile */
-      direction: ltr; /* Ensure button numbers are LTR */
+      justify-content: center;
     }
   }
 
-  /* Common spacing */
+  /* RTL specific adjustments */
+  [dir='rtl'] .v-pagination :deep(.v-pagination__prev .v-btn__content),
+  [dir='rtl'] .v-pagination :deep(.v-pagination__next .v-btn__content) {
+    transform: rotate(180deg);
+  }
+
+  /* Spacing utilities */
   .ms-2 {
-    margin-left: 0.5rem !important;
+    margin-inline-start: 0.5rem !important;
   }
 
   .me-2 {
-    margin-right: 0.5rem !important;
+    margin-inline-end: 0.5rem !important;
   }
 
   .mx-sm-2 {
-    margin-left: 0.5rem !important;
-    margin-right: 0.5rem !important;
+    margin-inline-start: 0.5rem !important;
+    margin-inline-end: 0.5rem !important;
+  }
+  .numbers-display {
+    unicode-bidi: plaintext; /* Ensures numbers display correctly in RTL */
   }
 
-  /* RTL specific adjustments - can be done with conditional classes */
-  .flex-row-reverse {
-    flex-direction: row-reverse;
+  .of-word {
+    margin: 0 4px; /* Adjust spacing around the "of" word */
+  }
+
+  [dir='rtl'] .numbers-display {
+    direction: ltr; /* Force LTR for numbers in RTL context */
+    unicode-bidi: embed;
+  }
+
+  [dir='rtl'] .of-word {
+    unicode-bidi: isolate; /* Isolate the Arabic word */
   }
 </style>

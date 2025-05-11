@@ -4,17 +4,21 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: [true, "First name is required"],
+
       trim: true,
     },
     lastName: {
       type: String,
-      required: [true, "Last name is required"],
+
       trim: true,
     },
     username: {
       type: String,
     },
+    isDeleted: {
+    type: Boolean,
+    default: false
+  },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -87,7 +91,6 @@ const userSchema = new mongoose.Schema(
       default: function () {
         return this.role === "user" ? "approved" : "pending";
       },
-     
     },
     tags: {
       type: [String],
@@ -125,7 +128,6 @@ const userSchema = new mongoose.Schema(
     lastOrderDate: Date,
     lastSiteVisit: Date,
     averageOrderValue: { type: Number, default: 0 },
-    isBlocked: { type: Boolean, default: false },
     isHotUser: { type: Boolean, default: false },
     isSubscribedToNewsletter: { type: Boolean, default: false },
     communicationPreferences: {
@@ -233,50 +235,15 @@ const userSchema = new mongoose.Schema(
         addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         addedAt: { type: Date, default: Date.now },
         resolvedAt: Date,
-        isActive: { type: Boolean, default: true },
-        isDeleted: { type: Boolean, default: false },
+        
       },
     ],
-
-    //   {
-    //     reviewId: { type: String, unique: true },
-    //     productId: {
-    //       type: mongoose.Schema.Types.ObjectId,
-    //       ref: "Product",
-    //       required: true,
-    //     },
-    //     title: { type: String, required: true },
-    //     rating: {
-    //       type: Number,
-    //       required: true,
-    //       min: 1,
-    //       max: 5,
-    //     },
-    //     reviewText: String,
-    //     photos: [String],
-    //     isVerifiedPurchase: { type: Boolean, default: false },
-    //     createdAt: { type: Date, default: Date.now },
-    //   },
-    // ],
-    // incentives: [
-    //   {
-    //     incentiveId: { type: String, unique: true },
-    //     incentiveType: {
-    //       type: String,
-    //       enum: ["discount", "coupon", "cashback", "gift", "points", "other"],
-    //       required: true,
-    //     },
-    //     amount: { type: Number, required: true },
-    //     description: String,
-    //     expiryDate: Date,
-    //     isUsed: { type: Boolean, default: false },
-    //     addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    //     createdAt: { type: Date, default: Date.now },
-    //   },
-    // ],
+    tierLock: {
+      type: Boolean,
+      default: false, // Flag to lock the tier update
+    },
     deletedAt: Date,
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    isActive: { type: Boolean, default: true },
   },
   {
     timestamps: true,
@@ -303,6 +270,10 @@ userSchema.virtual("age").get(function () {
 });
 
 userSchema.pre("save", function (next) {
+  // Skip automatic tier update if tierLock is true
+  if (this.tierLock) return next();
+
+  // Existing tier calculation logic
   if (this.isModified("ordersCount") || this.isModified("totalSpent")) {
     const newTags = [];
 
@@ -327,6 +298,7 @@ userSchema.pre("save", function (next) {
     else if (this.totalSpent >= 500) this.customerTier = "silver";
     else this.customerTier = "basic";
   }
+
   next();
 });
 
