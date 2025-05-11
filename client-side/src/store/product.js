@@ -14,10 +14,8 @@ export const useProductStore = defineStore('product', {
     totalProducts: 0,
     isLoading: false,
     searchQuery: '' // Add search query to state
-
     // Add other pagination-related state
   }),
-
   getters: {
     productCount(state) {
       return state.products.length
@@ -62,19 +60,22 @@ export const useProductStore = defineStore('product', {
         return null
       }
     },
-
     async fetchAll(
       page = this.currentPage,
       limit = this.itemsPerPage,
-      search = ''
+      search = this.searchQuery
     ) {
       try {
         this.isLoading = true
         this.searchQuery = search // Store the search query
         const params = {
           page,
-          limit,
-          search: search.trim()
+          limit
+        }
+
+        // Only add search parameter if it has value
+        if (search && search.trim()) {
+          params.search = search.trim()
         }
         const response = await api.get('/products', { params })
         const productsWithImageURLs = await Promise.all(
@@ -112,7 +113,6 @@ export const useProductStore = defineStore('product', {
         this.isLoading = false
       }
     },
-
     async deleteProduct(productId) {
       try {
         await api.delete(`/products/${productId}`) // بعد ما الـ API call ينجح، هنفلتر الـ products array ونشيل المنتج اللي الـ _id بتاعه بيساوي الـ productId
@@ -127,7 +127,6 @@ export const useProductStore = defineStore('product', {
         console.error('Error soft deleting product:', error) // هنا ممكن نعرض رسالة خطأ للمستخدم لو الـ Soft Delete في الـ Backend فشل
       }
     },
-
     async updateProduct(productId, formData) {
       // هنستقبل الـ productId والـ formData
       console.log('the form data before response', formData)

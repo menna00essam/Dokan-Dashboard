@@ -1,49 +1,59 @@
 <template>
   <v-container fluid>
-    <v-toolbar
+    <v-card
       flat
       :color="$vuetify.theme.current.dark ? 'primary' : 'white'"
-      style="border: none"
+      class="toolbar-container"
     >
-      <v-text-field
-        v-model="searchQuery"
-        :label="t('search_products')"
-        :prepend-inner-icon="$i18n.locale === 'ar' ? undefined : 'mdi-magnify'"
-        :append-inner-icon="$i18n.locale === 'ar' ? 'mdi-magnify' : undefined"
-        clearable
-        variant="outlined"
-        density="comfortable"
-        single-line
-        hide-details
-        class="search-field"
+      <div
+        class="toolbar-content"
         :class="{
-          'mr-3': $i18n.locale === 'ltr',
-          'ml-3': $i18n.locale === 'ar'
+          'desktop-layout': !isMobile,
+          'mobile-layout': isMobile
         }"
-        :style="{ 'max-width': isMobile ? '100%' : '300px' }"
-        :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-        @input="handleSearch"
-        @click:clear="clearSearch"
-      ></v-text-field>
-      <v-spacer></v-spacer>
-      <router-link to="/addproducts" class="ml-auto">
-        <v-btn
-          class="bg-secondary text-white"
-          color="white"
-          style="text-transform: none"
-        >
-          <template v-if="$i18n.locale === 'ar'">
-            {{ t('add_a_product') }}
-            <v-icon end> mdi-plus </v-icon>
-          </template>
-          <template v-else>
-            <v-icon start> mdi-plus </v-icon>
+      >
+        <v-text-field
+          v-model="searchQuery"
+          :label="t('search_products')"
+          :prepend-inner-icon="
+            $i18n.locale === 'ar' ? undefined : 'mdi-magnify'
+          "
+          :append-inner-icon="$i18n.locale === 'ar' ? 'mdi-magnify' : undefined"
+          clearable
+          variant="outlined"
+          density="comfortable"
+          single-line
+          hide-details
+          class="search-field"
+          :class="{
+            'mr-3': $i18n.locale === 'ltr' && !isMobile,
+            'ml-3': $i18n.locale === 'ar' && !isMobile,
+            'mb-3': isMobile
+          }"
+          :style="{ width: isMobile ? '100%' : '300px' }"
+          :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+          @input="handleSearch"
+          @click:clear="clearSearch"
+        ></v-text-field>
 
-            {{ t('add_a_product') }}
-          </template>
-        </v-btn>
-      </router-link>
-    </v-toolbar>
+        <router-link to="/addproducts" :class="{ 'w-100': isMobile }">
+          <v-btn
+            class="bg-secondary text-white"
+            :class="{ 'w-100': isMobile }"
+            style="text-transform: none"
+          >
+            <template v-if="$i18n.locale === 'ar'">
+              {{ t('add_a_product') }}
+              <v-icon end> mdi-plus </v-icon>
+            </template>
+            <template v-else>
+              <v-icon start> mdi-plus </v-icon>
+              {{ t('add_a_product') }}
+            </template>
+          </v-btn>
+        </router-link>
+      </div>
+    </v-card>
     <v-data-table
       :key="componentKey"
       :headers="translatedHeaders"
@@ -155,6 +165,11 @@
   const productToDelete = ref(null)
   const debounceTimeout = ref(null)
 
+  import { useDisplay } from 'vuetify'
+
+  const { mobile } = useDisplay()
+  const isMobile = computed(() => mobile.value)
+
   import PaginationControls from '../components/Shared/PaginationControls.vue'
   import ConfirmDialog from '../components/Shared/ConfirmDialog.vue'
   const router = useRouter()
@@ -193,14 +208,16 @@
     }
   }
   const handleSearch = () => {
-  clearTimeout(debounceTimeout.value);
-  debounceTimeout.value = setTimeout(() => {
-    const searchTerm = searchQuery.value.trim();
-    console.log('Triggering search with:', searchTerm); // Debug log
-    productStore.currentPage = 1;
-    productStore.fetchAll(1, productStore.itemsPerPage, searchTerm);
-  }, 500);
-};
+    clearTimeout(debounceTimeout.value)
+    debounceTimeout.value = setTimeout(() => {
+      productStore.currentPage = 1 // Reset to first page when searching
+      productStore.fetchAll(
+        1, // Always start from page 1 when searching
+        productStore.itemsPerPage,
+        searchQuery.value
+      )
+    }, 500)
+  }
 
   const clearSearch = () => {
     console.log('Clearing search')
@@ -228,9 +245,45 @@
   }
 </script>
 <style scoped>
-  .v-toolbar {
-    padding: 0 16px;
-    margin-bottom: 16px;
+  /* Base toolbar styles */
+  .toolbar-container {
+    padding: 12px 16px;
+    min-height: auto !important;
+    border: none;
+    margin-bottom: 30px;
+  }
+
+  /* Content container */
+  .toolbar-content {
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Desktop layout */
+  .desktop-layout {
+    justify-content: space-between;
+  }
+
+  .desktop-layout .search-field {
+    width: 300px;
+    margin-right: 12px;
+  }
+
+  /* Mobile layout */
+  .mobile-layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mobile-layout .search-field,
+  .mobile-layout .add-product-btn {
+    width: 100%;
+  }
+
+  /* Field and button styles */
+  .search-field .v-field {
+    height: 40px;
   }
 
   .v-btn {
@@ -238,8 +291,10 @@
     letter-spacing: 0.5px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    height: 40px;
   }
 
+  /* Data table styles (keep your existing ones) */
   .v-data-table .v-data-table__td {
     vertical-align: middle;
     padding: 12px;
@@ -253,26 +308,11 @@
     background-color: #f0f4ff;
     transition: background-color 0.3s;
   }
-  .search-field {
-    max-width: 300px;
-    margin-top: 8px;
-  }
 
+  /* Responsive adjustments */
   @media (max-width: 600px) {
-    .search-field {
-      max-width: 100%;
-      margin-bottom: 16px;
-    }
-
-    .v-toolbar {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .ml-auto {
-      margin-left: 0 !important;
-      margin-top: 16px;
-      width: 100%;
+    .toolbar-container {
+      padding: 12px;
     }
   }
 </style>

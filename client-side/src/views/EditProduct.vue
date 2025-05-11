@@ -836,10 +836,12 @@
     background-color: rgba(255, 82, 82, 0.1);
   }
   .deleteIcon {
-    position: absolute;
-    top: 0;
+    position: absolute !important;
+    top: 0 !important;
     right: 0 !important;
     color: red;
     box-shadow: none;
+    text-align: right !important;
+    width: 50px;
   }
 </style>
