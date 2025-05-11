@@ -36,7 +36,15 @@
           @click:clear="clearSearch"
         ></v-text-field>
 
-        <router-link to="/addproducts" :class="{ 'w-100': isMobile }">
+        <router-link
+          :to="{
+            name:
+              getUserRole() === 'super_admin'
+                ? 'super-admin-add-products'
+                : 'admin-add-products'
+          }"
+          :class="{ 'w-100': isMobile }"
+        >
           <v-btn
             class="bg-secondary text-white"
             :class="{ 'w-100': isMobile }"
@@ -184,6 +192,10 @@
     { title: 'Added', key: 'date' },
     { title: 'Action', key: 'action', sortable: false }
   ])
+  const getUserRole = () => {
+    const user = JSON.parse(localStorage.getItem('user'))
+    return user?.role || 'admin' // default to admin if not found
+  }
   const translatedHeaders = computed(() => {
     return headers.value.map((header) => ({
       ...header,
@@ -234,7 +246,16 @@
   })
 
   const editItem = (item) => {
-    router.push(`/editproducts/${item._id}`)
+    const role = getUserRole()
+    const routeName =
+      role === 'super_admin'
+        ? 'super-admin-edit-products'
+        : 'admin-edit-products'
+
+    router.push({
+      name: routeName,
+      params: { id: item._id }
+    })
   }
 
   const statusColor = (status) => {
