@@ -34,13 +34,9 @@
                 {{ customer.firstName }} {{ customer.lastName }}
               </h1>
               <div class="d-flex align-center">
-                <v-chip
-                  :color="customer.isBlocked ? 'error' : 'success'"
-                  small
-                  class="mr-2"
-                >
-                  {{ customer.isBlocked ? $t('customers.blocked') : $t('customers.active') }}
-                </v-chip>
+                  <v-chip :color="customer.state === 'active' ? 'success' : 'error'" small class="mr-2">
+    {{ customer.state === 'active' ? $t('customers.active') : $t('customers.blocked') }}
+  </v-chip>
                 <span class="text-caption">{{
                   customer.email
                 }}</span>
@@ -405,23 +401,16 @@
             <v-icon left>mdi-pencil</v-icon>
             {{ $t('common.edit') }}
           </v-btn>
-          <v-btn
-            :color="customer.isBlocked ? 'success' : 'error'"
-            variant="tonal"
-            @click="toggleBlockStatus"
-          >
-            <v-tooltip activator="parent" location="top">
-              {{
-                customer.isBlocked
-                  ? $t('customers.unblockTooltip')
-                  : $t('customers.blockTooltip')
-              }}
-            </v-tooltip>
-            <v-icon left>{{
-              customer.isBlocked ? 'mdi-lock-open' : 'mdi-lock'
-            }}</v-icon>
-            {{ customer.isBlocked ? $t('customers.unblock') : $t('customers.block') }}
-          </v-btn>
+         <v-btn
+    :color="customer.state === 'active' ? 'error' : 'success'"
+    variant="tonal"
+    @click="blockStatusDialog.open()"
+  >
+    <v-icon left>
+      {{ customer.state === 'active' ? 'mdi-lock' : 'mdi-lock-open' }}
+    </v-icon>
+    {{ customer.state === 'active' ? $t('customers.block') : $t('customers.unblock') }}
+  </v-btn>
         </v-card-actions>
       </v-card>
 
@@ -491,14 +480,26 @@
         @confirm="deleteAddress"
       />
       <ConfirmDialog
-        ref="blockStatusDialog"
-        :title="customer?.isBlocked ? $t('dialogs.unblockCustomer.title') : $t('dialogs.blockCustomer.title')"
-        :message="customer?.isBlocked ? $t('dialogs.unblockCustomer.message') : $t('dialogs.blockCustomer.message')"
-        :confirm-text="$t('common.confirm')"
-        confirm-color="error"
-        :type="customer?.isBlocked ? 'warning' : 'error'"
-        @confirm="confirmToggleBlockStatus"
-      />
+    ref="blockStatusDialog"
+    :title="customer.state === 'active' 
+      ? $t('dialogs.blockCustomer.title') 
+      : $t('dialogs.unblockCustomer.title')"
+    :message="customer.state === 'active'
+      ? $t('dialogs.blockCustomer.message')
+      : $t('dialogs.unblockCustomer.message')"
+  />
+
+<ConfirmDialog
+  ref="blockStatusDialog"
+  :title="customer.state === 'active' 
+    ? $t('dialogs.blockCustomer.title') 
+    : $t('dialogs.unblockCustomer.title')"
+  :message="customer.state === 'active'
+    ? $t('dialogs.blockCustomer.message')
+    : $t('dialogs.unblockCustomer.message')"
+  @confirm="handleBlockConfirm" 
+/>
+
     </template>
     <template v-slot:no-data>
   <v-alert type="info">{{ $t('orders.noOrders') }}</v-alert>
@@ -596,9 +597,7 @@ const customerOrders = computed(() => customerStore.getCustomerOrders)
         firstName: '',
         lastName: '',
         email: '',
-        isBlocked: false,
-        state: 'active',            
-        isActive: true,
+state: 'active',
         addresses: [],
         activityLog: [],
       }
@@ -612,6 +611,9 @@ const customerOrders = computed(() => customerStore.getCustomerOrders)
   const customerActivity = computed(() =>
     customerStore.getCustomerActivityLog(route.params.id)
   )
+
+  const isBlocked = computed(() => customer.value.state === 'blocked')
+const isActive = computed(() => customer.value.state === 'active')
 
   const handleBlockToggle = async () => {
     await customerStore.toggleBlockStatus(customer.value.id)
@@ -785,9 +787,36 @@ const editCustomer = () => {
   router.push(`/customers/edit/${customer.value.id}`)
 }
 
-const toggleBlockStatus = () => {
-  blockStatusDialog.value.open()
-}
+const handleBlockConfirm = async () => {
+  try {
+    const previousState = customer.value.state;
+    await customerStore.toggleBlockStatus(customer.value.id);
+    await customerStore.fetchCustomerById(route.params.id);// جلب بيانات جديدة للتأكد من التحديث
+    toast.success(
+      previousState === 'active' 
+        ? t('customers.blockSuccess') 
+        : t('customers.unblockSuccess')
+    );
+  } catch (error) {
+    toast.error(t('customers.statusUpdateError'));
+  }
+};
+
+const toggleBlockStatus = async () => {
+  try {
+    const previousState = customer.value.state;
+    
+    await customerStore.toggleBlockStatus(customer.value.id);
+    
+    toast.success(
+      previousState === 'active' 
+        ? t('customers.blockSuccess') 
+        : t('customers.unblockSuccess')
+    );
+  } catch (error) {
+    toast.error(t('customers.statusUpdateError'));
+  }
+};
 
   const confirmToggleBlockStatus = async () => {
     try {

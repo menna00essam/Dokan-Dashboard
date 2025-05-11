@@ -232,8 +232,7 @@ const userSchema = new mongoose.Schema(
         addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         addedAt: { type: Date, default: Date.now },
         resolvedAt: Date,
-        isActive: { type: Boolean, default: true },
-        isDeleted: { type: Boolean, default: false },
+        
       },
     ],
     tierLock: {
