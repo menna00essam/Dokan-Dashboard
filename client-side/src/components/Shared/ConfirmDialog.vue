@@ -51,6 +51,12 @@
 
 <script setup>
   import { ref, computed } from 'vue'
+  const isOpen = ref(false)
+
+
+
+
+
 
   const props = defineProps({
     title: {
@@ -134,6 +140,7 @@
     emit('cancel')
     close()
   }
+  
 
   // Expose open/close methods to parent component
   defineExpose({ open, close })

@@ -12,7 +12,7 @@
     <!-- Main Content -->
     <template v-else>
       <!-- Customer Not Found -->
-      <v-alert v-if="!customer.id" type="error" class="mb-4">
+      <v-alert v-if="!customer._id" type="error" class="mb-4">
         {{ $t('customers.notFound') }}
       </v-alert>
 
@@ -35,7 +35,9 @@
               </h1>
               <div class="d-flex align-center">
                   <v-chip :color="customer.state === 'active' ? 'success' : 'error'" small class="mr-2">
-    {{ customer.state === 'active' ? $t('customers.active') : $t('customers.blocked') }}
+   {{ customer.state === 'active' 
+      ? $t('customers.active') 
+      : $t('customers.blocked') }}
   </v-chip>
                 <span class="text-caption">{{
                   customer.email
@@ -401,16 +403,18 @@
             <v-icon left>mdi-pencil</v-icon>
             {{ $t('common.edit') }}
           </v-btn>
-         <v-btn
-    :color="customer.state === 'active' ? 'error' : 'success'"
-    variant="tonal"
-    @click="blockStatusDialog.open()"
-  >
-    <v-icon left>
-      {{ customer.state === 'active' ? 'mdi-lock' : 'mdi-lock-open' }}
-    </v-icon>
-    {{ customer.state === 'active' ? $t('customers.block') : $t('customers.unblock') }}
-  </v-btn>
+<v-btn
+  :color="customer.state === 'active' ? 'error' : 'success'"
+  variant="tonal"
+  @click="handleBlockConfirm"
+>
+  <v-icon left>
+    {{ customer.state === 'active' ? 'mdi-lock' : 'mdi-lock-open' }}
+  </v-icon>
+  {{ customer.state === 'active' 
+    ? $t('block') 
+    : $t('unblock') }}
+</v-btn>
         </v-card-actions>
       </v-card>
 
@@ -479,15 +483,7 @@
         type="error"
         @confirm="deleteAddress"
       />
-      <ConfirmDialog
-    ref="blockStatusDialog"
-    :title="customer.state === 'active' 
-      ? $t('dialogs.blockCustomer.title') 
-      : $t('dialogs.unblockCustomer.title')"
-    :message="customer.state === 'active'
-      ? $t('dialogs.blockCustomer.message')
-      : $t('dialogs.unblockCustomer.message')"
-  />
+
 
 <ConfirmDialog
   ref="blockStatusDialog"
@@ -495,9 +491,9 @@
     ? $t('dialogs.blockCustomer.title') 
     : $t('dialogs.unblockCustomer.title')"
   :message="customer.state === 'active'
-    ? $t('dialogs.blockCustomer.message')
-    : $t('dialogs.unblockCustomer.message')"
-  @confirm="handleBlockConfirm" 
+    ? $t('dialogs.blockCustomer.message', { name: customer.firstName })
+    : $t('dialogs.unblockCustomer.message', { name: customer.firstName })"
+  @confirm="handleBlockConfirm"
 />
 
     </template>
@@ -508,7 +504,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch,nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCustomerStore } from '../store/customers'
 import { useToast } from 'vue-toastification'
@@ -530,6 +526,27 @@ const ordersLoading = ref(false)
 const deleteAddressDialog = ref(null)
 const blockStatusDialog = ref(null)
 
+
+const handleBlock = () => {
+  if (blockStatusDialog.value) {
+    blockStatusDialog.value.open()
+  }
+}
+
+
+// import { useCurrencyStore } from '../store/useCurrencyStore'
+// const currencyStore = useCurrencyStore()
+
+// const formatCurrency = (amount) => {
+//   const convertedAmount = amount * currencyStore.rate;
+//   return convertedAmount.toLocaleString('en-US', {
+//     style: 'currency',
+//     currency: currencyStore.selectedCurrency.code,
+//     currencyDisplay: 'symbol'
+//   });
+// };
+
+
 // New address data
 const newAddress = ref({
   province: null,
@@ -547,6 +564,17 @@ const newAddress = ref({
     { title: t('customers.status'), key: 'status' },
     { title: t('common.actions'), key: 'actions', sortable: false }
   ]
+
+// CustomerDetails.vue
+watch(
+  () => customerStore.currentCustomer,
+  (newVal) => {
+    if (newVal && newVal._id === route.params.id) {
+      customer.value = { ...newVal };
+    }
+  },
+  { deep: true, immediate: true }
+);
 
   // Computed
 const customerOrders = computed(() => customerStore.getCustomerOrders)
@@ -590,23 +618,29 @@ const customerOrders = computed(() => customerStore.getCustomerOrders)
   })
 
   // In component script (corrected computed property)
-  const customer = computed(() => {
-    if (!customerStore.currentCustomer || Object.keys(customerStore.currentCustomer).length === 0) {
-      return {
-        id: '',
-        firstName: '',
-        lastName: '',
-        email: '',
-state: 'active',
-        addresses: [],
-        activityLog: [],
-      }
-    }
-    return {
-      ...customerStore.currentCustomer,
-      isBlocked: customerStore.currentCustomer.state === 'blocked'
-    }
-  })
+ 
+
+
+const emptyCustomer = {
+    _id: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    mobile: '',
+    state: 'active',
+    customerTier: 'basic',
+    addresses: [],
+    activityLog: [],
+    createdAt: null,
+    updatedAt: null,
+    avatar: 'https://cdn.vuetifyjs.com/images/john.jpg'
+  }
+
+const customer = computed(() => {
+  const current = customerStore.currentCustomer;
+  return current?._id ? current : { ...emptyCustomer };
+});
+
 
   const customerActivity = computed(() =>
     customerStore.getCustomerActivityLog(route.params.id)
@@ -615,9 +649,7 @@ state: 'active',
   const isBlocked = computed(() => customer.value.state === 'blocked')
 const isActive = computed(() => customer.value.state === 'active')
 
-  const handleBlockToggle = async () => {
-    await customerStore.toggleBlockStatus(customer.value.id)
-  }
+ 
 
   const handleComponentError = (error) => {
     toast.error(t('errors.componentError'))
@@ -789,48 +821,45 @@ const editCustomer = () => {
 
 const handleBlockConfirm = async () => {
   try {
-    const previousState = customer.value.state;
-    await customerStore.toggleBlockStatus(customer.value.id);
-    await customerStore.fetchCustomerById(route.params.id);// جلب بيانات جديدة للتأكد من التحديث
-    toast.success(
-      previousState === 'active' 
-        ? t('customers.blockSuccess') 
-        : t('customers.unblockSuccess')
-    );
+    const newState = customer.value.state === 'active' ? 'blocked' : 'active';
+    
+    // استخدام _id بدلاً من id
+    await customerStore.updateCustomerStatus(customer.value._id, newState);
+    
+    // إعادة جلب البيانات للتأكد من التحديث
+    await customerStore.fetchCustomerById(customer.value._id);
+    
+    toast.success(t(`customers.${newState}Success`));
   } catch (error) {
     toast.error(t('customers.statusUpdateError'));
   }
 };
-
-const toggleBlockStatus = async () => {
+async function toggleBlockStatus(customerId) {
   try {
-    const previousState = customer.value.state;
+    // Change 'id' to '_id' when finding the customer
+    const customer = customers.value.find(c => c._id === customerId);
+    if (!customer) throw new Error('Customer not found');
     
-    await customerStore.toggleBlockStatus(customer.value.id);
+    const newState = customer.state === 'blocked' ? 'active' : 'blocked';
     
-    toast.success(
-      previousState === 'active' 
-        ? t('customers.blockSuccess') 
-        : t('customers.unblockSuccess')
-    );
-  } catch (error) {
-    toast.error(t('customers.statusUpdateError'));
-  }
-};
-
-  const confirmToggleBlockStatus = async () => {
-    try {
-      await customerStore.toggleBlockStatus(customer.value.id)
-      await customerStore.fetchCustomerById(route.params.id)
-      toast.success(
-        customer.value.isBlocked
-          ? t('customers.unblockSuccess')
-          : t('customers.blockSuccess')
-      )
-    } catch (error) {
-      toast.error(t('customers.statusUpdateError'))
+    await apiClient.patch(`/${customerId}`, { state: newState });
+    
+    // Update local state
+    customer.state = newState;
+    
+    // Change 'id' to '_id' for current customer check
+    if (currentCustomer.value._id === customerId) {
+      currentCustomer.value.state = newState;
     }
+    
+    return true;
+  } catch (err) {
+    toast.error(t('customers.statusUpdateError'));
+    throw err;
   }
+}
+
+
 
 const viewOrderDetails = (order) => {
   router.push(`/orders/${order.id}`)

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch ,nextTick} from 'vue'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
 
@@ -154,49 +154,43 @@ const getCustomerOrders = computed(() => currentCustomerOrders.value)
 
 
 
-  async function fetchCustomerById(id) {
-    try {
-      loading.value = true;
-      const response = await apiClient.get(`/${id}`);
-  
-      if (!response.data?.data?.user) {
-        throw new Error('Customer data not found in response');
-      }
-  
-      const customerData = response.data.data.user;
-  
-      currentCustomer.value = {
-        id: customerData._id,
-        firstName: customerData.firstName,
-        lastName: customerData.lastName,
-        email: customerData.email,
-        mobile: customerData.mobile,
-        tier: customerData.customerTier,
-        joinDate: customerData.joinDate,
-        avatar: customerData.avatar,
-        addresses: customerData.addresses || [],
-        ordersCount: customerData.ordersCount,
-        totalSpent: customerData.totalSpent,
-        lastOrderDate: customerData.lastOrderDate,
-        activityLog: customerData.activityLog || [],
-        communicationPreferences: customerData.communicationPreferences || {},
-        notes: customerData.notes || '',
-        state: customerData.state,
-      };
-  
-      currentCustomerActivity.value = customerData.activityLog || [];
-  
-      console.log('currentCustomer updated:', currentCustomer.value);
-    } catch (err) {
-      console.error('Error details:', {
-        message: err.message,
-        response: err.response?.data,
-      });
-      throw err;
-    } finally {
-      loading.value = false
+async function fetchCustomerById(id) {
+  try {
+    loading.value = true;
+    const response = await apiClient.get(`/${id}`);
+    
+    if (!response.data?.data?.user) {
+      throw new Error('Customer not found');
     }
+
+    const apiCustomer = response.data.data.user;
+    
+    currentCustomer.value = {
+      _id: apiCustomer._id, // Use _id instead of id
+      firstName: apiCustomer.firstName,
+      lastName: apiCustomer.lastName,
+      email: apiCustomer.email,
+      mobile: apiCustomer.mobile,
+      state: apiCustomer.state,
+      tier: apiCustomer.customerTier,
+      avatar: apiCustomer.avatar || 'https://cdn.vuetifyjs.com/images/john.jpg',
+      addresses: apiCustomer.addresses || [],
+      activityLog: apiCustomer.activityLog || [],
+      ordersCount: apiCustomer.ordersCount,
+      totalSpent: apiCustomer.totalSpent,
+      lastOrderDate: apiCustomer.lastOrderDate,
+      communicationPreferences: apiCustomer.communicationPreferences || {},
+      joinDate: apiCustomer.joinDate,
+      birthDate: apiCustomer.birthDate,
+      notes: apiCustomer.notes || '',
+    };
+  } catch (error) {
+    console.error('Error loading customer:', error);
+    throw error;
+  } finally {
+    loading.value = false;
   }
+}
   
 
   async function createCustomer(data) {
@@ -302,13 +296,11 @@ async function bulkUpdateStatus(userIds, newState) {
       state: newState 
     });
 
-    // Update local state
+    // Update local state with new objects
     customers.value = customers.value.map(c => 
       userIds.includes(c._id) ? { ...c, state: newState } : c
     );
-     const modifiedCount = response.data.data.modifiedCount;
-
-
+    
     toast.success(`Updated ${response.data.modifiedCount} users`);
     return response.data.modifiedCount;
   } catch (err) {
@@ -320,7 +312,52 @@ async function bulkUpdateStatus(userIds, newState) {
 }
 
 
+// store/customers.js
+// In customer store
+// In Pinia store (customers.js)
+// In your Pinia store (customer.js)
+async function updateCustomerStatus(id, newState) {
+  try {
+    const response = await apiClient.patch(`/${id}`, { state: newState });
+    
+    // تحديث القائمة باستخدام _id
+    const index = customers.value.findIndex(c => c._id === id);
+    if (index > -1) {
+      customers.value.splice(index, 1, { 
+        ...customers.value[index], 
+        state: newState 
+      });
+    }
 
+    // تحديث العميل الحالي باستخدام _id
+    if (currentCustomer.value?._id === id) {
+      currentCustomer.value = { 
+        ...currentCustomer.value, 
+        state: newState 
+      };
+    }
+
+    return response.data;
+  } catch (error) {
+    toast.error("Status update failed");
+    throw error;
+  }
+}
+
+// In component script
+const handleBlockConfirm = async () => {
+  try {
+    const newState = customer.value.state === 'active' ? 'blocked' : 'active';
+    await customerStore.updateCustomerStatus(customer.value._id, newState);
+    
+    // Refresh customer data
+    await customerStore.fetchCustomerById(customer.value._id);
+    
+    toast.success(t(`customers.${newState}Success`));
+  } catch (error) {
+    toast.error(t('customers.statusUpdateError'));
+  }
+};
 
 
  async function addTagsToCustomers(ids, tags) {
@@ -503,6 +540,8 @@ watch(
     fetchCustomerOrders,
     changePage,
     resetFilters,
-    bulkUpdateTier
+    bulkUpdateTier,
+    updateCustomerStatus,
+    handleBlockConfirm
   }
 })
