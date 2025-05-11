@@ -66,38 +66,60 @@ const createUser = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users
 // @access  Public
 const getAllUsers = asyncWrapper(async (req, res, next) => {
-  const { page = 1, limit = 10, search, isActive } = req.query;
+  const { 
+    page = 1, 
+    limit = 10, 
+    search, 
+    state,
+    customerTier,
+    sortBy = 'createdAt',
+    sortOrder = 'desc' 
+  } = req.query;
 
-  const query = {
-    role: "user",
-    isActive: true,
-  };
+  const query = { role: "user" };
+
+  // التعديل 1: استخدام حقل state مباشرة بدل isActive
+  if (state === 'active') query.state = 'active'; // ← CHANGED
+  if (state === 'blocked') query.state = 'blocked'; // ← CHANGED
+
+  if (customerTier && customerTier !== 'all') {
+    query.customerTier = customerTier;
+  }
 
   if (search) {
     query.$or = [
       { firstName: { $regex: search, $options: "i" } },
       { lastName: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } }
     ];
   }
 
-  if (isActive === "true") query.isActive = true;
-  if (isActive === "false") query.isActive = false;
+  const allowedSortFields = ['firstName', 'lastName', 'email', 'createdAt', 'totalSpent'];
+  const validatedSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+  const validatedSortOrder = sortOrder.toLowerCase() === 'asc' ? 1 : -1;
+  const sortOptions = { [validatedSortBy]: validatedSortOrder };
 
   const {
     data: users,
     total,
     page: currentPage,
-    totalPages,
-  } = await paginate(User, query, { page, limit, sort: { createdAt: -1 } });
+    totalPages
+  } = await paginate(User, query, {
+    page: Number(page),
+    limit: Number(limit),
+    sort: sortOptions
+  });
+
+  // التعديل 2: إزالة التحويل غير الضروري
+  const transformedUsers = users.map(user => user.toObject()); // ← CHANGED
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    results: users.length,
+    results: transformedUsers.length,
     total,
     currentPage,
     totalPages,
-    data: { users },
+    data: { users: transformedUsers } // ← البيانات تحتوي على state مباشرة
   });
 });
 
@@ -240,9 +262,9 @@ const updateUser = asyncWrapper(async (req, res, next) => {
     "email",
     "mobile",
     "role",
-    "isActive",
     "isHotUser",
     "creditLimit",
+     "state",
   ];
 
   allowedFields.forEach((field) => {
@@ -285,7 +307,7 @@ const deleteUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-      isActive: false,
+    state: "blocked",
       deletedAt: Date.now(),
       deletedBy: req.user.id,
     },
@@ -309,7 +331,7 @@ const restoreUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-      isActive: true,
+    state: "active",
       deletedAt: null,
       deletedBy: null,
     },
@@ -1227,24 +1249,42 @@ const bulkDeleteUsers = asyncWrapper(async (req, res, next) => {
   });
 });
 
+// @desc    Bulk update user statuses
+// @route   PATCH /api/users/bulk-status
+// @access  Private (Admin)
+// Bulk Status Update Controller
 const bulkUpdateUserStatus = asyncWrapper(async (req, res, next) => {
-  const { ids, status } = req.body;
+  const { userIds, state } = req.body; // ← MODIFIED (was ids, status)
 
-  if (!ids || !Array.isArray(ids) || !status) {
-    return next(new AppError("Invalid request data", 400, httpStatusText.FAIL));
+  // Validation
+  if (!Array.isArray(userIds)) { // Added missing closing parenthesis
+    return next(new AppError('User IDs must be an array', 400));
   }
 
-  const result = await User.updateMany({ _id: { $in: ids } }, { status });
+  if (!['active', 'blocked'].includes(state)) { // ← MODIFIED (status → state)
+    return next(new AppError('Invalid state value', 400));
+  }
+
+  const result = await User.updateMany(
+    { _id: { $in: userIds } }, // ← MODIFIED (uses _id)
+    { $set: { state } } // ← MODIFIED (was isActive: status === 'active')
+  );
 
   res.status(200).json({
-    status: httpStatusText.SUCCESS,
-    data: { updatedCount: result.modifiedCount },
+    status: "success",
+    data: { modifiedCount: result.modifiedCount } // ← MODIFIED response format
   });
 });
 
-// داخل user.controller.js
+
+
+
+
+
+
+ 
 const bulkAssignTags = asyncWrapper(async (req, res, next) => {
-  const { ids, tags } = req.body;
+  const { ids, customerTier } = req.body;
 
   if (!ids || !Array.isArray(ids) || !tags || !Array.isArray(tags)) {
     return next(new AppError("Invalid data format", 400, httpStatusText.FAIL));
@@ -1260,6 +1300,42 @@ const bulkAssignTags = asyncWrapper(async (req, res, next) => {
     data: { updatedCount: result.modifiedCount },
   });
 });
+
+
+
+// routes/users.js
+
+const bulkAssignTier = asyncWrapper(async (req, res) => {
+  const { ids, tier } = req.body;
+  const allowedTiers = ['basic', 'silver', 'gold', 'platinum'];
+
+  // Validation
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Invalid user IDs array' });
+  }
+  if (!allowedTiers.includes(tier)) {
+    return res.status(400).json({ error: 'Invalid tier value' });
+  }
+
+  try {
+    const result = await User.updateMany(
+      { _id: { $in: ids } },
+      { $set: { customerTier: tier } }
+    );
+
+    res.json({
+      success: true,
+      message: `Updated ${result.modifiedCount} users`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Tier update error:', error);
+    res.status(500).json({ error: 'Failed to update tiers' });
+  }
+});
+
+
+
 
 // In user.controller.js
 // @desc    Get user orders
@@ -1327,5 +1403,6 @@ module.exports = {
   denyUser,
   handleAdminRequest,
   getAdminRequests,
+  bulkAssignTier
   // getUserOrders,
 };

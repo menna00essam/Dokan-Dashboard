@@ -80,34 +80,58 @@
         {{ t('selected', { count: selected.length }) }}
       </v-btn>
 
-      <v-menu :disabled="!selected.length">
-        <template v-slot:activator="{ props }">
-          <v-btn
-            color="secondary"
-            variant="tonal"
-            v-bind="props"
-            prepend-icon="mdi-tune"
-            class="mr-2"
-            :disabled="!selected.length"
-          >
-            {{ t('bulkActions') }}
-          </v-btn>
-        </template>
-        <v-list density="compact">
-          <v-list-item
-            @click="bulkUpdateStatus('active')"
-            prepend-icon="mdi-account-check"
-          >
-            <v-list-item-title>{{ t('markAsActive') }}</v-list-item-title>
-          </v-list-item>
-          <v-list-item
-            @click="bulkUpdateStatus('blocked')"
-            prepend-icon="mdi-account-cancel"
-          >
-            <v-list-item-title>{{ t('markAsBlocked') }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+     <v-menu :disabled="!selected.length">
+    <template v-slot:activator="{ props }">
+      <v-btn
+        color="secondary"
+        variant="tonal"
+        v-bind="props"
+        prepend-icon="mdi-tune"
+        class="mr-2"
+        :disabled="!selected.length"
+      >
+        {{ t('bulkActions') }}
+      </v-btn>
+    </template>
+    
+    <v-list density="compact">
+      <v-list-item
+        @click="bulkUpdateStatus('active')"
+        prepend-icon="mdi-account-check"
+      >
+        <v-list-item-title>{{ t('markAsActive') }}</v-list-item-title>
+      </v-list-item>
+      
+      <v-list-item
+        @click="bulkUpdateStatus('blocked')"
+        prepend-icon="mdi-account-cancel"
+      >
+        <v-list-item-title>{{ t('markAsBlocked') }}</v-list-item-title>
+      </v-list-item>
+
+      <v-list-item>
+        <v-menu location="start">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              :title="t('changeTier')"
+              prepend-icon="mdi-account-star"
+            />
+          </template>
+          
+          <v-list>
+            <v-list-item
+              v-for="tier in tierOptions.filter(t => t.value !== 'all')"
+              :key="tier.value"
+              @click="handleBulkTierUpdate(tier.value)"
+            >
+              <v-list-item-title>{{ tier.title }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </v-list-item>
+    </v-list>
+  </v-menu>
 
       <v-btn
         color="error"
@@ -128,11 +152,11 @@
       :items-per-page="customerStore.itemsPerPage"
       v-model="selected"
       show-select
-      item-value="id"
+      item-value="_id"
       class="elevation-1"
       :loading="customerStore.loading"
       hide-default-footer
-      @click:row="(event, { item }) => viewCustomerDetails(item.id)"
+      @click:row="(event, { item }) => viewCustomerDetails(item._id)"
     >
       <!-- Table Content Templates -->
       <template #item.fullname="{ item }">
@@ -153,14 +177,25 @@
         </v-chip>
       </template>
 
-      <template #item.status="{ item }">
-        <v-chip
-          :color="item.state === 'active' ? 'success' : 'error'"
-          size="small"
-        >
-          {{ t(item.state) }}
-        </v-chip>
-      </template>
+<template #item.state="{ item }">
+  <v-chip :color="item.state === 'active' ? 'success' : 'error'" size="small @click.stop">
+    {{ t(item.state) }}
+    <v-icon 
+      v-if="item.state === 'active'"
+      small 
+      @click.stop="toggleCustomerStatus(item._id, 'blocked')"
+    >
+      mdi-lock
+    </v-icon>
+    <v-icon 
+      v-else
+      small 
+      @click.stop="toggleCustomerStatus(item._id, 'active')"
+    >
+      mdi-lock-open
+    </v-icon>
+  </v-chip>
+</template>
 
       <template #item.actions="{ item }">
         <div
@@ -243,21 +278,19 @@
 
   const defaultAvatar = 'https://cdn.vuetifyjs.com/images/profiles/male1.jpg'
 
-  const statusOptions = [
-    { value: 'all', title: t('all') },
-    ...['active', 'blocked'].map((state) => ({
-      value: state,
-      title: t(state)
-    }))
-  ]
+ const statusOptions = [
+  { value: 'all', title: t('all') },
+  { value: 'active', title: t('active') },
+  { value: 'blocked', title: t('blocked') }
+];
 
-  const tierOptions = [
-    { value: 'all', title: t('all') },
-    ...['basic', 'silver', 'gold', 'platinum'].map((customerTier) => ({
-      value: customerTier,
-      title: t(customerTier)
-    }))
-  ]
+const tierOptions = [
+  { value: 'all', title: t('all') },
+  { value: 'basic', title: t('basic') },
+  { value: 'silver', title: t('silver') },
+  { value: 'gold', title: t('gold') },
+  { value: 'platinum', title: t('platinum') }
+];
 
   const resetAll = async () => {
     customerStore.resetFilters()
@@ -274,6 +307,17 @@
       toast.error(t('pageChangeError'))
     }
   }
+
+  const bulkUpdateTier = async (tier) => {
+  try {
+    await customerStore.bulkUpdateTier(selected.value, tier)
+    await customerStore.fetchCustomers(customerStore.currentPage)
+    selected.value = []
+    toast.success(t('bulkTierUpdated', { tier: t(tier) }))
+  } catch (error) {
+    toast.error(t('bulkUpdateError'))
+  }
+}
 
   const handleItemsPerPageChange = async (newSize) => {
     console.log('Changing items per page to:', newSize)
@@ -308,6 +352,26 @@
     { title: t('actions'), key: 'actions', sortable: false }
   ])
 
+
+
+  const tiers = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'silver', label: 'Silver' },
+  { value: 'gold', label: 'Gold' },
+  { value: 'platinum', label: 'Platinum' }
+];
+
+const handleBulkTierUpdate = async (tier) => {
+  try {
+    await customerStore.bulkUpdateTier(selected.value, tier)
+    await customerStore.fetchCustomers() 
+    selected.value = []
+    toast.success(t('updateSuccess')) 
+  } catch (error) {
+    toast.error(t('updateFailed'))
+  }
+}
+
   const deleteMessage = computed(() =>
     t('deleteCustomerConfirm', { count: selected.value.length })
   )
@@ -325,7 +389,7 @@
   }
 
   const editCustomer = (customer) => {
-    router.push(`/customers/edit/${customer.id}`)
+    router.push(`/customers/edit/${customer._id}`)
   }
 
   const deleteSingleCustomer = (id) => {
@@ -346,30 +410,71 @@
     }
   }
 
-  const confirmDelete = async () => {
-    isDeleting.value = true
-    try {
-      const success = await customerStore.bulkDeleteCustomers(selected.value)
-      if (success) {
-        await customerStore.fetchCustomers(customerStore.currentPage)
-        selected.value = []
-      }
-    } finally {
-      isDeleting.value = false
-    }
+// In component's confirmDelete function
+const confirmDelete = async () => {
+  isDeleting.value = true;
+  try {
+    const selectedIds = selected.value.map(c => c._id);
+    await customerStore.bulkDeleteCustomers(selectedIds);
+    await customerStore.fetchCustomers();
+    selected.value = [];
+    toast.success(t('customersDeleted', { count: selectedIds.length }));
+  } catch (error) {
+    toast.error(t('deleteError'));
+  } finally {
+    isDeleting.value = false;
   }
+};
 
-  const bulkUpdateStatus = async (state) => {
-    try {
-      // You'll need to implement this function in your store
-      await customerStore.bulkUpdateStatus(selected.value, state)
-      await customerStore.fetchCustomers(customerStore.currentPage)
-      selected.value = []
-      toast.success(t('statusUpdated', { count: selected.value.length }))
-    } catch (error) {
-      toast.error(t('updateError'))
-    }
+
+const toggleCustomerStatus = async (customerId, newState) => {
+  try {
+    await customerStore.toggleBlockStatus(customerId);
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    toast.success(t('statusChanged', { state: t(newState) }));
+  } catch (error) {
+    toast.error(t('statusChangeError'));
   }
+};
+
+const updateCustomerTier = async (customer, newTier) => {
+  try {
+    await customerStore.updateCustomer(customer.id, {
+      customerTier: newTier
+    });
+    await customerStore.fetchCustomers(customerStore.currentPage);
+    toast.success(t('tierUpdated', { tier: t(newTier) }));
+  } catch (error) {
+    toast.error(t('tierUpdateError'));
+  }
+};
+
+
+const bulkUpdateStatus = async (state) => {
+  try {
+    await customerStore.bulkUpdateStatus(selected.value, state);
+    await customerStore.fetchCustomers();
+    selected.value = [];
+    toast.success(t('statusUpdated', { count: selected.value.length }));
+  } catch (error) {
+    toast.error(t('updateError'));
+  }
+};
+
+const handleBulkStatusUpdate = async (state) => {
+  try {
+    const selectedIds = selected.value.map(c => c._id);
+    const modifiedCount = await customerStore.bulkUpdateStatus(selectedIds, state);
+    
+    if (modifiedCount > 0) {
+      toast.success(t('statusUpdated', { count: modifiedCount }));
+      selected.value = [];
+      await customerStore.fetchCustomers();
+    }
+  } catch (error) {
+    toast.error(t('updateError'));
+  }
+};
 
   const formatTier = (customerTier) => {
     if (!customerTier) return t('unknown')
