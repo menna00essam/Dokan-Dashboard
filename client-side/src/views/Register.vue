@@ -41,7 +41,7 @@
     if (isValid) {
       loading.value = true
       try {
-        const response = await axios.post('http://localhost:5000/auth/signup', {
+        const response = await axios.post('https://dokan-dashboard.onrender.com/auth/signup', {
           username: form.value.username,
           email: form.value.email,
           phone: form.value.phone,

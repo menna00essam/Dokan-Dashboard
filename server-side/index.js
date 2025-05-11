@@ -88,7 +88,7 @@ app.use((error, req, res, next) => {
 });
 
 app.listen(PORT, () =>
-  console.log(`I am running on: http://localhost:${PORT}`)
+  console.log(`I am running on: https://dokan-dashboard.onrender.com`)
 );
 
 module.exports = app;

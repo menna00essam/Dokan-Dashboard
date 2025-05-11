@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:5000/settings',
+  baseURL: 'https://dokan-dashboard.onrender.com/settings',
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache'

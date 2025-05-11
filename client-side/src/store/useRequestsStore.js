@@ -25,7 +25,7 @@ export const useRequestsStore = defineStore('requests', {
           params.search !== undefined ? params.search : this.searchQuery
 
         const response = await axios.get(
-          'http://localhost:5000/users/pending',
+          'https://dokan-dashboard.onrender.com/users/pending',
           {
             params: {
               page: params.page || 1, // Always use params.page if provided
@@ -65,7 +65,7 @@ export const useRequestsStore = defineStore('requests', {
       this.loading = true
       try {
         await axios.patch(
-          `http://localhost:5000/users/${userId}/approve`,
+          `https://dokan-dashboard.onrender.com/users/${userId}/approve`,
           {},
           {
             headers: {
@@ -89,7 +89,7 @@ export const useRequestsStore = defineStore('requests', {
       this.loading = true
       try {
         await axios.patch(
-          `http://localhost:5000/users/${userId}/deny`,
+          `https://dokan-dashboard.onrender.com/users/${userId}/deny`,
           { reason: 'you are not legal to enter dashboard' },
           {
             headers: {

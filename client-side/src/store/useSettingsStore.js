@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
-const API_BASE_URL = 'http://localhost:5000'
+const API_BASE_URL = 'https://dokan-dashboard.onrender.com'
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
@@ -30,7 +30,7 @@ export const useSettingsStore = defineStore('settings', {
       this.error = null
       try {
         const response = await axios.get(
-          'http://localhost:5000/settings/store',
+          'https://dokan-dashboard.onrender.com/settings/store',
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -75,7 +75,7 @@ export const useSettingsStore = defineStore('settings', {
       this.error = null
       try {
         const response = await axios.put(
-          'http://localhost:5000/settings/store',
+          'https://dokan-dashboard.onrender.com/settings/store',
           updatedSettings,
           {
             headers: {

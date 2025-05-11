@@ -138,14 +138,14 @@ onMounted(async () => {
     try {
         updateChartLabels();
 
-        const revenueResponse = await axios.get('http://localhost:5000/dashboard/stats/revenue');
-        const ordersResponse = await axios.get('http://localhost:5000/dashboard/stats/orders');
-        const avgOrderValueResponse = await axios.get('http://localhost:5000/dashboard/stats/avg-order-value');
-        const weeklyStatsResponse = await axios.get('http://localhost:5000/dashboard/stats/weekly-stats');
+        const revenueResponse = await axios.get('https://dokan-dashboard.onrender.com/dashboard/stats/revenue');
+        const ordersResponse = await axios.get('https://dokan-dashboard.onrender.com/dashboard/stats/orders');
+        const avgOrderValueResponse = await axios.get('https://dokan-dashboard.onrender.com/dashboard/stats/avg-order-value');
+        const weeklyStatsResponse = await axios.get('https://dokan-dashboard.onrender.com/dashboard/stats/weekly-stats');
 
-        const ordersDataResponse = await axios.get('http://localhost:5000/dashboard/stats/neworders');
-        const customersDataResponse = await axios.get('http://localhost:5000/dashboard/stats/customers');
-        const productsDataResponse = await axios.get('http://localhost:5000/dashboard/stats/products');
+        const ordersDataResponse = await axios.get('https://dokan-dashboard.onrender.com/dashboard/stats/neworders');
+        const customersDataResponse = await axios.get('https://dokan-dashboard.onrender.com/dashboard/stats/customers');
+        const productsDataResponse = await axios.get('https://dokan-dashboard.onrender.com/dashboard/stats/products');
 
         kpis.value = {
             totalRevenue: revenueResponse.data.totalRevenue,
@@ -170,7 +170,7 @@ onMounted(async () => {
 watch(locale, async () => {
     await nextTick();
     updateChartLabels();
-    const weeklyStatsResponse = await axios.get('http://localhost:5000/dashboard/stats/weekly-stats');
+    const weeklyStatsResponse = await axios.get('https://dokan-dashboard.onrender.com/dashboard/stats/weekly-stats');
     updateChartData(weeklyStatsResponse);
 
 });

@@ -15,7 +15,7 @@ async function checkApproval() {
     try {
         checking.value = true;
 
-        const response = await axios.get(`http://localhost:5000/auth/check-approval`, {
+        const response = await axios.get(`https://dokan-dashboard.onrender.com/auth/check-approval`, {
             params: {
                 email: authStore.pendingEmail,
             },
