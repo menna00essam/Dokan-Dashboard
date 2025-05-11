@@ -262,9 +262,9 @@ const updateUser = asyncWrapper(async (req, res, next) => {
     "email",
     "mobile",
     "role",
-    "isActive",
     "isHotUser",
     "creditLimit",
+     "state",
   ];
 
   allowedFields.forEach((field) => {
@@ -307,7 +307,7 @@ const deleteUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-      isActive: false,
+    state: "blocked",
       deletedAt: Date.now(),
       deletedBy: req.user.id,
     },
@@ -331,7 +331,7 @@ const restoreUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-      isActive: true,
+    state: "active",
       deletedAt: null,
       deletedBy: null,
     },
