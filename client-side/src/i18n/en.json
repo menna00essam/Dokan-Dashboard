@@ -167,6 +167,7 @@
   "itemsPerPage": "Items per page",
   "showingItems": "Showing {from} to {to} of {total} items",
   "userApproved": "{name} has been approved",
+  "Haveaniceday!Wearehappytoseeyouhere.":"Have a nice day! We are happy to see you here.",
 
   "currencies": "Currencies",
   "addCurrency": "Add Currency",
@@ -389,9 +390,14 @@
   "Confirm Delete": "Confirm Delete",
   "Cancel": "Cancel",
   "Delete": "Delete",
+  "greeting": {
+    "welcome": "Have a nice day! We are happy to see you here.",
+    "hello": "Hello"
+  },
+  "visitors": "Number of Visitors",
+
   "statusUpdated": "Updated {count} users",
   "selectUsersFirst": "Please select users first",
   "confirmBulkUpdate": "Are you sure you want to update {count} users to {state}?",
   "updateError": "Failed to update some users"
-  
-}
+  }

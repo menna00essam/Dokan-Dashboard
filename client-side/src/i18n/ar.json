@@ -377,13 +377,17 @@
   "retry": "إعادة المحاولة",
   "noResultsFound": "لا توجد نتائج",
   "tryDifferentSearch": "جرب مصطلح بحث مختلف",
+  "requestDate": "تاريخ",
+  "greeting": {
+    "welcome": "نتمنى لك يوماً سعيداً! سعداء بوجودك معنا.",
+    "hello":"مرحبًا"
+  },
+  "visitors": "عدد الزوار"
   "requestDate": "تاريخ",  
     "cancelSuccess": "تم إلغاء الطلب بنجاح",
     "cancelError": "فشل في إلغاء الطلب",
     "noOrdersFound": "لا توجد طلبات لعرضها",
-    
- 
-      "message": "هل أنت متأكد من رغبتك في إلغاء الطلب رقم {id}؟",
+     "message": "هل أنت متأكد من رغبتك في إلغاء الطلب رقم {id}؟",
     "statusChanged": "تم تغيير الحالة إلى {state}",
   "tierUpdated": "تم تحديث المستوى إلى {tier}",
   "statusChangeError": "حدث خطأ أثناء تغيير الحالة",
