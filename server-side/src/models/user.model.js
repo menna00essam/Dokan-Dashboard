@@ -124,7 +124,6 @@ const userSchema = new mongoose.Schema(
     lastOrderDate: Date,
     lastSiteVisit: Date,
     averageOrderValue: { type: Number, default: 0 },
-    isBlocked: { type: Boolean, default: false },
     isHotUser: { type: Boolean, default: false },
     isSubscribedToNewsletter: { type: Boolean, default: false },
     communicationPreferences: {
@@ -232,8 +231,7 @@ const userSchema = new mongoose.Schema(
         addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         addedAt: { type: Date, default: Date.now },
         resolvedAt: Date,
-        isActive: { type: Boolean, default: true },
-        isDeleted: { type: Boolean, default: false },
+        
       },
     ],
     tierLock: {
@@ -242,7 +240,6 @@ const userSchema = new mongoose.Schema(
     },
     deletedAt: Date,
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    isActive: { type: Boolean, default: true },
   },
   {
     timestamps: true,

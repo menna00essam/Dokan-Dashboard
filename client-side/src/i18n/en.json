@@ -388,5 +388,10 @@
   "No data available": "No data available",
   "Confirm Delete": "Confirm Delete",
   "Cancel": "Cancel",
-  "Delete": "Delete"
+  "Delete": "Delete",
+  "statusUpdated": "Updated {count} users",
+  "selectUsersFirst": "Please select users first",
+  "confirmBulkUpdate": "Are you sure you want to update {count} users to {state}?",
+  "updateError": "Failed to update some users"
+  
 }

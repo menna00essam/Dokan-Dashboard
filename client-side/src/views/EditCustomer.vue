@@ -343,20 +343,21 @@ const saveCustomer = async () => {
       throw new Error(t('fillRequiredFields'))
     }
 
-    // Transform data for API
+    // Transform data before sending
     const customerData = {
       ...customer.value,
+      customerTier: customer.value.customerTier,
       addresses: customer.value.addresses.map(addr => ({
         ...addr,
         provinceId: addr.province?.id,
         cityId: addr.city?.id,
-        // Remove object properties
         province: undefined,
         city: undefined
       }))
     }
 
     await customerStore.updateCustomer(customer.value.id, customerData)
+
     toast.success(t('customerSaved'))
     router.push('/customers')
   } catch (error) {
@@ -366,6 +367,7 @@ const saveCustomer = async () => {
     isSaving.value = false
   }
 }
+
 
 // Computed properties
 const filteredCities = computed(() => (provinceId) => {
