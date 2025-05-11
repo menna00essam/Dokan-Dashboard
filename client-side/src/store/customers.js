@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch ,nextTick} from 'vue'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
+import { useI18n } from 'vue-i18n';
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:5000/users',
@@ -152,6 +153,7 @@ const getCustomerOrders = computed(() => currentCustomerOrders.value)
         customerTier: tierFilter.value,  // Should match backend expectation
         sortBy: sortBy.value,
         sortOrder: sortOrder.value,
+        showDeleted: false
       },
       })
 
@@ -304,31 +306,50 @@ async function bulkUpdateTier(ids, tier) {
 
  
 
-  async function bulkDeleteCustomers(ids) {
-    try {
-      loading.value = true
-      await apiClient.post('/bulk-delete', { ids })
-      toast.success(`${ids.length} customers deleted`)
-      await fetchCustomers()
-      selectedCustomers.value = []
-    } catch (err) {
-      error.value = err.message
-      toast.error('Failed to delete customers')
-    } finally {
-      loading.value = false
+async function bulkDeleteCustomers(ids, t) { 
+  try {
+    loading.value = true;
+    console.log('IDs to delete:', ids); // تسجيل المعرفات للتأكد من أنها صحيحة
+    
+    const response = await apiClient.patch('/bulk-delete', { ids });
+    console.log('Delete response:', response.data); // تسجيل الاستجابة للتحقق
+    
+    const { deletedCount } = response.data.data || { deletedCount: 0 };
+    
+    // تحديث حالة المتجر المحلية
+    customers.value = customers.value.filter(c => !ids.includes(c._id));
+    
+    // تنظيف التحديد إذا كان هناك عميل مُحدد تم حذفه
+    if (currentCustomer.value && ids.includes(currentCustomer.value._id)) {
+      currentCustomer.value = {};
     }
+    
+    toast.success(t('customersDeleted', { count: deletedCount }));
+    return deletedCount;
+  } catch (err) {
+    console.error('Bulk delete error:', err); // تسجيل الخطأ بالتفصيل
+    toast.error(t('deleteError') + ': ' + err.message);
+    throw err;
+  } finally {
+    loading.value = false;
   }
+}
+
 
 // In useCustomerStore (Pinia store)
 async function bulkUpdateStatus(userIds, newState) {
   try {
     loading.value = true;
+    console.log('Updating status for IDs:', userIds, 'to', newState);
+    
     const response = await apiClient.patch('/bulk-status', { 
       userIds, 
       state: newState 
     });
+    
+    console.log('Status update response:', response.data);
 
-    // Update local state with new objects
+    // تحديث الحالة المحلية مع الكائنات الجديدة
     customers.value = customers.value.map(c => 
       userIds.includes(c._id) ? { ...c, state: newState } : c
     );
@@ -336,6 +357,7 @@ async function bulkUpdateStatus(userIds, newState) {
     toast.success(`Updated ${response.data.modifiedCount} users`);
     return response.data.modifiedCount;
   } catch (err) {
+    console.error('Status update error:', err);
     toast.error('Failed to update statuses');
     throw err;
   } finally {

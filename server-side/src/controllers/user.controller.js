@@ -13,13 +13,19 @@ const paginate = async (model, query, options) => {
   const limit = parseInt(options.limit) || 10;
   const skip = (page - 1) * limit;
 
+  // تطبيق شرط الحذف التلقائي إلا إذا طُلب خلاف ذلك
+  const finalQuery = { ...query };
+  if (finalQuery.showDeleted !== true) {
+    finalQuery.isDeleted = false;
+  }
+
   const data = await model
-    .find(query)
+    .find(finalQuery)
     .skip(skip)
     .limit(limit)
     .sort(options.sort);
 
-  const total = await model.countDocuments(query);
+  const total = await model.countDocuments(finalQuery);
 
   return {
     data,
@@ -74,11 +80,19 @@ const getAllUsers = asyncWrapper(async (req, res, next) => {
     search, 
     state,
     customerTier,
+    showDeleted,
     sortBy = 'createdAt',
     sortOrder = 'desc' 
   } = req.query;
 
-  const query = { role: "user" };
+  const query = { role: "user"};
+
+
+   if (showDeleted === 'true') {
+    query.isDeleted = true;
+  } else {
+    query.isDeleted = false;
+  }
 
   // التعديل 1: استخدام حقل state مباشرة بدل isActive
   if (state === 'active') query.state = 'active'; // ← CHANGED
@@ -242,7 +256,10 @@ const changePassword = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users/:id
 // @access  Private (Admin/SuperAdmin)
 const getUserById = asyncWrapper(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
+   const user = await User.findOne({
+    _id: req.params.id,
+    isDeleted: false
+  });
   if (!user) {
     return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
   }
@@ -267,6 +284,7 @@ const updateUser = asyncWrapper(async (req, res, next) => {
     "isHotUser",
     "creditLimit",
      "state",
+     
   ];
 
   allowedFields.forEach((field) => {
@@ -287,10 +305,15 @@ const updateUser = asyncWrapper(async (req, res, next) => {
     }
   }
 
-  const user = await User.findByIdAndUpdate(req.params.id, updates, {
-    new: true,
-    runValidators: true,
-  });
+   const user = await User.findOneAndUpdate(
+    { 
+      _id: req.params.id,
+      isDeleted: false
+    },
+    updates,
+    { new: true, runValidators: true }
+  );
+
 
   if (!user) {
     return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
@@ -309,7 +332,7 @@ const deleteUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-    state: "blocked",
+    isDeleted: true,
       deletedAt: Date.now(),
       deletedBy: req.user.id,
     },
@@ -333,7 +356,7 @@ const restoreUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
-    state: "active",
+    isDeleted: false,
       deletedAt: null,
       deletedBy: null,
     },
@@ -1247,26 +1270,27 @@ const getAdminRequests = asyncWrapper(async (req, res, next) => {
 
 // في ملف controllers/user.controller.js
 const bulkDeleteUsers = asyncWrapper(async (req, res, next) => {
-  const { ids } = req.body;
+  const { ids } = req.body; 
 
   if (!ids || !Array.isArray(ids)) {
-    return next(
-      new AppError(
-        "Please provide an array of user IDs",
-        400,
-        httpStatusText.FAIL
-      )
-    );
+    return next(new AppError("Invalid user IDs", 400, httpStatusText.FAIL));
   }
 
   const result = await User.updateMany(
     { _id: { $in: ids } },
-    { isActive: false, deletedAt: Date.now() }
+    {
+      isDeleted: true,
+      deletedAt: Date.now(),
+      deletedBy: req.user.id,
+    }
   );
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
-    data: { deletedCount: result.modifiedCount },
+    data: { 
+      deletedCount: result.modifiedCount,
+      message: `${result.modifiedCount} users deleted successfully`
+    },
   });
 });
 
