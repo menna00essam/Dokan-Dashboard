@@ -5,7 +5,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n';
 
 const apiClient = axios.create({
-  baseURL: 'https://dokan-dashboard.onrender.com//users',
+  baseURL: 'https://dokan-dashboard.onrender.com/users',
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache'
