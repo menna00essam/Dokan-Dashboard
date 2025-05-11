@@ -83,7 +83,7 @@
   "uploading_images_for_color_n": "جاري رفع صور اللون {n}",
   "processing": "جاري المعالجة...",
   "add_product": "إضافة منتج",
- 
+
   "required_field": "مطلوب.",
   "preparing": "جارٍ التحضير",
   "starting": "بدء الرفع",
@@ -380,15 +380,15 @@
   "requestDate": "تاريخ",
   "greeting": {
     "welcome": "نتمنى لك يوماً سعيداً! سعداء بوجودك معنا.",
-    "hello":"مرحبًا"
+    "hello": "مرحبًا"
   },
-  "visitors": "عدد الزوار"
-  "requestDate": "تاريخ",  
-    "cancelSuccess": "تم إلغاء الطلب بنجاح",
-    "cancelError": "فشل في إلغاء الطلب",
-    "noOrdersFound": "لا توجد طلبات لعرضها",
-     "message": "هل أنت متأكد من رغبتك في إلغاء الطلب رقم {id}؟",
-    "statusChanged": "تم تغيير الحالة إلى {state}",
+  "visitors": "عدد الزوار",
+  "requestDate": "تاريخ",
+  "cancelSuccess": "تم إلغاء الطلب بنجاح",
+  "cancelError": "فشل في إلغاء الطلب",
+  "noOrdersFound": "لا توجد طلبات لعرضها",
+  "message": "هل أنت متأكد من رغبتك في إلغاء الطلب رقم {id}؟",
+  "statusChanged": "تم تغيير الحالة إلى {state}",
   "tierUpdated": "تم تحديث المستوى إلى {tier}",
   "statusChangeError": "حدث خطأ أثناء تغيير الحالة",
   "tierUpdateError": "حدث خطأ أثناء تحديث المستوى",
@@ -396,4 +396,3 @@
   "bulkUpdateSuccess": "تم تحديث {count} عميل بنجاح",
   "bulkUpdateError": "فشل تحديث الحالة"
 }
-
