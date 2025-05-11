@@ -419,7 +419,7 @@
 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/${productNameForFolder}`,
+        `https://dokan-dashboard.onrender.com/api/${productNameForFolder}`,
         formData,
         {
           headers: {

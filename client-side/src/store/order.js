@@ -71,9 +71,12 @@ export const useOrderStore = defineStore('order', {
             this.loading = true;
             this.error = null;
             try {
-                const res = await axios.get('http://localhost:5000/orders', {
+                const res = await axios.get(
+                  'https://dokan-dashboard.onrender.com/orders',
+                  {
                     params: { page, limit, search, status, sortBy, sortOrder }
-                })
+                  }
+                )
                 console.log("Response data:", res.data);
                 if (res.data && res.data.data) {
                     this.orders = res.data.data.orders;
@@ -95,7 +98,10 @@ export const useOrderStore = defineStore('order', {
         async updateOrderStatus(id, status) {
             const toast = useToast();
             try {
-                const res = await axios.put(`http://localhost:5000/orders/${id}`, { status });
+                const res = await axios.put(
+                  `https://dokan-dashboard.onrender.com/orders/${id}`,
+                  { status }
+                )
                 if (res.status === 200) {
                     toast.success('Order status updated successfully');
                     await this.getOrders();
@@ -111,7 +117,9 @@ export const useOrderStore = defineStore('order', {
         async softDeleteOrder(id) {
             const toast = useToast();
             try {
-                await axios.patch(`http://localhost:5000/orders/${id}/soft-delete`);
+                await axios.patch(
+                  `https://dokan-dashboard.onrender.com/orders/${id}/soft-delete`
+                )
                 toast.success('Order deleted successfully');
             } catch (err) {
                 console.log(err);
@@ -121,7 +129,9 @@ export const useOrderStore = defineStore('order', {
 
         async restoreOrder(id) {
             try {
-                await axios.patch(`http://localhost:5000/orders/${id}/restore`)
+                await axios.patch(
+                  `https://dokan-dashboard.onrender.com/orders/${id}/restore`
+                )
                 await this.getOrders();
             } catch (err) {
                 console.log(err);

@@ -518,7 +518,7 @@
         )
 
         // Delete from Cloudinary
-        await axios.delete(`http://localhost:5000/api/images/${image.publicId}`)
+        await axios.delete(`https://dokan-dashboard.onrender.com/api/images/${image.publicId}`)
         return
       }
 
@@ -567,7 +567,7 @@
 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/${productNameForFolder}`,
+        `https://dokan-dashboard.onrender.com/api/${productNameForFolder}`,
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },

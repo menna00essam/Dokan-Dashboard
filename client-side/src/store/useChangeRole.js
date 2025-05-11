@@ -5,7 +5,7 @@ import axios from 'axios'
 
 export const useChangeRole = defineStore('ChangeRole', () => {
   const authStore = useAuthStore()
-  const BaseUrl = 'http://localhost:5000'
+  const BaseUrl = 'https://dokan-dashboard.onrender.com'
 
   // State
   const users = ref([])

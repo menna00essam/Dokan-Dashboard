@@ -23,9 +23,12 @@ export const useCurrencyStore = defineStore('currency', {
     async fetchCurrencies(page = 1, limit = 10) {
       this.loading = true
       try {
-        const res = await axios.get('http://localhost:5000/api/currencies', {
-          params: { page, size: limit }
-        })
+        const res = await axios.get(
+          'https://dokan-dashboard.onrender.com/api/currencies',
+          {
+            params: { page, size: limit }
+          }
+        )
 
         // Handle both paginated and non-paginated responses
         if (res.data.meta) {
@@ -59,7 +62,7 @@ export const useCurrencyStore = defineStore('currency', {
       this.error = null
       try {
         const response = await axios.post(
-          'http://localhost:5000/api/currencies',
+          'https://dokan-dashboard.onrender.com/api/currencies',
           {
             code: data.code,
             name: data.name,
@@ -91,7 +94,7 @@ export const useCurrencyStore = defineStore('currency', {
       this.loading = true
       try {
         const res = await axios.put(
-          `http://localhost:5000/api/currencies/${id}`,
+          `https://dokan-dashboard.onrender.com/api/currencies/${id}`,
           data
         )
         // Update local state if item exists on current page
@@ -111,7 +114,9 @@ export const useCurrencyStore = defineStore('currency', {
     async deleteCurrency(id) {
       this.loading = true
       try {
-        await axios.delete(`http://localhost:5000/api/currencies/${id}`)
+        await axios.delete(
+          `https://dokan-dashboard.onrender.com/api/currencies/${id}`
+        )
         // Refresh current page after deletion
         await this.fetchCurrencies(this.pagination.page, this.pagination.limit)
       } catch (err) {

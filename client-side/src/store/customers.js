@@ -5,7 +5,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:5000/users',
+  baseURL: 'https://dokan-dashboard.onrender.com//users',
   headers: {
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache'
@@ -462,7 +462,9 @@ async function toggleBlockStatus(customerId) {
 async function fetchCustomerOrders(id) {
   try {
     loading.value = true
-    const response = await apiClient.get(`http://localhost:5000/orders/user/${id}`)
+    const response = await apiClient.get(
+      `https://dokan-dashboard.onrender.com/orders/user/${id}`
+    )
     
     console.log('Response from API:', response.data);
 

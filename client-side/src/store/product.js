@@ -3,7 +3,7 @@ import axios from 'axios'
 
 // إنشاء Axios instance بـ Base URL الصحيح
 export const api = axios.create({
-  baseURL: 'http://localhost:5000' // تأكد إن ده هو الـ URL الصحيح للـ Backend بتاعك
+  baseURL: 'https://dokan-dashboard.onrender.com' // تأكد إن ده هو الـ URL الصحيح للـ Backend بتاعك
 })
 
 export const useProductStore = defineStore('product', {
@@ -26,7 +26,7 @@ export const useProductStore = defineStore('product', {
     async addProduct(newProduct) {
       try {
         const response = await api.post(
-          'http://localhost:5000/products',
+          'https://dokan-dashboard.onrender.com/products',
           newProduct,
           {
             headers: {
