@@ -31,6 +31,7 @@
               :label="$t('Sort By')"
               hide-details
               v-model="ordersStore.sortBy"
+              @update:model-value="handleSortChange"
             />
           </v-col>
 
@@ -72,7 +73,7 @@
             <div class="d-flex align-center ga-5">
               <div class="product-image-wrapper">
                 <v-img
-                  :src="item.orderItems[0]?.selectedColors[0]?.image"
+                  :src="item.orderItems[0]?.selectedColors[0]?.images[0]"
                   alt="Product Image"
                   cover
                 />

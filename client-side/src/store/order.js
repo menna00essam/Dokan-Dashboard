@@ -76,7 +76,8 @@ export const useOrderStore = defineStore('order', {
                 })
                 console.log("Response data:", res.data);
                 if (res.data && res.data.data) {
-                    this.orders = res.data.data.orders || [];
+                    this.orders = res.data.data.orders;
+                    console.log(this.orders)
                     this.totalOrders = res.data.data.totalOrders || 0;
                     this.totalPages = Math.ceil(this.totalOrders / this.itemsPerPage);
                     this.currentPage = page;

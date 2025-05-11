@@ -12,7 +12,6 @@ const createOrder = asyncWrapper(async (req, res, next) => {
     return next(new AppError("Missing required order fields", 400));
   }
 
-
   const newOrder = await Order.create({
     ...req.body,
   });
@@ -22,59 +21,6 @@ const createOrder = asyncWrapper(async (req, res, next) => {
     data: newOrder,
   });
 });
-
-/*
-const getOrders = asyncWrapper(async (req, res, next) => {
-  try {
-    console.log('[DEBUG] Incoming Order Body:', req.body);
-
-    let { limit = 10, page = 1, search = "", status = "", sortBy = "createdAt", sortOrder = "desc" } = req.query;
-
-    limit = Math.max(1, limit);
-    page = Math.max(1, page);
-
-    const skip = (page - 1) * limit;
-    const query = { isDeleted: false };
-
-    if (status && status !== 'All') {
-      query.status = status;
-    }
-
-    if (search.trim() !== "") {
-      const regex = new RegExp(search, "i");
-      query.$or = [
-        { "user.firstName": regex },
-        { "user.lastName": regex },
-        { orderNumber: regex },
-        { status: regex },
-      ];
-    }
-
-    const sortOptions = {};
-    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
-
-    const orders = await Order.find(query)
-      .populate("userId", "-password -__v")
-      .populate("orderItems.productId")
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limit);
-
-    const totalOrders = await Order.countDocuments(query);
-
-    const formattedOrders = formatOrders(orders);
-
-    res.status(200).json({
-      status: httpStatusText.SUCCESS,
-      data: { orders: formattedOrders, totalOrders },
-    });
-  } catch (err) {
-    console.error('Error fetching orders:', err);
-    res.status(500).json({ error: 'Internal Server Error', message: err.message });
-  }
-});
-*/
-
 
 const getOrders = asyncWrapper(async (req, res, next) => {
   try {
@@ -93,9 +39,10 @@ const getOrders = asyncWrapper(async (req, res, next) => {
 
     const orders = await Order.find(query)
       .populate("userId", "-password -__v")
-      .populate("orderItems.productId");
+      .populate("orderItems.productId")
+      .populate("orderItems.productId.colors")
+      .populate("orderItems.productId.colors.images");
 
-    // فلترة السيرش
     let filteredOrders = orders;
     if (search.trim() !== "") {
       const regex = new RegExp(search, "i");
@@ -110,10 +57,10 @@ const getOrders = asyncWrapper(async (req, res, next) => {
     filteredOrders.sort((a, b) => {
       let valA, valB;
 
-      if (sortBy === "User Name") {
+      if (sortBy === "userName") {
         valA = a.userId?.firstName?.toLowerCase() || "";
         valB = b.userId?.firstName?.toLowerCase() || "";
-      } else if (sortBy === "Total Price") {
+      } else if (sortBy === "totalPrice") {
         valA = a.total || 0;
         valB = b.total || 0;
       } else if (sortBy === "createdAt") {
@@ -132,7 +79,7 @@ const getOrders = asyncWrapper(async (req, res, next) => {
     const end = start + limit;
     const paginatedOrders = filteredOrders.slice(start, end);
 
-    const formattedOrders = formatOrders(paginatedOrders);
+    const formattedOrders = await formatOrders(paginatedOrders);
 
     res.status(200).json({
       status: httpStatusText.SUCCESS,
@@ -143,8 +90,6 @@ const getOrders = asyncWrapper(async (req, res, next) => {
     res.status(500).json({ error: 'Internal Server Error', message: err.message });
   }
 });
-
-
 
 const updateOrderStatus = asyncWrapper(async (req, res, next) => {
   const orderId = req.params.id;
@@ -178,8 +123,6 @@ const updateOrderStatus = asyncWrapper(async (req, res, next) => {
     return next(new AppError('Failed to update order status', 500, httpStatusText.ERROR));
   }
 });
-
-
 
 const softDeleteOrder = asyncWrapper(async (req, res, next) => {
   const orderId = req.params.id;
@@ -232,5 +175,26 @@ const restoreOrder = asyncWrapper(async (req, res, next) => {
   })
 })
 
-module.exports = { createOrder, getOrders, updateOrderStatus, softDeleteOrder, restoreOrder };
+const getUserOrders = asyncWrapper(async (req, res, next) => {
+  const { userId } = req.params;
 
+  if (!userId) {
+    return next(new AppError("User ID is required", 400));
+  }
+
+  const orders = await Order.find({ userId, isDeleted: false })
+    .populate("orderItems.productId")
+    .sort({ createdAt: -1 });
+
+  const totalOrders = orders.length;
+
+  const formattedOrders = formatOrders(orders);
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    total: totalOrders,
+    data: formattedOrders,
+  });
+});
+
+module.exports = { createOrder, getOrders, updateOrderStatus, softDeleteOrder, restoreOrder, getUserOrders };

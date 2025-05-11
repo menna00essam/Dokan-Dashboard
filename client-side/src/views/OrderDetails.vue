@@ -129,7 +129,7 @@
           >
             <div class="image" style="height: 250px">
               <img
-                :src="color.image"
+                :src="color.images[0]"
                 alt=""
                 width="100%"
                 height="100%"
@@ -160,7 +160,7 @@
   </section>
 
   <!-- Shipped Details -->
-  <section class="px-8" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+  <section class="px-10" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     <div
       class="mt-16 border-t-lg border-dotted border-b-0 border-e-0 border-s-0 py-10"
     >
