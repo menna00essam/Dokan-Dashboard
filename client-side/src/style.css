@@ -9,8 +9,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-
-
 body {
   margin: 0;
   min-height: 100vh;
@@ -21,5 +19,60 @@ h1 {
   line-height: 1.1;
 }
 
+/* Global RTL table fixes */
+/* [dir='rtl'] .v-data-table-header__content {
+  justify-content: flex-end;
+} */
 
+[dir='rtl'] .v-data-table__td--start {
+  text-align: right;
+}
 
+[dir='rtl'] .v-data-table__td--end {
+  text-align: left;
+}
+
+[dir='rtl'] .v-data-table__td--center {
+  text-align: center;
+}
+[dir='rtl'] .v-data-table th,
+[dir='rtl'] .v-data-table td {
+  text-align: right !important;
+}
+
+[dir='rtl'] .v-text-field input,
+[dir='rtl'] .v-text-field .v-label,
+[dir='rtl'] .v-select .v-select__selection-text,
+[dir='rtl'] .v-select .v-label {
+  text-align: right !important;
+}
+
+[dir='rtl'] .v-text-field .v-field__input {
+  text-align: right;
+  direction: rtl;
+}
+
+[dir='rtl'] .v-select .v-field__input {
+  direction: rtl;
+}
+
+/* Style for Webkit browsers (Chrome, Safari, Chromium Edge) */
+::-webkit-scrollbar-track {
+  background-color: var(--v-theme-secondary);
+}
+
+/* Optional: Style the scrollbar as a whole in Webkit */
+::-webkit-scrollbar {
+  width: 10px; /* Adjust width for vertical scrollbar */
+  height: 10px; /* Adjust height for horizontal scrollbar */
+}
+
+/* Optional: Style the scrollbar thumb in Webkit */
+::-webkit-scrollbar-thumb {
+  background-color: #888; /* Default thumb color */
+  border-radius: 5px; /* Optional: round the corners */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Hover effect for thumb */
+}
