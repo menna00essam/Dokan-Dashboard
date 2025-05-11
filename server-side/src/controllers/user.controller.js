@@ -4,6 +4,8 @@ const AppError = require("../utils/appError");
 const httpStatusText = require("../utils/httpStatusText");
 const cloudinary = require("cloudinary").v2;
 const { body } = require("express-validator");
+const transporter = require("../utils/emailTransporter");
+const mongoose = require("mongoose");
 
 // Helper function for pagination
 const paginate = async (model, query, options) => {
@@ -1018,14 +1020,36 @@ const updateCustomerTier = asyncWrapper(async (req, res, next) => {
 // @route   GET /api/users/pending
 // @access  Private (Admin/SuperAdmin)
 const getPendingUsers = asyncWrapper(async (req, res, next) => {
-  const { page = 1, limit = 10 } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    sortBy = "createdAt",
+    sortDirection = "desc",
+  } = req.query;
+
+  // Base query
+  const query = { status: "pending" };
+
+  // Add search functionality if search query exists
+  if (search) {
+    query.$or = [
+      { username: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { fullName: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  // Sort configuration
+  const sortOptions = {};
+  sortOptions[sortBy] = sortDirection === "asc" ? 1 : -1;
 
   const {
     data: users,
     total,
     page: currentPage,
     totalPages,
-  } = await paginate(User, { status: "pending" }, { page, limit });
+  } = await paginate(User, query, { page, limit, sort: sortOptions });
 
   res.status(200).json({
     status: httpStatusText.SUCCESS,
@@ -1089,10 +1113,7 @@ const getDeniedUsers = asyncWrapper(async (req, res, next) => {
 const approveUser = asyncWrapper(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    {
-      status: "approved",
-      adminRequest: false,
-    },
+    { role: "admin", status: "approved", adminRequest: false },
     { new: true, runValidators: true }
   ).select("-password -__v");
 
@@ -1101,7 +1122,7 @@ const approveUser = asyncWrapper(async (req, res, next) => {
   }
 
   // Send approval email
-  await sendEmail({
+  transporter.sendMail({
     email: user.email,
     subject: "Your Account Has Been Approved",
     template: "account-approved",
@@ -1141,7 +1162,7 @@ const denyUser = asyncWrapper(async (req, res, next) => {
   }
 
   // Send denial email
-  await sendEmail({
+  transporter.sendMail({
     email: user.email,
     subject: "Your Account Request Has Been Denied",
     template: "account-denied",
@@ -1301,7 +1322,100 @@ const bulkAssignTags = asyncWrapper(async (req, res, next) => {
   });
 });
 
+const getStandardRoleUsers = asyncWrapper(async (req, res, next) => {
+  const { page = 1, limit = 10, search, isActive } = req.query;
 
+  // Base query to only include admin or user roles
+  const query = {
+    role: { $in: ["admin", "user"] },
+  };
+
+  // Optional filters
+  if (search) {
+    query.$or = [
+      { firstName: { $regex: search, $options: "i" } },
+      { lastName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  if (isActive === "true") query.isActive = true;
+  if (isActive === "false") query.isActive = false;
+
+  const {
+    data: users,
+    total,
+    page: currentPage,
+    totalPages,
+  } = await paginate(User, query, { page, limit, sort: { createdAt: -1 } });
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    results: users.length,
+    total,
+    currentPage,
+    totalPages,
+    data: { users },
+  });
+});
+
+// @desc    Toggle user role between admin and user
+// @route   PATCH /api/users/:id/toggle-role
+// @access  Private (SuperAdmin)
+const toggleUserRole = asyncWrapper(async (req, res, next) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError("Invalid user ID", 400, httpStatusText.FAIL));
+  }
+
+  // Find the user first to check current role
+  const user = await User.findById(id);
+  if (!user) {
+    return next(new AppError("User not found", 404, httpStatusText.NOT_FOUND));
+  }
+
+  // Check if user has a role that can be toggled
+  if (!["admin", "user"].includes(role)) {
+    return next(
+      new AppError(
+        "Can only toggle roles between admin and user",
+        400,
+        httpStatusText.FAIL
+      )
+    );
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    id,
+    { role: role },
+    { new: true, runValidators: true }
+  ).select("-password -__v");
+
+  // Send notification email if needed
+  try {
+    transporter.sendMail({
+      email: updatedUser.email,
+      subject: `Your account role has been updated to ${role}`,
+      template: "role-updated",
+      context: {
+        name: updatedUser.firstName || "User",
+        role,
+        oldRole: user.role,
+      },
+    });
+  } catch (e) {
+    console.error("Email send error:", e.message);
+    // Continue even if email fails
+  }
+
+  res.status(200).json({
+    status: httpStatusText.SUCCESS,
+    data: { user: updatedUser },
+    message: `User role changed from ${user.role} to ${role}`,
+  });
+});
 
 // routes/users.js
 
@@ -1363,6 +1477,8 @@ const bulkAssignTier = asyncWrapper(async (req, res) => {
 // });
 
 module.exports = {
+  toggleUserRole,
+  getStandardRoleUsers,
   bulkAssignTags,
   bulkDeleteUsers,
   bulkUpdateUserStatus,

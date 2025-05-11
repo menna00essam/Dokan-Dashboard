@@ -47,6 +47,7 @@ export const useChangeRole = defineStore('ChangeRole', () => {
   const updateUserRole = async (user) => {
     try {
       loading.value = true
+      console.log('togelled user', user.role)
       const response = await axios.patch(
         `${BaseUrl}/users/roles/${user._id}`,
         { role: user.role }, // Added request body
