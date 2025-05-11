@@ -147,9 +147,6 @@
   "Email": "Email",
   "dateJoined": "Date Joined",
   "ProductId": "Product ID",
-  "name": "Name",
-  "category": "Category",
-  "price": "Price",
   "DateAdded": "Date Added",
   "Loading": "Loading",
   "Mon": "Mon",
@@ -405,5 +402,10 @@
   "statusUpdated": "Updated {count} users",
   "selectUsersFirst": "Please select users first",
   "confirmBulkUpdate": "Are you sure you want to update {count} users to {state}?",
-  "updateError": "Failed to update some users"
+  "updateError": "Failed to update some users",
+  "confirm_delete_product": "Are you sure to delete ?",
+  "delete_product": "Confrim Delete Product",
+  "customer": "Customer",
+  "customerTier": "Customer Tier",
+  "Reset": "Reset"
 }

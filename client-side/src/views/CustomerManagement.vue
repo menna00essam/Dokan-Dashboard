@@ -59,7 +59,7 @@
               @click="customerStore.resetFilters"
               block
             >
-              Reset
+              {{ t('Reset') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -72,7 +72,8 @@
       :class="{ 'flex-row-reverse': locale === 'ar' }"
     >
       <v-btn
-      :class="$i18n.locale === 'ar' ? ' ml-2' : 'mr-2'"        variant="tonal"
+        :class="$i18n.locale === 'ar' ? ' ml-2' : 'mr-2'"
+        variant="tonal"
         color="orange"
         :variant="selected.length ? 'flat' : 'outlined'"
       >
