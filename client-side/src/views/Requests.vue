@@ -34,33 +34,6 @@
   const isMobile = computed(() => mobile.value)
   const hasData = computed(() => requestsStore.requests.length > 0)
 
-  // Methods
-  // const fetchRequests = async () => {
-  //   try {
-  //     initialLoading.value = true
-  //     error.value = null
-
-  //     await requestsStore.fetchRequests({
-  //       page: page.value,
-  //       limit: itemsPerPage.value,
-  //       search: searchQuery.value,
-  //       sortBy: sortBy.value,
-  //       sortDirection: sortDirection.value
-  //     })
-
-  //     // Adjust page if current page has no data but isn't page 1
-  //     if (!hasData.value && page.value > 1) {
-  //       page.value = Math.max(1, page.value - 1)
-  //       await fetchRequests()
-  //     }
-  //   } catch (err) {
-  //     error.value = err.message || t('error.fetchingRequests')
-  //     toast.error(error.value)
-  //   } finally {
-  //     initialLoading.value = false
-  //   }
-  // }
-  // Unified fetch method
   const fetchRequests = async () => {
     try {
       initialLoading.value = true
@@ -149,6 +122,12 @@
     }
     columns.value = [t('user'), t('email'), t('actions')]
   })
+  const headers = computed(() => [
+  { title: t('user'), key: 'username' },
+  { title: t('email'), key: 'email' },
+  { title: t('requestDate'), key: 'createdAt', sortable: true },
+  { title: t('actions'), key: 'actions' }
+])
 </script>
 
 <template>
@@ -207,148 +186,117 @@
             </v-templete > -->
             <!-- Requests list -->
             <template>
-              <v-table
+              <v-data-table
+                :key="componentKey"
+                :headers="headers"
+                :items="requestsStore.requests"
+                class="elevation-1"
+                hide-default-footer
                 :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                class="elevation-1 mb-4"
-                style="width: 100%"
-                fixed-header
                 :loading="initialLoading || requestsStore.loading"
+                :no-data-text="t('noPendingRequests')"
               >
-                <thead>
-                  <tr>
-                    <th class="text-left text-h6">
-                      {{ t('user') }}
-                    </th>
-                    <th class="text-left text-h6">
-                      {{ t('email') }}
-                    </th>
-                    <th class="text-left text-h6">
-                      <div
-                        class="d-flex align-center cursor-pointer"
-                        @click="toggleSort('createdAt')"
-                      >
-                        {{ t('requestDate') }}
-                        <v-icon small class="ml-1">{{
-                          getSortIcon('createdAt')
-                        }}</v-icon>
-                      </div>
-                    </th>
-                    <th class="text-left text-h6">{{ t('actions') }}</th>
-                  </tr>
-                </thead>
-                <tbody v-if="!isLoading">
-                  <tr
-                    v-if="hasData"
-                    v-for="user in requestsStore.requests"
-                    :key="user._id"
-                    class="hover-row"
-                  >
-                    <td>
-                      <div class="d-flex align-center">
-                        <v-avatar color="primary" size="48" class="mx-4">
-                          <v-img :src="user.avatar" :alt="user.username" />
-                        </v-avatar>
-                        <div>
-                          <span class="text-h6 d-block">{{
-                            user.username
-                          }}</span>
-                          <span
-                            v-if="user.fullName"
-                            class="text-caption text-grey"
-                            >{{ user.fullName }}</span
-                          >
-                        </div>
-                      </div>
-                    </td>
-                    <td class="text-h6">{{ user.email }}</td>
-                    <td class="text-h6">
-                      {{ new Date(user.createdAt).toLocaleDateString() }}
-                      <v-tooltip
-                        :text="new Date(user.createdAt).toLocaleString()"
-                        location="bottom"
-                      >
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" small class="ml-1"
-                            >mdi-information-outline</v-icon
-                          >
-                        </template>
-                      </v-tooltip>
-                    </td>
-                    <td class="text-right">
-                      <div
-                        class="d-flex"
-                        :class="{
-                          'flex-column': isMobile,
-                          'align-center': isMobile
-                        }"
-                      >
-                        <v-btn
-                          color="success"
-                          variant="tonal"
-                          :class="[
-                            $i18n.locale === 'ar' ? 'ml-2' : 'mr-2',
-                            isMobile ? 'mb-2' : ''
-                          ]"
-                          size="large"
-                          @click="approve(user)"
-                          :prepend-icon="
-                            $i18n.locale === 'ar' ? undefined : 'mdi-check'
-                          "
-                          :append-icon="
-                            $i18n.locale === 'ar' ? 'mdi-check' : undefined
-                          "
-                          :loading="loadingUsers[user._id]"
-                        >
-                          {{ t('approve') }}
-                        </v-btn>
+                <template #item.username="{ item }">
+                  <div class="d-flex align-center">
+                    <v-avatar color="primary" size="48" class="mr-4">
+                      <v-img :src="item.avatar" :alt="item.username" />
+                    </v-avatar>
+                    <div>
+                      <span class="text-h6 d-block">{{ item.username }}</span>
+                      <span v-if="item.fullName" class="text-caption text-grey">
+                        {{ item.fullName }}
+                      </span>
+                    </div>
+                  </div>
+                </template>
 
-                        <v-btn
-                          color="error"
-                          variant="tonal"
-                          size="large"
-                          @click="deny(user)"
-                          :prepend-icon="
-                            $i18n.locale === 'ar' ? undefined : 'mdi-close'
-                          "
-                          :append-icon="
-                            $i18n.locale === 'ar' ? 'mdi-close' : undefined
-                          "
-                          :loading="loadingUsers[user._id]"
-                        >
-                          {{ t('deny') }}
-                        </v-btn>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-else>
-                    <td :colspan="columns.length + 1" class="text-center">
-                      <div
-                        class="d-flex flex-column align-center justify-center py-12"
-                      >
-                        <v-icon size="96" color="grey lighten-1"
-                          >mdi-account-off</v-icon
-                        >
-                        <p class="text-h4 grey--text mt-4">
-                          {{
-                            searchQuery
-                              ? t('noResultsFound')
-                              : t('noPendingRequests')
-                          }}
-                        </p>
-                        <p class="text grey--text mt-4">
-                          {{
-                            searchQuery
-                              ? t('tryDifferentSearch')
-                              : t('allRequestsProcessed')
-                          }}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </v-table>
+                <template #item.createdAt="{ item }">
+                  {{ new Date(item.createdAt).toLocaleDateString() }}
+                  <v-tooltip
+                    :text="new Date(item.createdAt).toLocaleString()"
+                    location="bottom"
+                  >
+                    <template #activator="{ props }">
+                      <v-icon v-bind="props" small class="ml-1">
+                        mdi-information-outline
+                      </v-icon>
+                    </template>
+                  </v-tooltip>
+                </template>
+
+                <template #item.actions="{ item }">
+                  <div
+                    class="d-flex"
+                    :class="{
+                      'flex-column': isMobile,
+                      'align-center': isMobile
+                    }"
+                  >
+                    <v-btn
+                      color="success"
+                      variant="tonal"
+                      :class="[
+                        $i18n.locale === 'ar' ? 'ml-2' : 'mr-2',
+                        isMobile ? 'mb-2' : ''
+                      ]"
+                      size="large"
+                      @click="approve(item)"
+                      :prepend-icon="
+                        $i18n.locale === 'ar' ? undefined : 'mdi-check'
+                      "
+                      :append-icon="
+                        $i18n.locale === 'ar' ? 'mdi-check' : undefined
+                      "
+                      :loading="loadingUsers[item._id]"
+                    >
+                      {{ t('approve') }}
+                    </v-btn>
+
+                    <v-btn
+                      color="error"
+                      variant="tonal"
+                      size="large"
+                      @click="deny(item)"
+                      :prepend-icon="
+                        $i18n.locale === 'ar' ? undefined : 'mdi-close'
+                      "
+                      :append-icon="
+                        $i18n.locale === 'ar' ? 'mdi-close' : undefined
+                      "
+                      :loading="loadingUsers[item._id]"
+                    >
+                      {{ t('deny') }}
+                    </v-btn>
+                  </div>
+                </template>
+
+                <template #no-data>
+                  <div
+                    class="d-flex flex-column align-center justify-center py-12"
+                  >
+                    <v-icon size="96" color="grey lighten-1"
+                      >mdi-account-off</v-icon
+                    >
+                    <p class="text-h4 grey--text mt-4">
+                      {{
+                        searchQuery
+                          ? t('noResultsFound')
+                          : t('noPendingRequests')
+                      }}
+                    </p>
+                    <p class="text grey--text mt-4">
+                      {{
+                        searchQuery
+                          ? t('tryDifferentSearch')
+                          : t('allRequestsProcessed')
+                      }}
+                    </p>
+                  </div>
+                </template>
+              </v-data-table>
 
               <PaginationControls
+                v-if="requestsStore.pagination.total > 0"
                 v-model:page="page"
                 v-model:itemsPerPage="itemsPerPage"
                 :total-items="requestsStore.pagination.total"

@@ -207,19 +207,20 @@
 
 <template>
   <v-container fluid>
-    <template v-if="isLoading">
-      <v-card class="pa-4" elevation="2">
-        <v-skeleton-loader type="table" class="my-4"></v-skeleton-loader>
-        <div class="d-flex justify-center">
-          <v-progress-circular
-            indeterminate
-            color="primary"
-            size="48"
-            class="mb-4"
-          ></v-progress-circular>
-        </div>
-      </v-card>
-    </template>
+    <v-row v-if="isLoading">
+      <v-col
+        cols="12"
+        class="text-center d-flex align-center justify-center"
+        style="height: 80vh; flex-direction: column; gap: 10px"
+      >
+        <v-progress-circular
+          indeterminate
+          color="secondary"
+          size="48"
+        ></v-progress-circular>
+        <p class="fade-in">{{ t('Loading') }}...</p>
+      </v-col>
+    </v-row>
 
     <v-row v-if="isError">
       <v-col
@@ -576,4 +577,14 @@
     display: flex;
     justify-content: center;
   }
+  .fade-in {
+  animation: fade 1.5s infinite alternate;
+  opacity: 0.7;
+}
+@keyframes fade {
+  to {
+    opacity: 1;
+  }
+}
+
 </style>
