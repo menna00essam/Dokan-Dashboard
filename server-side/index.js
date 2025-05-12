@@ -45,7 +45,13 @@ connectDB();
 
 // Middlewares
 app.use(
-  cors({ origin: "https://dokan-dashboard.netlify.app", credentials: true })
+  cors({
+    origin: [
+      "https://dokan-dashboard.netlify.app",
+      "https://dokan-dashboard-kappa.vercel.app/",
+    ],
+    credentials: true,
+  })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
