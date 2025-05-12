@@ -2,7 +2,6 @@
   import { onMounted, ref, computed, watch } from 'vue'
   import { useToast } from 'vue-toastification'
   import { useI18n } from 'vue-i18n'
-  import SkeletonLoader from '../components/Shared/SkeletonLoader.vue'
   import PaginationControls from '../components/Shared/PaginationControls.vue'
 
   import { useAuthStore } from '../store/auth'
@@ -20,9 +19,8 @@
   const debounceTimeout = ref(null)
 
   // Reactive data
-  // Reactive data - Initialize page from store's current page
-  const page = ref(requestsStore.pagination.currentPage)
-  const itemsPerPage = ref(requestsStore.pagination.itemsPerPage)
+  const page = ref(requestsStore.pagination.currentPage || 1)
+  const itemsPerPage = ref(requestsStore.pagination.itemsPerPage || 10)
   const columns = ref([])
   const error = ref(null)
   const loadingUsers = ref({})
@@ -32,7 +30,10 @@
   // Computed properties
   const isSuperAdmin = computed(() => authStore.userRole === 'super_admin')
   const isMobile = computed(() => mobile.value)
-  const hasData = computed(() => requestsStore.requests.length > 0)
+  const hasData = computed(() => requestsStore.requests?.length > 0)
+  const isLoading = computed(
+    () => initialLoading.value || requestsStore.loading
+  )
 
   const fetchRequests = async () => {
     try {
@@ -44,7 +45,7 @@
         sortBy: sortBy.value,
         sortDirection: sortDirection.value
       })
-      console.log('Fetched data for page:', page.value)
+      console.log('Fetched data:', requestsStore.requests)
     } catch (err) {
       console.error('Fetch error:', err)
       error.value = err.message || t('error.fetchingRequests')
@@ -92,16 +93,16 @@
   }
 
   const changePage = (newPage) => {
-    console.log('Page changed to:', newPage)
     page.value = newPage
     fetchRequests()
   }
 
   const changeItemsPerPage = (newSize) => {
-    console.log('Items per page changed to:', newSize)
     itemsPerPage.value = newSize
+    page.value = 1 // Reset to first page when changing items per page
     fetchRequests()
   }
+
   const toggleSort = () => {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
     page.value = 1
@@ -111,23 +112,14 @@
   const getSortIcon = () => {
     return sortDirection.value === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'
   }
+
   // Watchers
   watch(searchQuery, handleSearch)
 
   onMounted(() => {
-    if (!requestsStore.searchQuery) {
-      fetchRequests() // Only fetch all if no search query exists initially
-    } else {
-      fetchRequests() // Re-fetch with the existing query if there is one
-    }
     columns.value = [t('user'), t('email'), t('actions')]
+    fetchRequests()
   })
-  const headers = computed(() => [
-  { title: t('user'), key: 'username' },
-  { title: t('email'), key: 'email' },
-  { title: t('requestDate'), key: 'createdAt', sortable: true },
-  { title: t('actions'), key: 'actions' }
-])
 </script>
 
 <template>
@@ -180,132 +172,156 @@
           <v-divider></v-divider>
 
           <v-card-text style="padding: 0">
-            <!-- Error state -->
-            <!-- <v-templete v-if="error" type="error" variant="tonal" class="mb-6">
-              {{ error }}
-            </v-templete > -->
-            <!-- Requests list -->
-            <template>
-              <v-data-table
-                :key="componentKey"
-                :headers="headers"
-                :items="requestsStore.requests"
-                class="elevation-1"
-                hide-default-footer
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                :loading="initialLoading || requestsStore.loading"
-                :no-data-text="t('noPendingRequests')"
-              >
-                <template #item.username="{ item }">
-                  <div class="d-flex align-center">
-                    <v-avatar color="primary" size="48" class="mr-4">
-                      <v-img :src="item.avatar" :alt="item.username" />
-                    </v-avatar>
-                    <div>
-                      <span class="text-h6 d-block">{{ item.username }}</span>
-                      <span v-if="item.fullName" class="text-caption text-grey">
-                        {{ item.fullName }}
-                      </span>
-                    </div>
+            <v-data-table
+              :headers="[
+                {
+                  title: t('user'),
+                  key: 'user',
+                  align: 'start',
+                  sortable: false
+                },
+                {
+                  title: t('email'),
+                  key: 'email',
+                  align: 'start',
+                  sortable: false
+                },
+                {
+                  title: t('requestDate'),
+                  key: 'createdAt',
+                  align: 'start',
+                  sortable: true
+                },
+                {
+                  title: t('actions'),
+                  key: 'actions',
+                  align: 'start',
+                  sortable: false
+                }
+              ]"
+              :items="hasData ? requestsStore.requests : []"
+              :loading="isLoading"
+              :items-per-page="itemsPerPage"
+              :page="page"
+              hide-default-footer
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              class="elevation-1"
+              :server-items-length="requestsStore.pagination.total"
+              fixed-header
+              density="comfortable"
+            >
+              <template v-slot:item.user="{ item }">
+                <div class="d-flex align-center">
+                  <v-avatar color="primary" size="48" class="mx-4">
+                    <v-img :src="item.avatar" :alt="item.username" />
+                  </v-avatar>
+                  <div>
+                    <span class="text-h6 d-block">{{ item.username }}</span>
+                    <span v-if="item.fullName" class="text-caption text-grey">
+                      {{ item.fullName }}
+                    </span>
                   </div>
-                </template>
+                </div>
+              </template>
 
-                <template #item.createdAt="{ item }">
+              <template v-slot:item.email="{ item }">
+                <span class="text-h6">{{ item.email }}</span>
+              </template>
+
+              <template v-slot:item.createdAt="{ item }">
+                <span class="text-h6">
                   {{ new Date(item.createdAt).toLocaleDateString() }}
                   <v-tooltip
                     :text="new Date(item.createdAt).toLocaleString()"
                     location="bottom"
                   >
-                    <template #activator="{ props }">
+                    <template v-slot:activator="{ props }">
                       <v-icon v-bind="props" small class="ml-1">
                         mdi-information-outline
                       </v-icon>
                     </template>
                   </v-tooltip>
-                </template>
+                </span>
+              </template>
 
-                <template #item.actions="{ item }">
-                  <div
-                    class="d-flex"
-                    :class="{
-                      'flex-column': isMobile,
-                      'align-center': isMobile
-                    }"
+              <template v-slot:item.actions="{ item }">
+                <div
+                  class="d-flex"
+                  :class="{
+                    'flex-column': isMobile,
+                    'align-center': isMobile
+                  }"
+                >
+                  <v-btn
+                    color="success"
+                    variant="tonal"
+                    :class="[
+                      $i18n.locale === 'ar' ? 'ml-2' : 'mr-2',
+                      isMobile ? 'mb-2' : ''
+                    ]"
+                    size="large"
+                    @click="approve(item)"
+                    :prepend-icon="
+                      $i18n.locale === 'ar' ? undefined : 'mdi-check'
+                    "
+                    :append-icon="
+                      $i18n.locale === 'ar' ? 'mdi-check' : undefined
+                    "
+                    :loading="loadingUsers[item._id]"
                   >
-                    <v-btn
-                      color="success"
-                      variant="tonal"
-                      :class="[
-                        $i18n.locale === 'ar' ? 'ml-2' : 'mr-2',
-                        isMobile ? 'mb-2' : ''
-                      ]"
-                      size="large"
-                      @click="approve(item)"
-                      :prepend-icon="
-                        $i18n.locale === 'ar' ? undefined : 'mdi-check'
-                      "
-                      :append-icon="
-                        $i18n.locale === 'ar' ? 'mdi-check' : undefined
-                      "
-                      :loading="loadingUsers[item._id]"
-                    >
-                      {{ t('approve') }}
-                    </v-btn>
+                    {{ t('approve') }}
+                  </v-btn>
 
-                    <v-btn
-                      color="error"
-                      variant="tonal"
-                      size="large"
-                      @click="deny(item)"
-                      :prepend-icon="
-                        $i18n.locale === 'ar' ? undefined : 'mdi-close'
-                      "
-                      :append-icon="
-                        $i18n.locale === 'ar' ? 'mdi-close' : undefined
-                      "
-                      :loading="loadingUsers[item._id]"
-                    >
-                      {{ t('deny') }}
-                    </v-btn>
-                  </div>
-                </template>
-
-                <template #no-data>
-                  <div
-                    class="d-flex flex-column align-center justify-center py-12"
+                  <v-btn
+                    color="error"
+                    variant="tonal"
+                    size="large"
+                    @click="deny(item)"
+                    :prepend-icon="
+                      $i18n.locale === 'ar' ? undefined : 'mdi-close'
+                    "
+                    :append-icon="
+                      $i18n.locale === 'ar' ? 'mdi-close' : undefined
+                    "
+                    :loading="loadingUsers[item._id]"
                   >
-                    <v-icon size="96" color="grey lighten-1"
-                      >mdi-account-off</v-icon
-                    >
-                    <p class="text-h4 grey--text mt-4">
-                      {{
-                        searchQuery
-                          ? t('noResultsFound')
-                          : t('noPendingRequests')
-                      }}
-                    </p>
-                    <p class="text grey--text mt-4">
-                      {{
-                        searchQuery
-                          ? t('tryDifferentSearch')
-                          : t('allRequestsProcessed')
-                      }}
-                    </p>
-                  </div>
-                </template>
-              </v-data-table>
+                    {{ t('deny') }}
+                  </v-btn>
+                </div>
+              </template>
 
-              <PaginationControls
-                v-if="requestsStore.pagination.total > 0"
-                v-model:page="page"
-                v-model:itemsPerPage="itemsPerPage"
-                :total-items="requestsStore.pagination.total"
-                @update:page="changePage"
-                @update:itemsPerPage="changeItemsPerPage"
-                :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                class="mt-4"
-              />
-            </template>
+              <template v-slot:no-data>
+                <div
+                  class="d-flex flex-column align-center justify-center py-12"
+                >
+                  <v-icon size="96" color="grey lighten-1">
+                    mdi-account-off
+                  </v-icon>
+                  <p class="text-h4 grey--text mt-4">
+                    {{
+                      searchQuery ? t('noResultsFound') : t('noPendingRequests')
+                    }}
+                  </p>
+                  <p class="text grey--text mt-4">
+                    {{
+                      searchQuery
+                        ? t('tryDifferentSearch')
+                        : t('allRequestsProcessed')
+                    }}
+                  </p>
+                </div>
+              </template>
+            </v-data-table>
+
+            <PaginationControls
+              v-model:page="page"
+              v-model:itemsPerPage="itemsPerPage"
+              :total-items="requestsStore.pagination.total"
+              @update:page="changePage"
+              @update:itemsPerPage="changeItemsPerPage"
+              :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              class="mt-4"
+            />
           </v-card-text>
         </v-card>
       </v-col>
@@ -320,10 +336,6 @@
     transition: all 0.3s ease;
   }
 
-  .v-table {
-    width: 100%;
-  }
-
   .v-card-title {
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
     display: flex;
@@ -334,7 +346,9 @@
   tr td {
     padding: 20px !important;
   }
-
+  :deep(.v-data-table__td) {
+    padding: 16px !important;
+  }
   .cursor-pointer {
     cursor: pointer;
   }
@@ -345,7 +359,7 @@
   }
 
   /* Optional: Add other RTL-specific table styles */
-  [dir='rtl'] .v-table td {
+  [dir='rtl'] .v-data-table td {
     text-align: right !important;
   }
 
@@ -372,14 +386,11 @@
       margin-top: 12px;
     }
 
-    tr td {
-      padding: 12px !important;
-    }
-
     .v-btn {
       width: 100%;
     }
   }
+
   /* RTL specific styles */
   [dir='rtl'] .search-field :deep(.v-field__input) {
     text-align: right;
