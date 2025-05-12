@@ -48,7 +48,7 @@ app.use(
   cors({
     origin: [
       "https://dokan-dashboard.netlify.app",
-      "https://dokan-dashboard-kappa.vercel.app/",
+      "https://dokan-dashboard-kappa.vercel.app",
     ],
     credentials: true,
   })
