@@ -3,63 +3,55 @@
     <v-card
       flat
       :color="$vuetify.theme.current.dark ? 'primary' : 'white'"
-      class="toolbar-container mb-4"
+      class="mb-4"
+      elevation="2"
     >
-      <div
-        class="toolbar-content"
-        :class="{
-          'desktop-layout': !isMobile,
-          'mobile-layout': isMobile
-        }"
-      >
-        <v-col cols="12" md="4" sm="6">
-          <v-text-field
-            :label="$t('Search Orders')"
-            prepend-inner-icon="mdi-magnify"
-            clearable
-            hide-details
-            v-model="ordersStore.searchQuery"
-            @input="ordersStore.setSearchQuery(ordersStore.searchQuery)"
-          />
-        </v-col>
+      <v-card-text>
+        <v-row :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+          <v-col cols="12" md="4" sm="6">
+            <v-text-field
+              :label="$t('Search Orders')"
+              prepend-inner-icon="mdi-magnify"
+              clearable
+              hide-details
+              v-model="ordersStore.searchQuery"
+              @input="ordersStore.setSearchQuery(ordersStore.searchQuery)"
+            />
+          </v-col>
+          <v-col cols="6" md="3" sm="6">
+            <v-select
+              v-model="ordersStore.selectedStatus"
+              :items="statusOptions"
+              :label="$t('orderHeaders.status')"
+              clearable
+              hide-details
+              class="status-select w-100"
+              @update:model-value="ordersStore.setStatusFilter"
+            ></v-select>
+          </v-col>
+          <v-col cols="6" md="3" sm="6">
+            <v-select
+              :items="sortOptions"
+              :label="$t('Sort By')"
+              hide-details
+              v-model="ordersStore.sortBy"
+              @update:model-value="handleSortChange"
+            />
+          </v-col>
 
-        <v-select
-          v-model="ordersStore.selectedStatus"
-          :items="statusOptions"
-          :label="$t('orderHeaders.status')"
-          clearable
-          hide-details
-          class="status-select"
-          :class="{
-            'mr-3': $i18n.locale === 'ltr' && !isMobile,
-            'ml-3': $i18n.locale === 'ar' && !isMobile,
-            'mb-3': isMobile
-          }"
-          :style="{ width: isMobile ? '100%' : '200px' }"
-          @update:model-value="ordersStore.setStatusFilter"
-        ></v-select>
-        <v-col cols="6" md="3" sm="6">
-          <v-select
-            :items="sortOptions"
-            :label="$t('Sort By')"
-            hide-details
-            v-model="ordersStore.sortBy"
-            @update:model-value="handleSortChange"
-          />
-        </v-col>
-
-        <v-col cols="6" md="2" sm="6" class="d-flex align-center">
-          <v-btn
-            color="secondary"
-            class="pa-6"
-            style="font-size: 1.2rem"
-            block
-            @click="ordersStore.resetFilters()"
-          >
-            {{ t('Reset') }}
-          </v-btn>
-        </v-col>
-      </div>
+          <v-col cols="6" md="2" sm="6" class="d-flex align-center">
+            <v-btn
+              color="secondary"
+              class="pa-6"
+              style="font-size: 1.2rem"
+              block
+              @click="ordersStore.resetFilters()"
+            >
+              {{ t('Reset') }}
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
     </v-card>
 
     <!-- Error State -->
@@ -67,7 +59,7 @@
       {{ error }}
     </v-alert>
 
-    <v-card class="mx-4">
+    <v-card>
       <v-data-table
         :key="componentKey"
         :headers="headers"
@@ -140,12 +132,14 @@
               @click="openEditDialog(item)"
               size="small"
               variant="text"
+              style="box-shadow: none"
             />
             <v-btn
               icon="mdi-eye"
               @click="orderDetails(item)"
               size="small"
               variant="text"
+              style="box-shadow: none"
             />
             <v-btn
               icon="mdi-delete"
@@ -153,6 +147,7 @@
               size="small"
               class="text-error"
               variant="text"
+              style="box-shadow: none"
             />
           </div>
         </template>
@@ -166,18 +161,17 @@
           </div>
         </template>
       </v-data-table>
-
-      <PaginationControls
-        v-if="ordersStore.totalOrders > 0"
-        v-model:page="ordersStore.currentPage"
-        v-model:itemsPerPage="ordersStore.itemsPerPage"
-        :total-items="ordersStore.totalOrders"
-        :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-        @update:page="handlePageChange"
-        @update:itemsPerPage="handleItemsPerPageChange"
-      />
     </v-card>
-
+    <PaginationControls
+      class="px-10"
+      :page="ordersStore.currentPage"
+      :items-per-page="ordersStore.itemsPerPage"
+      :total-items="ordersStore.totalOrders"
+      @update:page="handlePageChange"
+      @update:itemsPerPage="handleItemsPerPageChange"
+      :loading="ordersStore.loading"
+      :direction="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+    />
     <!-- Edit Dialog -->
     <v-dialog
       v-model="dialog"

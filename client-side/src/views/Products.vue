@@ -4,6 +4,7 @@
       flat
       :color="$vuetify.theme.current.dark ? 'primary' : 'white'"
       class="toolbar-container"
+      :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
     >
       <div
         class="toolbar-content"

@@ -117,7 +117,7 @@
         v-for="(color, colorIndex) in item.selectedColors"
         :key="'color-' + colorIndex"
       >
-        <v-row no-gutters class="mt-5 align-center elevation-1 pa-3 rounded-lg">
+        <v-row no-gutters class="mt-5 align-center elevation-1 pa-3 rounded-lg bg-primary">
           <v-col
             class="mr-10"
             :class="{
