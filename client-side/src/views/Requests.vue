@@ -205,21 +205,14 @@
             <!-- <v-templete v-if="error" type="error" variant="tonal" class="mb-6">
               {{ error }}
             </v-templete > -->
-
-            <!-- Skeleton Loading -->
-            <skeleton-loader
-              v-if="initialLoading || requestsStore.loading"
-              :columns="columns"
-              :rows="3"
-            />
-
             <!-- Requests list -->
-            <template v-else>
+            <template>
               <v-table
                 :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
                 class="elevation-1 mb-4"
                 style="width: 100%"
                 fixed-header
+                :loading="initialLoading || requestsStore.loading"
               >
                 <thead>
                   <tr>
@@ -243,7 +236,7 @@
                     <th class="text-left text-h6">{{ t('actions') }}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody v-if="!isLoading">
                   <tr
                     v-if="hasData"
                     v-for="user in requestsStore.requests"

@@ -53,13 +53,7 @@
 
   <div class="px-8">
     <v-card>
-      <template v-if="ordersStore.loading">
-        <SkeletonLoader
-          :columns="headers.map((h) => h.title)"
-          :rows="ordersStore.itemsPerPage"
-        />
-      </template>
-      <template v-else>
+      <template>
         <v-data-table
           :headers="headers"
           :items="ordersStore.sortedOrders"
@@ -68,6 +62,7 @@
           class="elevation-0"
           hide-default-footer
           :no-data-text="t('No data available')"
+          :loading="ordersStore.loading"
         >
           <template #item.product="{ item }">
             <div class="d-flex align-center ga-5">
