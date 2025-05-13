@@ -1,22 +1,21 @@
-# Vue.js Admin Dashboard
+# ⚡ Vue.js Admin Dashboard
 
 ![image](https://github.com/user-attachments/assets/768970f4-3ad8-4c5b-a150-e4a68b86f07a)
 
 A modern admin dashboard built with Vue 3, Vuetify 3, and Vue Router. Featuring role-based authentication, multi-language support, and responsive design.
 
 ## 👥 User Roles
--Admin 
--Super Admin
+-🛡️Admin 
+-👑Super Admin
 for test
-### Super Admin  
-- Email: `superadmin@example.com`  
-- Password: `password@123`
+### Super Admin
+- 📧 Email: `superadmin@example.com`  
+- 🔒 Password: `password@123`
 
 ### Admin  
 - Sign up and then use the Super Admin account to approve your admin access
 
-## Features
-
+## 📌 Features
 - 🛡️ **Role-based access control** (Super Admin, Admin)
 - 🌐 **Multi-language support** (i18n)
 - 📱 **Fully responsive** design
@@ -30,7 +29,7 @@ for test
 - ⚙️ **Store configuration**
 - 🔄 **Real-time updates**
 
-## Tech Stack
+##🧰 Tech Stack
 
 - **Frontend**: Vue 3, Vuetify 3, Vue Router, Pinia
 - **Build**: Vite
@@ -39,7 +38,8 @@ for test
 - **Notifications**: vue-toastification
 - **Backend**: Express , MongoDB Atlas ,Cloudinary
   
-## Project Structure
+##🗂️ Project Structure
+
 <details>
 <summary>Click to view</summary>
 src/
@@ -60,7 +60,7 @@ src/
 
 
 
-## Installation
+##🛠️ Installation
 
 1. Clone the repository:
    ```sh
@@ -85,7 +85,7 @@ src/
    ```
 
 
-## Contribution
+##🤝 Contribution
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you want to change.
 
@@ -95,7 +95,7 @@ Before contributing:
 - Write clear commit messages
 - Test your changes locally
 
-## Contact
+##📬 Contact
 
 For questions or suggestions:
 
@@ -106,7 +106,7 @@ For questions or suggestions:
 
 **Built by [Mariem , Menna , Radwa , Asmaaa , Rhama ]**
 
-## License
+##📄 License
 
 This project is licensed under the MIT License.
 You are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software.
