@@ -4,6 +4,17 @@
 
 A modern admin dashboard built with Vue 3, Vuetify 3, and Vue Router. Featuring role-based authentication, multi-language support, and responsive design.
 
+## 👥 User Roles
+-Admin 
+-Super Admin
+for test
+### Super Admin  
+- Email: `superadmin@example.com`  
+- Password: `password@123`
+
+### Admin  
+- Sign up and then use the Super Admin account to approve your admin access
+
 ## Features
 
 - 🛡️ **Role-based access control** (Super Admin, Admin)
@@ -94,3 +105,9 @@ For questions or suggestions:
 ---
 
 **Built by [Mariem , Menna , Radwa , Asmaaa , Rhama ]**
+
+## License
+
+This project is licensed under the MIT License.
+You are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software.
+
