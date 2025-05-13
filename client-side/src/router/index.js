@@ -23,6 +23,43 @@ import { useAuthStore } from '../store/auth'
 const routes = [
   // Super Admin Routes
   {
+    path: '/auth',
+    component: () => import('../layouts/AuthLayout.vue'), // Dynamic import here
+    meta: { public: true },
+    children: [
+      {
+        path: 'login',
+        name: 'login',
+        component: Login,
+        meta: { breadcrumb: 'Login' }
+      },
+      {
+        path: '/login',
+        redirect: '/auth/login'
+      },
+      {
+        path: 'register',
+        name: 'register',
+        component: Register,
+        meta: { breadcrumb: 'Register' }
+      },
+      {
+        path: '/register',
+        redirect: '/auth/register'
+      },
+      {
+        path: 'pending',
+        name: 'pending',
+        component: Pending,
+        meta: { breadcrumb: 'Pending' }
+      },
+      {
+        path: '/pending',
+        redirect: '/auth/pending'
+      }
+    ]
+  },
+  {
     path: '/',
     component: () => import('../layouts/AppLayout.vue'), // Dynamic import here
     meta: {
@@ -188,47 +225,11 @@ const routes = [
       }
     ]
   },
-  {
-    path: '/auth',
-    component: () => import('../layouts/AuthLayout.vue'), // Dynamic import here
-    meta: { public: true },
-    children: [
-      {
-        path: 'login',
-        name: 'login',
-        component: Login,
-        meta: { breadcrumb: 'Login' }
-      },
-      {
-        path: '/login',
-        redirect: '/auth/login'
-      },
-      {
-        path: 'register',
-        name: 'register',
-        component: Register,
-        meta: { breadcrumb: 'Register' }
-      },
-      {
-        path: '/register',
-        redirect: '/auth/register'
-      },
-      {
-        path: 'pending',
-        name: 'pending',
-        component: Pending,
-        meta: { breadcrumb: 'Pending' }
-      },
-      {
-        path: '/pending',
-        redirect: '/auth/pending'
-      }
-    ]
-  },
   // 404 Catch-all
   {
     path: '/:pathMatch(.*)*',
     component: NotFound,
+    name: 'not-found',
     meta: { public: true }
   }
 ]
@@ -242,6 +243,9 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   try {
+    if (to.name === 'not-found') {
+      return next()
+    }
     if (!authStore.user && authStore.token) {
       await authStore.loadUserFromStorage()
     }
