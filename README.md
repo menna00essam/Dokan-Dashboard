@@ -7,7 +7,6 @@ A modern admin dashboard built with Vue 3, Vuetify 3, and Vue Router. Featuring 
 ## 👥 User Roles
 -🛡️Admin 
 -👑Super Admin
-for test
 ### Super Admin
 - 📧 Email: `superadmin@example.com`  
 - 🔒 Password: `password@123`
